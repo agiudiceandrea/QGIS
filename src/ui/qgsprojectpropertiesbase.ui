@@ -667,6 +667,12 @@
                        <property name="toolTip">
                         <string>The number of decimal places for the manual option</string>
                        </property>
+                       <property name="minimum">
+                        <number>0</number>
+                       </property>
+                       <property name="maximum">
+                        <number>9</number>
+                       </property>
                       </widget>
                      </item>
                      <item>

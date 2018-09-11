@@ -512,7 +512,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
 
   // set decimal places of the measure tool
   int decimalPlaces = mSettings->value( QStringLiteral( "/qgis/measure/decimalplaces" ), "3" ).toInt();
-  mDecimalPlacesSpinBox->setRange( 0, 12 );
+  mDecimalPlacesSpinBox->setRange( 0, 9 );
   mDecimalPlacesSpinBox->setValue( decimalPlaces );
 
   // set if base unit of measure tool should be changed
