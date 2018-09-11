@@ -348,23 +348,19 @@ class CORE_EXPORT QgsUnitTypes
      * Will convert a \a distance with a given \a unit to a distance value which is nice to display.
      * It will convert between different units (e.g. from meters to kilometers or millimeters)
      * if appropriate, unless forced otherwise with \a keepBaseUnit.
-     * The value will also be rounded to \a decimals (be prepared that the returned value is still a double so it will require
-     * further formatting when converting to a string).
      *
      * \since QGIS 3.0
      */
-    Q_INVOKABLE static QgsUnitTypes::DistanceValue scaledDistance( double distance, QgsUnitTypes::DistanceUnit unit, int decimals, bool keepBaseUnit = false );
+    Q_INVOKABLE static QgsUnitTypes::DistanceValue scaledDistance( double distance, QgsUnitTypes::DistanceUnit unit, bool keepBaseUnit = false );
 
     /**
      * Will convert an \a area with a given \a unit to an area value which is nice to display.
      * It will convert between different units (e.g. from square meters to square kilometers)
      * if appropriate, unless forced otherwise with \a keepBaseUnit.
-     * The value will also be rounded to \a decimals (be prepared that the returned value is still a double so it will require
-     * further formatting when converting to a string).
      *
      * \since QGIS 3.0
      */
-    Q_INVOKABLE static QgsUnitTypes::AreaValue scaledArea( double area, QgsUnitTypes::AreaUnit unit, int decimals, bool keepBaseUnit = false );
+    Q_INVOKABLE static QgsUnitTypes::AreaValue scaledArea( double area, QgsUnitTypes::AreaUnit unit, bool keepBaseUnit = false );
 
     /**
      * Returns an distance formatted as a friendly string.
