@@ -287,10 +287,10 @@ inline bool qgsDoubleNearSig( double a, double b, int significantDigits = 10 )
  *
  * \since QGIS 3.0
  */
-inline double qgsRound( double number, double places )
+inline double qgsRound( double number, int places )
 {
-  int scaleFactor = std::pow( 10, places );
-  return static_cast<double>( static_cast<qlonglong>( number * scaleFactor + 0.5 ) ) / scaleFactor;
+  qlonglong scaleFactor = std::pow( 10, places );
+  return static_cast<double>( static_cast<qulonglong>( number * scaleFactor + 0.5 ) ) / scaleFactor;
 }
 
 
