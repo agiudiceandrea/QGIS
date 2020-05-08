@@ -81,7 +81,8 @@ QgsScaleBarRenderer::Flags QgsTicksScaleBarRenderer::flags() const
          Flag::FlagUsesLabelBarSpace |
          Flag::FlagUsesLabelVerticalPlacement |
          Flag::FlagUsesLabelHorizontalPlacement |
-         Flag::FlagUsesSubdivisions;
+         Flag::FlagUsesSubdivisions |
+         Flag::FlagUsesSubdivisionsHeight;
 }
 
 QgsTicksScaleBarRenderer *QgsTicksScaleBarRenderer::clone() const
