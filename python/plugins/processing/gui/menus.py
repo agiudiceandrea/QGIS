@@ -42,7 +42,7 @@ algorithmsToolbar = None
 menusSettingsGroup = 'Menus'
 
 defaultMenuEntries = {}
-vectorMenu = iface.vectorMenu().title()
+QApplication.translate('MainWindow', 'Vect&or')
 analysisToolsMenu = vectorMenu + "/" + Processing.tr('&Analysis Tools')
 defaultMenuEntries.update({'qgis:distancematrix': analysisToolsMenu,
                            'native:sumlinelengths': analysisToolsMenu,
@@ -94,7 +94,7 @@ defaultMenuEntries.update({'native:reprojectlayer': managementToolsMenu,
                            'native:mergevectorlayers': managementToolsMenu,
                            'native:createspatialindex': managementToolsMenu})
 
-rasterMenu = iface.rasterMenu().title()
+QApplication.translate('MainWindow', '&Raster')
 projectionsMenu = rasterMenu + "/" + Processing.tr('Projections')
 defaultMenuEntries.update({'gdal:warpreproject': projectionsMenu,
                            'gdal:extractprojection': projectionsMenu,
@@ -131,7 +131,7 @@ defaultMenuEntries.update({'gdal:buildvirtualraster': miscMenu,
                            'gdal:overviews': miscMenu,
                            'gdal:tileindex': miscMenu})
 
-toolBarButtons = {'native:selectbylocation': iface.selectionToolBar()}
+# toolBarButtons = {'native:selectbylocation': iface.selectionToolBar()}
 
 
 def initializeMenus():
