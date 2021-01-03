@@ -120,14 +120,16 @@ class ManageConnectionsDialog(QDialog, BASE_CLASS):
         """save connections ops"""
 
         doc = etree.Element('qgsCSWConnections')
-        doc.attrib['version'] = '1.0'
+        doc.attrib['version'] = '1.1'
 
         for conn in connections:
             url = self.settings.value('/MetaSearch/%s/url' % conn)
+            lon_lat = self.settings.value('/MetaSearch/%s/lon_lat' % conn, 'false')
             if url is not None:
                 connection = etree.SubElement(doc, 'csw')
                 connection.attrib['name'] = conn
                 connection.attrib['url'] = url
+                connection.attrib['lon_lat'] = lon_lat
 
         # write to disk
         with open(self.filename, 'w') as fileobj:
@@ -163,7 +165,9 @@ class ManageConnectionsDialog(QDialog, BASE_CLASS):
 
             # no dups detected or overwrite is allowed
             url = '/MetaSearch/%s/url' % conn_name
+            lon_lat = '/MetaSearch/%s/lon_lat' % conn_name
             self.settings.setValue(url, csw.attrib.get('url'))
+            self.settings.setValue(lon_lat, csw.attrib.get('lon_lat', False))
 
     def accept(self):
         """accept connections"""
