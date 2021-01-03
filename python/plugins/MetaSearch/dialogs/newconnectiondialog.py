@@ -56,6 +56,7 @@ class NewConnectionDialog(QDialog, BASE_CLASS):
         conn_url = self.leURL.text().strip()
         conn_username = self.leUsername.text().strip()
         conn_password = self.lePassword.text().strip()
+        conn_lon_lat = self.leLonLat.isChecked()
 
         if any([conn_name == '', conn_url == '']):
             QMessageBox.warning(self, self.tr('Save Connection'),
@@ -87,6 +88,7 @@ class NewConnectionDialog(QDialog, BASE_CLASS):
                 self.settings.remove(key_orig)
 
             self.settings.setValue(keyurl, conn_url)
+            self.settings.setValue('%s/lon_lat' % key, conn_lon_lat)
             self.settings.setValue('/MetaSearch/selected', conn_name)
 
             if conn_username != '':
