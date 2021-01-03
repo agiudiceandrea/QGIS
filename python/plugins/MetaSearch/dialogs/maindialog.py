@@ -308,6 +308,7 @@ class MetaSearchDialog(QDialog, BASE_CLASS):
         conn_edit.setWindowTitle(self.tr('Edit Catalog Service'))
         conn_edit.leName.setText(current_text)
         conn_edit.leURL.setText(url)
+        conn_edit.leLonLat.setChecked(self.settings.value('/MetaSearch/%s/lon_lat' % current_text, False, type=bool))
         conn_edit.leUsername.setText(self.settings.value('/MetaSearch/%s/username' % current_text))
         conn_edit.lePassword.setText(self.settings.value('/MetaSearch/%s/password' % current_text))
 
@@ -365,6 +366,7 @@ class MetaSearchDialog(QDialog, BASE_CLASS):
             # no dups detected or overwrite is allowed
             key = '/MetaSearch/%s' % name
             self.settings.setValue('%s/url' % key, server.attrib.get('url'))
+            self.settings.setValue('%s/lon_lat' % key, server.attrib.get('lon_lat'))
 
         self.populate_connection_list()
 
@@ -465,11 +467,16 @@ class MetaSearchDialog(QDialog, BASE_CLASS):
         maxy = self.leNorth.text()
         bbox = [minx, miny, maxx, maxy]
 
+        # bbox axis order
+        lon_lat = self.settings.value('%s/lon_lat' % key, False, type=bool)
+
         # only apply spatial filter if bbox is not global
         # even for a global bbox, if a spatial filter is applied, then
         # the CSW server will skip records without a bbox
         if bbox != ['-180', '-90', '180', '90']:
-            self.constraints.append(BBox([miny, minx, maxy, maxx],
+            if not lon_lat:
+                bbox = [miny, minx, maxy, maxx]
+            self.constraints.append(BBox(bbox,
                                          crs='urn:ogc:def:crs:EPSG::4326'))
 
         # keywords
