@@ -34,7 +34,27 @@
    <item row="1" column="1">
     <widget class="QLineEdit" name="leURL"/>
    </item>
-   <item row="2" column="0" colspan="2">
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="leLonLat">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Use Longitude-Latitude axis order</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
     <widget class="QGroupBox" name="authenticationGroupBox">
      <property name="title">
       <string>Authentication</string>
@@ -73,7 +93,7 @@
      </layout>
     </widget>
    </item>
-   <item row="3" column="1">
+   <item row="4" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -88,6 +108,7 @@
  <tabstops>
   <tabstop>leName</tabstop>
   <tabstop>leURL</tabstop>
+  <tabstop>leLonLat</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
