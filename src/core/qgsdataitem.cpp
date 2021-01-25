@@ -65,6 +65,8 @@ QIcon QgsLayerItem::iconForWkbType( QgsWkbTypes::Type type )
       return iconLine();
     case QgsWkbTypes::PolygonGeometry:
       return iconPolygon();
+    case QgsWkbTypes::GeometryCollection:
+      return iconGeometryCollection();
     default:
       break;
   }
@@ -84,6 +86,11 @@ QIcon QgsLayerItem::iconLine()
 QIcon QgsLayerItem::iconPolygon()
 {
   return QgsApplication::getThemeIcon( QStringLiteral( "/mIconPolygonLayer.svg" ) );
+}
+
+QIcon QgsLayerItem::iconGeometryCollection()
+{
+  return QgsApplication::getThemeIcon( QStringLiteral( "/mIconGeometryCollectionLayer.svg" ) );
 }
 
 QIcon QgsLayerItem::iconTable()
