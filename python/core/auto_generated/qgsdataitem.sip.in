@@ -609,6 +609,7 @@ Returns the icon for a vector layer whose geometry type is provided.
     static QIcon iconPoint();
     static QIcon iconLine();
     static QIcon iconPolygon();
+    static QIcon iconGeometryCollection();
     static QIcon iconTable();
     static QIcon iconRaster();
     static QIcon iconDefault();
