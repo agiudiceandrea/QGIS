@@ -637,6 +637,7 @@ class CORE_EXPORT QgsLayerItem : public QgsDataItem
     static QIcon iconPoint();
     static QIcon iconLine();
     static QIcon iconPolygon();
+    static QIcon iconGeometryCollection();
     static QIcon iconTable();
     static QIcon iconRaster();
     static QIcon iconDefault();
