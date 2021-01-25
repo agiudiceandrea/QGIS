@@ -141,7 +141,7 @@ void QgsVectorLayerSaveAsDialog::setup()
   addGeomItem( QgsWkbTypes::Point );
   addGeomItem( QgsWkbTypes::LineString );
   addGeomItem( QgsWkbTypes::Polygon );
-  mGeometryTypeComboBox->addItem( QgsWkbTypes::translatedDisplayString( QgsWkbTypes::GeometryCollection ), QgsWkbTypes::GeometryCollection );
+  addGeomItem( QgsWkbTypes::GeometryCollection );
   addGeomItem( QgsWkbTypes::NoGeometry );
   mGeometryTypeComboBox->setCurrentIndex( mGeometryTypeComboBox->findData( -1 ) );
 
