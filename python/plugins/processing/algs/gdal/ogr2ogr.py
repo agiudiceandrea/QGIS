@@ -28,13 +28,15 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterDefinition,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterString,
-                       QgsProcessingParameterVectorDestination)
+                       QgsProcessingParameterVectorDestination,
+                       QgsProcessingParameterBoolean)
 from processing.algs.gdal.GdalAlgorithm import GdalAlgorithm
 from processing.algs.gdal.GdalUtils import GdalUtils
 
 
 class ogr2ogr(GdalAlgorithm):
     INPUT = 'INPUT'
+    ALL_LAYERS = 'ALL_LAYERS'
     OPTIONS = 'OPTIONS'
     OUTPUT = 'OUTPUT'
 
@@ -45,6 +47,11 @@ class ogr2ogr(GdalAlgorithm):
         self.addParameter(QgsProcessingParameterFeatureSource(self.INPUT,
                                                               self.tr('Input layer'),
                                                               types=[QgsProcessing.TypeVector]))
+
+        self.addParameter(QgsProcessingParameterBoolean(self.ALL_LAYERS,
+                                                        self.tr('Process all the layers in the file'),
+                                                        defaultValue=False,
+                                                        optional=True))
 
         options_param = QgsProcessingParameterString(self.OPTIONS,
                                                      self.tr('Additional creation options'),
@@ -91,6 +98,7 @@ class ogr2ogr(GdalAlgorithm):
 
         arguments.append(output)
         arguments.append(ogrLayer)
-        arguments.append(layerName)
+        if not self.parameterAsBoolean(parameters, self.ALL_LAYERS, context):
+            arguments.append(layerName)
 
         return ['ogr2ogr', GdalUtils.escapeAndJoin(arguments)]
