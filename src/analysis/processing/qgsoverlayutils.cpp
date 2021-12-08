@@ -119,7 +119,7 @@ void QgsOverlayUtils::difference( const QgsFeatureSource &sourceA, const QgsFeat
 
     if ( featA.hasGeometry() )
     {
-      QgsGeometry geom( featA.geometry() );
+      const QgsGeometry geom( featA.geometry() );
       const QgsFeatureIds intersects = qgis::listToSet( indexB.intersects( geom.boundingBox() ) );
 
       QgsFeatureRequest request;
@@ -144,7 +144,8 @@ void QgsOverlayUtils::difference( const QgsFeatureSource &sourceA, const QgsFeat
         if ( feedback->isCanceled() )
           break;
 
-        if ( engine->intersects( featB.geometry().constGet() ) )
+        const QgsGeometry tmpGeom( featB.geometry() );
+        if ( engine->intersects( tmpGeom.constGet() ) )
           geometriesB << featB.geometry();
       }
 
@@ -160,10 +161,14 @@ void QgsOverlayUtils::difference( const QgsFeatureSource &sourceA, const QgsFeat
           // 2. fix geometries (removes polygons collapsed to lines etc.) using MakeValid
           throw QgsProcessingException( QStringLiteral( "%1\n\n%2" ).arg( QObject::tr( "GEOS geoprocessing error: unary union failed." ), geomB.lastError() ) );
         }
-        geom = geom.difference( geomB );
+        const QgsGeometry difGeom = geom.difference( geomB );
+      }
+      else
+      {
+        const QgsGeometry difGeom = geom;
       }
 
-      if ( !sanitizeDifferenceResult( geom, geometryType ) )
+      if ( !sanitizeDifferenceResult( difGeom, geometryType ) )
         continue;
 
       const QgsAttributes attrsA( featA.attributes() );
@@ -183,7 +188,7 @@ void QgsOverlayUtils::difference( const QgsFeatureSource &sourceA, const QgsFeat
       }
 
       QgsFeature outFeat;
-      outFeat.setGeometry( geom );
+      outFeat.setGeometry( difGeom );
       outFeat.setAttributes( attrs );
       if ( !sink.addFeature( outFeat, QgsFeatureSink::FastInsert ) )
         throw QgsProcessingException( writeFeatureError() );
