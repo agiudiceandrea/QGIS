@@ -236,7 +236,7 @@ Returns the path to the server resources directory.
 
     static QString translatorsFilePath();
 %Docstring
-Returns the path to the sponsors file.
+Returns the path to the translators file.
 %End
 
     static QString licenceFilePath();
