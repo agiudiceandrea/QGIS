@@ -302,9 +302,7 @@ class CORE_EXPORT QgsApplication : public QApplication
     //! Returns the path to the server resources directory.
     static QString serverResourcesPath();
 
-    /**
-     * Returns the path to the sponsors file.
-     */
+    //! Returns the path to the translators file.
     static QString translatorsFilePath();
 
     /**
