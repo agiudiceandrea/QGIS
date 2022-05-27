@@ -201,7 +201,7 @@ QString QgsDrapeToZAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm sets the z value of every vertex in the feature geometry to a value sampled from a band within a raster layer." )
          + QStringLiteral( "\n\n" )
-         + QObject::tr( "The raster values can optionally be scaled by a preset amount and an offset could be algebrically added." );
+         + QObject::tr( "The raster values can optionally be scaled by a preset amount and an offset can be algebraically added." );
 }
 
 QString QgsDrapeToZAlgorithm::shortDescription() const
@@ -264,7 +264,7 @@ QString QgsDrapeToMAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm sets the M value for every vertex in the feature geometry to a value sampled from a band within a raster layer." )
          + QStringLiteral( "\n\n" )
-         + QObject::tr( "The raster values can optionally be scaled by a preset amount and an offset could be algebrically added." );
+         + QObject::tr( "The raster values can optionally be scaled by a preset amount and an offset can be algebraically added." );
 }
 
 QString QgsDrapeToMAlgorithm::shortDescription() const
