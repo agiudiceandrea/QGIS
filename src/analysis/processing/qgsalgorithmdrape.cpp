@@ -58,7 +58,7 @@ void QgsDrapeAlgorithmBase::initParameters( const QVariantMap & )
   scaleParam->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( scaleParam.release() );
 
-  auto offsetParam = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "OFFSET" ), QObject::tr( "Offset" ), QgsProcessingParameterNumber::Double, 0.0, false, 0.0 );
+  auto offsetParam = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "OFFSET" ), QObject::tr( "Offset" ), QgsProcessingParameterNumber::Double, 0.0 );
   offsetParam->setIsDynamic( true );
   offsetParam->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "OFFSET" ), QObject::tr( "Offset" ), QgsPropertyDefinition::Double ) );
   offsetParam->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
