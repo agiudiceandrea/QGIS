@@ -17,6 +17,7 @@
 
 #include "qgsalgorithmsplitvectorlayer.h"
 #include "qgsvectorfilewriter.h"
+#include "qgsvectordataprovider.h"
 
 ///@cond PRIVATE
 
@@ -70,6 +71,11 @@ void QgsSplitVectorLayerAlgorithm::initAlgorithm( const QVariantMap & )
   auto fileTypeParam = std::make_unique < QgsProcessingParameterEnum >( QStringLiteral( "FILE_TYPE" ), QObject::tr( "Output file type" ), options, false, 0, true );
   fileTypeParam->setFlags( fileTypeParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
   addParameter( fileTypeParam.release() );
+
+  const QStringList encodings = QgsVectorDataProvider::availableEncodings();
+  auto encodingParam = std::make_unique < QgsProcessingParameterEnum >( QStringLiteral( "ENCODING" ), QObject::tr( "Output file encoding" ), encodings, false, QVariant(), true );
+  encodingParam->setFlags( encodingParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  addParameter( encodingParam.release() );
 
   addParameter( new QgsProcessingParameterFolderDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Output directory" ) ) );
   addOutput( new QgsProcessingOutputMultipleLayers( QStringLiteral( "OUTPUT_LAYERS" ), QObject::tr( "Output layers" ) ) );
