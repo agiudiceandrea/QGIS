@@ -251,7 +251,7 @@ int nmea_parse_GPGGA( const char *buff, int buff_sz, nmeaGPGGA *pack )
     return 0;
   }
 
-  if ( type != 'P' && type != 'N' )
+  if ( type != 'P' && type != 'N' && type != 'L' && type != 'A' && type != 'B' && type != 'Q' )
   {
     nmea_error( "G?GGA invalid type " );
     return 0;
