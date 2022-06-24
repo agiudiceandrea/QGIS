@@ -698,6 +698,7 @@ QgsLayoutExporter::ExportResult QgsLayoutExporter::exportToPdf( const QString &f
       return FileError;
     }
 
+    p.setRenderHint( QPainter::LosslessImageRendering, mLayout->renderContext().flags() & QgsLayoutRenderContext::FlagLosslessImageRendering );
     result = printPrivate( printer, p, false, settings.dpi, settings.rasterizeWholeImage );
     p.end();
 
