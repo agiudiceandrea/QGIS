@@ -27,7 +27,7 @@ QString QgsUuidWidgetWrapper::createUiid( int maxLength )
 {
   const QString uuid = QUuid::createUuid().toString();
 
-  if ( maxLength <= 0 || maxLength >= len(uuid) )
+  if ( maxLength <= 0 || maxLength >= len( uuid ) )
   {
     return uuid;
   }
