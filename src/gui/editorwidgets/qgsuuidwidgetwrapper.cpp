@@ -25,7 +25,7 @@ QgsUuidWidgetWrapper::QgsUuidWidgetWrapper( QgsVectorLayer *layer, int fieldIdx,
 
 QString QgsUuidWidgetWrapper::createUiid( int maxLength )
 {
-  const QString uuid = QUuid::createUuid().toString();
+  QString uuid = QUuid::createUuid().toString();
 
   if ( maxLength <= 0 || maxLength >= uuid.length() )
   {
