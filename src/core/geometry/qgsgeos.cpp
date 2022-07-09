@@ -1363,7 +1363,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsGeos::fromGeos( const GEOSGeometry *geos
     case GEOS_POINT:                 // a point
     {
       if ( GEOSisEmpty_r( geosinit()->ctxt, geos ) )
-        return qgis::make_unique< QgsPoint >();
+        return std::make_unique< QgsPoint >();
 
       const GEOSCoordSequence *cs = GEOSGeom_getCoordSeq_r( geosinit()->ctxt, geos );
       unsigned int nPoints = 0;
