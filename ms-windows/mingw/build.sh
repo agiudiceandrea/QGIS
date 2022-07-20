@@ -97,6 +97,7 @@ mkdir -p "$BUILDDIR"
     -DWITH_SERVER=ON \
     -DWITH_SERVER_LANDINGPAGE_WEBAPP=ON \
     -DTXT2TAGS_EXECUTABLE= \
+    -DWITH_CUSTOM_WIDGETS=ON \
     ..
 )
 echo "::endgroup::"
