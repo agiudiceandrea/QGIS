@@ -2607,7 +2607,7 @@ bool QgsOgrProvider::createAttributeIndex( int field )
     //find out, if the .idm/.ind file is there
     QString idmFile( fi.path().append( '/' ).append( fi.completeBaseName() ).append( ".idm" ) );
     QString indFile( fi.path().append( '/' ).append( fi.completeBaseName() ).append( ".ind" ) );
-    return QFile::exists( idmFile ) || QFile::exists( indFile );
+    return QFile::exists( idmFile ) && QFile::exists( indFile );
   }
 }
 
