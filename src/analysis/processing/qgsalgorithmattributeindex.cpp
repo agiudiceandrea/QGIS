@@ -87,7 +87,7 @@ QVariantMap QgsAttributeIndexAlgorithm::processAlgorithm( const QVariantMap &par
   const int fieldIndex = layer->fields().lookupField( field );
   if ( fieldIndex < 0 || layer->fields().fieldOrigin( fieldIndex ) != QgsFields::OriginProvider )
   {
-    feedback->pushInfo( QObject::tr( "Can not create attribute index on %1" ).arg( field ) );
+    throw QgsProcessingException( QObject::tr( "Can not create attribute index on %1" ).arg( field ) );
   }
   else
   {
@@ -96,12 +96,12 @@ QVariantMap QgsAttributeIndexAlgorithm::processAlgorithm( const QVariantMap &par
     {
       if ( !provider->createAttributeIndex( providerIndex ) )
       {
-        feedback->pushInfo( QObject::tr( "Could not create attribute index (OGR Error: %1" ).arg( QString::fromUtf8( CPLGetLastErrorMsg() ) ) );
+        throw QgsProcessingException( QObject::tr( "Could not create attribute index (OGR Error: %1" ).arg( QString::fromUtf8( CPLGetLastErrorMsg() ) ) );
       }
     }
     else
     {
-      feedback->pushInfo( QObject::tr( "Layer's data provider does not support creating attribute indexes" ) );
+      throw QgsProcessingException( QObject::tr( "Layer's data provider does not support creating attribute indexes" ) );
     }
   }
 
