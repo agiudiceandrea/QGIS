@@ -2598,7 +2598,7 @@ bool QgsOgrProvider::createAttributeIndex( int field )
   }
   else
   {
-    QByteArray dropSql = "DROP INDEX ON " + quotedLayerName;
+    QByteArray dropSql = "DROP INDEX ON " + quotedLayerName + " USING " + textEncoding()->fromUnicode( fields().at( field ).name() );
     mOgrOrigLayer->ExecuteSQLNoReturn( dropSql );
     QByteArray createSql = "CREATE INDEX ON " + quotedLayerName + " USING " + textEncoding()->fromUnicode( fields().at( field ).name() );
     mOgrOrigLayer->ExecuteSQLNoReturn( createSql );
