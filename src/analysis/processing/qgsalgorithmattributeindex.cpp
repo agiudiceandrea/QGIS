@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsalgorithmattributeindex.h"
+#include "qgsogrutils.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectordataprovider.h"
 
@@ -86,21 +87,21 @@ QVariantMap QgsAttributeIndexAlgorithm::processAlgorithm( const QVariantMap &par
   const int fieldIndex = layer->fields().lookupField( field );
   if ( fieldIndex < 0 || layer->fields().fieldOrigin( fieldIndex ) != QgsFields::OriginProvider )
   {
-    feedback->pushInfo( QObject::tr( "Can not create attribute index on %1" ).arg( field ) );
+    throw QgsProcessingException( QObject::tr( "Can not create attribute index on %1" ).arg( field ) );
   }
   else
   {
     const int providerIndex = layer->fields().fieldOriginIndex( fieldIndex );
     if ( provider->capabilities() & QgsVectorDataProvider::CreateAttributeIndex )
     {
-      if ( !provider->createAttributeIndex( providerIndex ) )
+      if ( !provider->createAttributeIndex( providerIndex ) || CPLGetLastErrorType() != CE_None )
       {
-        feedback->pushInfo( QObject::tr( "Could not create attribute index" ) );
+        throw QgsProcessingException( QObject::tr( "Could not create attribute index (OGR Error: %1" ).arg( QString::fromUtf8( CPLGetLastErrorMsg() ) ) );
       }
     }
     else
     {
-      feedback->pushInfo( QObject::tr( "Layer's data provider does not support creating attribute indexes" ) );
+      throw QgsProcessingException( QObject::tr( "Layer's data provider does not support creating attribute indexes" ) );
     }
   }
 
