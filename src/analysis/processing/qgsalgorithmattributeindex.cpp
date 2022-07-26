@@ -94,7 +94,7 @@ QVariantMap QgsAttributeIndexAlgorithm::processAlgorithm( const QVariantMap &par
     const int providerIndex = layer->fields().fieldOriginIndex( fieldIndex );
     if ( provider->capabilities() & QgsVectorDataProvider::CreateAttributeIndex )
     {
-      if ( !provider->createAttributeIndex( providerIndex ) )
+      if ( !provider->createAttributeIndex( providerIndex ) || CPLGetLastErrorType() != CE_None )
       {
         throw QgsProcessingException( QObject::tr( "Could not create attribute index (OGR Error: %1" ).arg( QString::fromUtf8( CPLGetLastErrorMsg() ) ) );
       }
