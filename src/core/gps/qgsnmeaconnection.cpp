@@ -379,7 +379,7 @@ void QgsNmeaConnection::processGsvSentence( const char *data, int len )
       }
       // set QgsSatelliteInfo.inuse to true for the satellites in view
       if ( currentSatellite.sig > 0 )
-      {  
+      {
         satelliteInfo.inUse = 1;
       }
       if ( IDfind == 0 && ( currentSatellite.azimuth > 0 && currentSatellite.elv > 0 ) )
@@ -393,7 +393,7 @@ void QgsNmeaConnection::processGsvSentence( const char *data, int len )
 void QgsNmeaConnection::processVtgSentence( const char *data, int len )
 {
   // GSA
-  mLastGPSInformation.satPrn.clear(); 
+  mLastGPSInformation.satPrn.clear();
   // GSV
   mLastGPSInformation.satellitesInView.clear();
   mLastGPSInformation.satellitesUsed = 0;
@@ -420,7 +420,7 @@ void QgsNmeaConnection::processGsaSentence( const char *data, int len )
       if ( result.sat_prn[ i ] > 0 )
       {
         mLastGPSInformation.satPrn.append( result.sat_prn[ i ] );
-        mLastGPSInformation.satellitesUsed +=1;
+        mLastGPSInformation.satellitesUsed += 1;
       }
     }
   }
