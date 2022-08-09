@@ -505,15 +505,19 @@ QgsVector calcMotion( const QgsPoint &a, const QgsPoint &b, const QgsPoint &c,
   QgsVector p = a - b;
   QgsVector q = c - b;
 
+  QgsDebugMsg( QStringLiteral( "p = %1; q = %2" ).arg( p ).arg( q ) );
+
   if ( qgsDoubleNear( p.length(), 0.0 ) || qgsDoubleNear( q.length(), 0.0 ) )
     return QgsVector( 0, 0 );
 
   // 2.0 is a magic number from the original JOSM source code
   double scale = 2.0 * std::min( p.length(), q.length() );
+  QgsDebugMsg( QStringLiteral( "scale = %1" ).arg( scale ) );
 
   p = p.normalized();
   q = q.normalized();
   double dotProduct = p * q;
+  QgsDebugMsg( QStringLiteral( "dotProduct = %1" ).arg( dotProduct ) );
 
   if ( !dotProductWithinAngleTolerance( dotProduct, lowerThreshold, upperThreshold ) )
   {
@@ -524,6 +528,7 @@ QgsVector calcMotion( const QgsPoint &a, const QgsPoint &b, const QgsPoint &c,
   // to deal with almost-straight segments (angle is closer to 180 than to 90/270).
   if ( dotProduct < -M_SQRT1_2 )
     dotProduct += 1.0;
+  QgsDebugMsg( QStringLiteral( "dotProduct = %1" ).arg( dotProduct ) );
 
   QgsVector new_v = p + q;
   // 0.1 magic number from JOSM implementation - think this is to limit each iterative step
