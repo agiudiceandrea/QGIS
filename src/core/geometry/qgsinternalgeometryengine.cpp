@@ -505,7 +505,7 @@ QgsVector calcMotion( const QgsPoint &a, const QgsPoint &b, const QgsPoint &c,
   QgsVector p = a - b;
   QgsVector q = c - b;
 
-  QgsDebugMsg( QStringLiteral( "p = %1; q = %2" ).arg( p ).arg( q ) );
+  QgsDebugMsg( QStringLiteral( "p = %1; q = %2" ).arg( p.toString() ).arg( q.toString() ) );
 
   if ( qgsDoubleNear( p.length(), 0.0 ) || qgsDoubleNear( q.length(), 0.0 ) )
     return QgsVector( 0, 0 );
@@ -577,6 +577,7 @@ QgsLineString *doOrthogonalize( QgsLineString *ring, int iterations, double tole
         else
           c = ring->pointN( i + 1 );
 
+        QgsDebugMsg( QStringLiteral( "calcMotion = %1" ).arg( calcMotion( a, b, c, lowerThreshold, upperThreshold ).toString() ) );
         motions << calcMotion( a, b, c, lowerThreshold, upperThreshold );
       }
       a = b;
