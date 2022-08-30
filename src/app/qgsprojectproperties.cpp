@@ -411,11 +411,14 @@ QgsProjectProperties::QgsProjectProperties( QgsMapCanvas *mapCanvas, QWidget *pa
   myRedInt = settings.value( QStringLiteral( "qgis/default_canvas_color_red" ), 255 ).toInt();
   myGreenInt = settings.value( QStringLiteral( "qgis/default_canvas_color_green" ), 255 ).toInt();
   myBlueInt = settings.value( QStringLiteral( "qgis/default_canvas_color_blue" ), 255 ).toInt();
-  QColor defaultCanvasColor = QColor( myRedInt, myGreenInt, myBlueInt );
+  myAlphaInt = settings.value( QStringLiteral( "qgis/default_canvas_color_alpha" ), 255 ).toInt();
+  QColor defaultCanvasColor = QColor( myRedInt, myGreenInt, myBlueInt, myAlphaInt );
 
   pbnCanvasColor->setContext( QStringLiteral( "gui" ) );
   pbnCanvasColor->setColor( QgsProject::instance()->backgroundColor() );
   pbnCanvasColor->setDefaultColor( defaultCanvasColor );
+  pbnCanvasColor->setColorDialogTitle( tr( "Canvas Color" ) );
+  pbnCanvasColor->setAllowOpacity( true );
 
   //get project scales
   const QVector< double > projectScales = QgsProject::instance()->viewSettings()->mapScales();

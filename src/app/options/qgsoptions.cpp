@@ -742,8 +742,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   red = mSettings->value( QStringLiteral( "/qgis/default_canvas_color_red" ), 255 ).toInt();
   green = mSettings->value( QStringLiteral( "/qgis/default_canvas_color_green" ), 255 ).toInt();
   blue = mSettings->value( QStringLiteral( "/qgis/default_canvas_color_blue" ), 255 ).toInt();
-  pbnCanvasColor->setColor( QColor( red, green, blue ) );
+  alpha = mSettings->value( QStringLiteral( "/qgis/default_canvas_color_alpha" ), 255 ).toInt();
+  pbnCanvasColor->setColor( QColor( red, green, blue, alpha ) );
   pbnCanvasColor->setColorDialogTitle( tr( "Set Canvas Color" ) );
+  pbnCanvasColor->setAllowOpacity( true );
   pbnCanvasColor->setContext( QStringLiteral( "gui" ) );
   pbnCanvasColor->setDefaultColor( Qt::white );
 
@@ -1672,6 +1674,7 @@ void QgsOptions::saveOptions()
   mSettings->setValue( QStringLiteral( "/qgis/default_canvas_color_red" ), myColor.red() );
   mSettings->setValue( QStringLiteral( "/qgis/default_canvas_color_green" ), myColor.green() );
   mSettings->setValue( QStringLiteral( "/qgis/default_canvas_color_blue" ), myColor.blue() );
+  mSettings->setValue( QStringLiteral( "/qgis/default_canvas_color_alpha" ), myColor.alpha() );
 
   //set the default color for the measure tool
   myColor = pbnMeasureColor->color();
