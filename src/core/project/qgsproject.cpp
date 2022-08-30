@@ -1012,7 +1012,7 @@ void QgsProject::clear()
   red = mSettings.value( QStringLiteral( "qgis/default_selection_color_red" ), 255 ).toInt();
   green = mSettings.value( QStringLiteral( "qgis/default_selection_color_green" ), 255 ).toInt();
   blue = mSettings.value( QStringLiteral( "qgis/default_selection_color_blue" ), 0 ).toInt();
-  const int alpha = mSettings.value( QStringLiteral( "qgis/default_selection_color_alpha" ), 255 ).toInt();
+  alpha = mSettings.value( QStringLiteral( "qgis/default_selection_color_alpha" ), 255 ).toInt();
   setSelectionColor( QColor( red, green, blue, alpha ) );
 
   mSnappingConfig.clearIndividualLayerSettings();
