@@ -55,7 +55,8 @@ QgsNewOgrConnection::QgsNewOgrConnection( QWidget *parent, const QString &connTy
   for ( int i = 0; i < dbDrivers.count(); i++ )
   {
     const QString dbDrive = dbDrivers.at( i );
-    cmbDatabaseTypes->addItem( dbDrive.split( ',' ).at( 0 ) );
+    if ( ( !dbDriver.isEmpty() ) && ( !dbDriver.isNull() ) )
+      cmbDatabaseTypes->addItem( dbDrive.split( ',' ).at( 0 ) );
   }
   txtName->setEnabled( true );
   cmbDatabaseTypes->setEnabled( true );
