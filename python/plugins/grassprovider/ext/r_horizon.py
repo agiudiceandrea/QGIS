@@ -45,7 +45,7 @@ def processOutputs(alg, parameters, context, feedback):
     num = start
     directory = alg.parameterAsString(parameters, 'output', context)
     while num < end:
-        grassName = '{}_{}'.format('output{}'.format(alg.uniqueSuffix), int(num))
+        grassName = '{}_{}'.format('output{}'.format(alg.uniqueSuffix), '{0:0>3}'.format(int(num)))
         fileName = '{}.tif'.format(os.path.join(directory, '{0:0>3}'.format(int(num))))
         alg.exportRasterLayer(grassName, fileName)
         num += step
