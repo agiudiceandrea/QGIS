@@ -1604,12 +1604,8 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
     QgsPluginRegistry::instance()->restoreSessionPlugins( QgsApplication::pluginPath() );
 
     // Also restore plugins from user specified plugin directories
-    QString myPaths = settings.value( QStringLiteral( "plugins/searchPathsForPlugins" ), "" ).toString();
-    if ( !myPaths.isEmpty() )
-    {
-      QStringList myPathList = myPaths.split( '|' );
-      QgsPluginRegistry::instance()->restoreSessionPlugins( myPathList );
-    }
+    const QStringList myPathList = settings.value( QStringLiteral( "plugins/searchPathsForPlugins" ) ).toStringList();
+    QgsPluginRegistry::instance()->restoreSessionPlugins( myPathList );
   }
 
 #ifdef WITH_BINDINGS
