@@ -357,11 +357,9 @@ void QgsPluginManager::getCppPluginsMetadata()
   QStringList myPathList( pr->libraryDirectory().path() );
 
   const QgsSettings settings;
-  const QString myPaths = settings.value( QStringLiteral( "plugins/searchPathsForPlugins" ), "" ).toString();
-  if ( !myPaths.isEmpty() )
-  {
-    myPathList.append( myPaths.split( '|' ) );
-  }
+  const QStringList myPaths = settings.value( QStringLiteral( "plugins/searchPathsForPlugins" ) ).toStringList();
+  myPathList.append( myPaths );
+  myPathList.removeDuplicates();
 
   for ( int j = 0; j < myPathList.size(); ++j )
   {
@@ -371,7 +369,7 @@ void QgsPluginManager::getCppPluginsMetadata()
     if ( pluginDir.count() == 0 )
     {
       QMessageBox::information( this, tr( "No Plugins" ), tr( "No QGIS plugins found in %1" ).arg( myPluginDir ) );
-      return;
+      continue;
     }
 
     for ( uint i = 0; i < pluginDir.count(); i++ )
