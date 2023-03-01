@@ -500,6 +500,12 @@ void QgsPluginRegistry::restoreSessionPlugins( const QString &pluginDirString )
   // check all libs in the current plugin directory and get name and descriptions
   const QDir myPluginDir( pluginDirString, pluginExt, QDir::Name | QDir::IgnoreCase, QDir::Files | QDir::NoSymLinks );
 
+  if ( myPluginDir.count() == 0 )
+  {
+    QgsMessageLog::logMessage( tr( "No QGIS plugins found in \"%1\"" ).arg( myPluginDir ), tr( "Plugins" ) );
+    return;
+  }
+
   for ( uint i = 0; i < myPluginDir.count(); i++ )
   {
     const QString myFullPath = pluginDirString + '/' + myPluginDir[i];
