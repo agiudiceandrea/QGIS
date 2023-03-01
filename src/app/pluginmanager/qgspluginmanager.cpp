@@ -371,7 +371,7 @@ void QgsPluginManager::getCppPluginsMetadata()
 
     if ( pluginDir.count() == 0 )
     {
-      QMessageBox::information( this, tr( "No Plugins" ), tr( "No QGIS plugins found in %1" ).arg( myPluginDir ) );
+      QgsMessageLog::logMessage( tr( "No QGIS plugins found in \"%1\"" ).arg( myPluginDir ), tr( "Plugins" ) );
       continue;
     }
 
