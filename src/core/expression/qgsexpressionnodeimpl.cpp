@@ -317,13 +317,18 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
     case boIntDiv:
     {
       //integer division
-      double fL = QgsExpressionUtils::getDoubleValue( vL, parent );
-      ENSURE_NO_EVAL_ERROR
-      double fR = QgsExpressionUtils::getDoubleValue( vR, parent );
-      ENSURE_NO_EVAL_ERROR
-      if ( fR == 0. )
-        return QVariant(); // silently handle division by zero and return NULL
-      return QVariant( qlonglong( std::floor( fL / fR ) ) );
+      if ( QgsExpressionUtils::isNull( vL ) || QgsExpressionUtils::isNull( vR ) )
+        return QVariant();
+      else
+      {
+        double fL = QgsExpressionUtils::getDoubleValue( vL, parent );
+        ENSURE_NO_EVAL_ERROR
+        double fR = QgsExpressionUtils::getDoubleValue( vR, parent );
+        ENSURE_NO_EVAL_ERROR
+        if ( fR == 0. )
+          return QVariant(); // silently handle division by zero and return NULL
+        return QVariant( qlonglong( std::floor( fL / fR ) ) );
+      }
     }
     case boPow:
       if ( QgsExpressionUtils::isNull( vL ) || QgsExpressionUtils::isNull( vR ) )
