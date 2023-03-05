@@ -319,8 +319,20 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
       //integer division
       if ( QgsExpressionUtils::isNull( vL ) || QgsExpressionUtils::isNull( vR ) )
         return QVariant();
+      else if ( QgsExpressionUtils::isIntSafe( vL ) && QgsExpressionUtils::isIntSafe( vR ) )
+      {
+        // both are integers - let's use integer arithmetic
+        qlonglong iL = QgsExpressionUtils::getIntValue( vL, parent );
+        ENSURE_NO_EVAL_ERROR
+        qlonglong iR = QgsExpressionUtils::getIntValue( vR, parent );
+        ENSURE_NO_EVAL_ERROR
+        if ( iR == 0 )
+          return QVariant(); // silently handle division by zero and return NULL
+        return QVariant( computeInt( iL, iR ) );
+      }
       else
       {
+        // general floating point arithmetic
         double fL = QgsExpressionUtils::getDoubleValue( vL, parent );
         ENSURE_NO_EVAL_ERROR
         double fR = QgsExpressionUtils::getDoubleValue( vR, parent );
@@ -638,7 +650,7 @@ qlonglong QgsExpressionNodeBinaryOperator::computeInt( qlonglong x, qlonglong y 
       return x - y;
     case boMul:
       return x * y;
-    case boDiv:
+    case boIntDiv:
       return x / y;
     case boMod:
       return x % y;
