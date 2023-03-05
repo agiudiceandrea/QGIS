@@ -1,0 +1,21 @@
+{
+  "name": "//",
+  "type": "operator",
+  "groups": ["Operators"],
+  "description": "Floored quotient of division of two values",
+  "arguments": [{
+    "arg": "a",
+    "description": "value"
+  }, {
+    "arg": "b",
+    "description": "value"
+  }],
+  "examples": [{
+    "expression": "5 // 2",
+    "returns": "2"
+  }, {
+    "expression": "5 // NULL",
+    "returns": "NULL"
+  }],
+  "tags": ["division", "quotient", "integer", "floored", "floor"]
+}
