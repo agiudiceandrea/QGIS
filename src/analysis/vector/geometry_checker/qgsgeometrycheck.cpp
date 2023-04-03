@@ -68,7 +68,7 @@ QList<QgsGeometryCheckResolutionMethod> QgsGeometryCheck::availableResolutionMet
   const int i = 0;
   for ( const QString &method : methods )
   {
-    fixes.append( QgsGeometryCheckResolutionMethod( i, method, QString(), false ) );
+    fixes.append( QgsGeometryCheckResolutionMethod( i++, method, QString(), false ) );
   }
 
   return fixes;
