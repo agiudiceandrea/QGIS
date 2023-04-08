@@ -743,6 +743,11 @@ static bool _compareEncodings( const QString &s1, const QString &s2 )
   return s1.toLower() < s2.toLower();
 }
 
+static bool _removeDuplicateEncodings( const QString &s1, const QString &s2 )
+{
+    return ( s1 == s2 );
+}
+
 QStringList QgsVectorDataProvider::availableEncodings()
 {
   static std::once_flag initialized;
@@ -801,8 +806,9 @@ QStringList QgsVectorDataProvider::availableEncodings()
     smEncodings << "System";
 #endif
 
-    // Do case-insensitive sorting of encodings
+    // Do case-insensitive sorting of encodings then remove duplicates
     std::sort( sEncodings.begin(), sEncodings.end(), _compareEncodings );
+    std::unique( sEncodings.begin(), sEncodings.end(), _removeDuplicateEncodings );
 
   } );
 
