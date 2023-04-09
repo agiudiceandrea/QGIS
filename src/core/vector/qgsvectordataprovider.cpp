@@ -743,11 +743,6 @@ static bool _compareEncodings( const QString &s1, const QString &s2 )
   return s1.toLower() < s2.toLower();
 }
 
-static bool _removeDuplicateEncodings( const QString &s1, const QString &s2 )
-{
-  return ( s1 == s2 );
-}
-
 QStringList QgsVectorDataProvider::availableEncodings()
 {
   static std::once_flag initialized;
