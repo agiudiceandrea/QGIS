@@ -809,7 +809,7 @@ QStringList QgsVectorDataProvider::availableEncodings()
     // Do case-insensitive sorting of encodings then remove duplicates
     std::sort( sEncodings.begin(), sEncodings.end(), _compareEncodings );
     const auto last = std::unique( sEncodings.begin(), sEncodings.end(), _removeDuplicateEncodings );
-    sEncodings.erase ( last, sEncodings.end () );
+    sEncodings.erase( last, sEncodings.end () );
 
   } );
 
