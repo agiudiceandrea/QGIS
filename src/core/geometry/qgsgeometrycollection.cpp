@@ -898,7 +898,7 @@ int QgsGeometryCollection::partCount() const
 
 QgsPoint QgsGeometryCollection::vertexAt( QgsVertexId id ) const
 {
-  QgsAbstractGeometry *geom = mGeometries[id.part];
+  const QgsAbstractGeometry *geom = mGeometries[id.part];
   if ( !geom )
   {
     return QgsPoint();
