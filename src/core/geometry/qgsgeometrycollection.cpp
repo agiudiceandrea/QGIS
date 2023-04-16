@@ -904,7 +904,7 @@ QgsPoint QgsGeometryCollection::vertexAt( QgsVertexId id ) const
     return QgsPoint();
   }
 
-  return mGeometries[id.part]->vertexAt( id );
+  return geom->vertexAt( id );
 }
 
 bool QgsGeometryCollection::isValid( QString &error, Qgis::GeometryValidityFlags flags ) const
