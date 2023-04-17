@@ -155,7 +155,7 @@ bool QgsGeometryUtils::verticesAtDistance( const QgsAbstractGeometry &geometry, 
   previousVertex = QgsVertexId();
   nextVertex = QgsVertexId();
 
-  if ( !geometry || geometry.isEmpty() )
+  if ( geometry.isEmpty() )
   {
     return false;
   }
