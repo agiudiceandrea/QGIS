@@ -903,12 +903,6 @@ QgsPoint QgsGeometryCollection::vertexAt( QgsVertexId id ) const
     return QgsPoint();
   }
 
-  const QgsAbstractGeometry *geom = mGeometries[id.part];
-  if ( !geom )
-  {
-    return QgsPoint();
-  }
-
   return geom->vertexAt( id );
 }
 
