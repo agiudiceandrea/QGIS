@@ -119,9 +119,9 @@ void TestQgsDoubleValidator::validate()
   int expectedValue;
 
   if ( negative )
-    validator.setRange( -10000, -4 );
+    validator->setRange( -10000, -4 );
   else
-    validator.setRange( 4, 10000 );
+    validator->setRange( 4, 10000 );
 
   lineEdit->setValidator( validator );
 
