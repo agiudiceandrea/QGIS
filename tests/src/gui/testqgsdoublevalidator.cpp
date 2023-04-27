@@ -109,22 +109,19 @@ void TestQgsDoubleValidator::toDouble_data()
 
 void TestQgsDoubleValidator::validate()
 {
+  QLineEdit *lineEdit = new QLineEdit();
+  QgsDoubleValidator *validator = new QgsDoubleValidator();
+
   QFETCH( QString, actualState );
   QFETCH( int, expState );
   QFETCH( bool, negative );
   QString value;
   int expectedValue;
 
-  QLineEdit *lineEdit = new QLineEdit();
-
   if ( negative )
-  {
-    QgsDoubleValidator *validator = new QgsDoubleValidator( -10000, -4, lineEdit );
-  }
+    validator.setRange( -10000, -4 );
   else
-  {
-    QgsDoubleValidator *validator = new QgsDoubleValidator( 4, 10000, lineEdit );
-  }
+    validator.setRange( 4, 10000 );
 
   lineEdit->setValidator( validator );
 
