@@ -110,7 +110,7 @@ void TestQgsDoubleValidator::toDouble_data()
 void TestQgsDoubleValidator::validate()
 {
   QLineEdit *lineEdit = new QLineEdit();
-  QgsDoubleValidator *validator = new QgsDoubleValidator();
+  QgsDoubleValidator *validator = new QgsDoubleValidator( lineEdit );
 
   QFETCH( QString, actualState );
   QFETCH( int, expState );
