@@ -58,25 +58,26 @@ void TestQgsDoubleValidator::validate_data()
 {
   QTest::addColumn<QString>( "actualState" );
   QTest::addColumn<int>( "expState" );
+  QTest::addColumn<bool>( "negative" );
 
-  QTest::newRow( "C decimal" ) << QString( "4cd6" ) << int( QValidator::Acceptable );
-  QTest::newRow( "locale decimal" ) << QString( "4ld6" ) << int( QValidator::Acceptable );
-  QTest::newRow( "locale decimal" ) << QString( "4444ld6" ) << int( QValidator::Acceptable );
-  QTest::newRow( "C negative C decimal" ) << QString( "cn4cd6" ) << int( QValidator::Acceptable );
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4ld6" ) << int( QValidator::Acceptable );
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4444ld6" ) << int( QValidator::Acceptable );
+  QTest::newRow( "C decimal" ) << QString( "4cd6" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "locale decimal" ) << QString( "4ld6" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "locale decimal" ) << QString( "4444ld6" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "C negative C decimal" ) << QString( "cn4cd6" ) << int( QValidator::Acceptable ) << true;
+  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4ld6" ) << int( QValidator::Acceptable ) << true;
+  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4444ld6" ) << int( QValidator::Acceptable ) << true;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
-  QTest::newRow( "locale group separator + locale decimal" ) << QString( "4lg444ld6" ) << int( QValidator::Intermediate );
-  QTest::newRow( "locale group separator misplaced + locale decimal" ) << QString( "44lg44ld6" ) << int( QValidator::Intermediate );
-  QTest::newRow( "locale group separator + c decimal" ) << QString( "4lg444cd6" ) << int( QValidator::Invalid );
-  QTest::newRow( "c group separator + locale decimal" ) << QString( "4cg444ld6" ) << int( QValidator::Invalid );
-  QTest::newRow( "c group separator + c decimal" ) << QString( "4cg444cd6" ) << int( QValidator::Intermediate );
+  QTest::newRow( "locale group separator + locale decimal" ) << QString( "4lg444ld6" ) << int( QValidator::Intermediate ) << false;
+  QTest::newRow( "locale group separator misplaced + locale decimal" ) << QString( "44lg44ld6" ) << int( QValidator::Intermediate ) << false;
+  QTest::newRow( "locale group separator + c decimal" ) << QString( "4lg444cd6" ) << int( QValidator::Invalid ) << false;
+  QTest::newRow( "c group separator + locale decimal" ) << QString( "4cg444ld6" ) << int( QValidator::Invalid ) << false;
+  QTest::newRow( "c group separator + c decimal" ) << QString( "4cg444cd6" ) << int( QValidator::Intermediate ) << false;
 
-  QTest::newRow( "outside the range + local decimal" ) << QString( "3ld6" ) << int( QValidator::Intermediate );
-  QTest::newRow( "outside the range + c decimal" ) << QString( "3cd6" ) << int( QValidator::Intermediate );
-  QTest::newRow( "string" ) << QString( "string" ) << int( QValidator::Invalid );
+  QTest::newRow( "outside the range + local decimal" ) << QString( "3ld6" ) << int( QValidator::Intermediate ) << false;
+  QTest::newRow( "outside the range + c decimal" ) << QString( "3cd6" ) << int( QValidator::Intermediate ) << false;
+  QTest::newRow( "string" ) << QString( "string" ) << int( QValidator::Invalid ) << false;
 
 }
 
@@ -110,12 +111,13 @@ void TestQgsDoubleValidator::validate()
 {
   QFETCH( QString, actualState );
   QFETCH( int, expState );
+  QFETCH( bool, negative );
   QString value;
   int expectedValue;
 
   QLineEdit *lineEdit = new QLineEdit();
 
-  if ( actualState[:2] == "cn" || actualState[:2] == "ln" )
+  if ( negative )
   {
     QgsDoubleValidator *validator = new QgsDoubleValidator( -10000, -4, lineEdit );
   }
