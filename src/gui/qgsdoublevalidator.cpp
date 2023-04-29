@@ -33,7 +33,7 @@ QgsDoubleValidator::QgsDoubleValidator( QObject *parent )
   , mMaximum( std::numeric_limits<qreal>::max() )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint(), 1000, locale().negativeSign(), locale().exponential() ) );
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint(), "1000", locale().negativeSign(), locale().exponential() ) );
   setRegularExpression( reg );
 }
 
@@ -51,7 +51,7 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, QObject *pare
   , mMaximum( top )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint(), 1000, locale().negativeSign(), locale().exponential() ) );
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint(), "1000", locale().negativeSign(), locale().exponential() ) );
   setRegularExpression( reg );
 }
 
