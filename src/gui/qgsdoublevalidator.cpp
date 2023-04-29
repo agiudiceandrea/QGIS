@@ -35,7 +35,7 @@ QgsDoubleValidator::QgsDoubleValidator( QObject *parent )
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
                                 .arg( 1000 )
-                                .arg( locale().negativeSign() );
+                                .arg( locale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -55,7 +55,7 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, QObject *pare
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
                                 .arg( 1000 )
-                                .arg( locale().negativeSign() );
+                                .arg( locale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -67,7 +67,7 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, int decimal, 
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
                                 .arg( QString::number( decimal ) )
-                                .arg( locale().negativeSign() );
+                                .arg( locale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -79,7 +79,7 @@ QgsDoubleValidator::QgsDoubleValidator( int decimal, QObject *parent )
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
                                 .arg( QString::number( decimal ) )
-                                .arg( locale().negativeSign() );
+                                .arg( locale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -87,7 +87,7 @@ void QgsDoubleValidator::setMaxDecimals( int maxDecimals )
 {
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
                                 .arg( QString::number( maxDecimals ) )
-                                .arg( locale().negativeSign() );
+                                .arg( locale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
