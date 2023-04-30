@@ -65,8 +65,8 @@ void TestQgsDoubleValidator::validate_data()
   QTest::newRow( "locale decimal" ) << QString( "4444ld6" ) << int( QValidator::Acceptable ) << false;
 
   QTest::newRow( "C negative C decimal" ) << QString( "cn4cd6" ) << int( QValidator::Acceptable ) << true;
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4ld6" ) << int( QValidator::Acceptable ) << true;
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4444ld6" ) << int( QValidator::Acceptable ) << true;
+  QTest::newRow( "locale negative locale decimal 2" ) << QString( "ln4444ld6" ) << int( QValidator::Acceptable ) << true;
+  QTest::newRow( "locale negative locale decimal 1" ) << QString( "ln4ld6" ) << int( QValidator::Acceptable ) << true;
 
   QTest::newRow( "positive sign C decimal" ) << QString( "+4cd6" ) << int( QValidator::Acceptable ) << false;
 
@@ -144,7 +144,7 @@ void TestQgsDoubleValidator::validate()
 
   lineEdit->setValidator( validator );
 
-  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal} );
+  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {
@@ -197,7 +197,7 @@ void TestQgsDoubleValidator::toDouble()
   QString value;
   double expectedValue;
 
-  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal} );
+  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {

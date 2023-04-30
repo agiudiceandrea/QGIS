@@ -279,18 +279,9 @@ jobs:
         test-batch: [ALL_BUT_PROVIDERS]
 
         include:
-          - qt-version: 5
-            distro-version: 22.04
-            docker-target: binary-only
-
           - qt-version: 6
             distro-version: 38
             docker-target: single
-
-          - qt-version: 5
-            distro-version: 22.04
-            test-batch: ORACLE
-            docker-target: binary-for-oracle
 
         exclude:
           - qt-version: 6
