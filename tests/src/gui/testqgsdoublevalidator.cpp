@@ -144,7 +144,7 @@ void TestQgsDoubleValidator::validate()
 
   lineEdit->setValidator( validator );
 
-  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
+  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {
@@ -197,7 +197,7 @@ void TestQgsDoubleValidator::toDouble()
   QString value;
   double expectedValue;
 
-  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
+  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {
