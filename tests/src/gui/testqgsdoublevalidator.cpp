@@ -148,7 +148,7 @@ void TestQgsDoubleValidator::validate()
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {
-    loc = listLocale.at( i );
+    loc = QLocale ( listLocale.at( i ) );
     QLocale::setDefault( loc );
     validator->setLocale( loc );
     value = actualState;
