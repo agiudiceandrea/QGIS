@@ -129,7 +129,7 @@ void TestQgsDoubleValidator::toDouble_data()
 void TestQgsDoubleValidator::validate()
 {
   QLineEdit *lineEdit = new QLineEdit();
-  
+
   QFETCH( QString, actualState );
   QFETCH( int, expState );
   QFETCH( bool, negative );
@@ -185,7 +185,7 @@ void TestQgsDoubleValidator::validate()
     {
       expectedValue = 1;
     }
-    qDebug() << value << loc << int( validator->validate( value ) ) << expectedValue;
+    //qDebug() << value << loc << int( validator->validate( value ) ) << expectedValue;
     QCOMPARE( int( validator->validate( value ) ), expectedValue );
   }
 }
