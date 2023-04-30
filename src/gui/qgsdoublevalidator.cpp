@@ -33,9 +33,9 @@ QgsDoubleValidator::QgsDoubleValidator( QObject *parent )
   , mMaximum( std::numeric_limits<qreal>::max() )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
                                 .arg( 1000 )
-                                .arg( Qlocale().negativeSign() ) );
+                                .arg( QLocale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -53,9 +53,9 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, QObject *pare
   , mMaximum( top )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
                                 .arg( 1000 )
-                                .arg( Qlocale().negativeSign() ) );
+                                .arg( QLocale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -65,9 +65,9 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, int decimal, 
   , mMaximum( top )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
                                 .arg( QString::number( decimal ) )
-                                .arg( Qlocale().negativeSign() ) );
+                                .arg( QLocale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
@@ -77,17 +77,17 @@ QgsDoubleValidator::QgsDoubleValidator( int decimal, QObject *parent )
   , mMaximum( std::numeric_limits<qreal>::max() )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
                                 .arg( QString::number( decimal ) )
-                                .arg( Qlocale().negativeSign() ) );
+                                .arg( QLocale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
 void QgsDoubleValidator::setMaxDecimals( int maxDecimals )
 {
-  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( locale().decimalPoint() )
+  const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
                                 .arg( QString::number( maxDecimals ) )
-                                .arg( Qlocale().negativeSign() ) );
+                                .arg( QLocale().negativeSign() ) );
   setRegularExpression( reg );
 }
 
