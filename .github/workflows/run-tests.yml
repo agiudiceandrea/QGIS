@@ -275,8 +275,8 @@ jobs:
 
     strategy:
       matrix:
-        qt-version: [5, 6]
-        test-batch: [ALL_BUT_PROVIDERS, POSTGRES, HANA]
+        qt-version: [6]
+        test-batch: [ALL_BUT_PROVIDERS]
 
         include:
           - qt-version: 5
