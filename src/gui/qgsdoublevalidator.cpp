@@ -34,7 +34,7 @@ QgsDoubleValidator::QgsDoubleValidator( QObject *parent )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
-                                .arg( 1000 )
+                                .arg( QString::number( 1000 ) )
                                 .arg( QLocale().negativeSign() )
                                 .arg( QLocale().exponential() ) );
   setRegularExpression( reg );
@@ -55,7 +55,7 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, QObject *pare
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
-                                .arg( 1000 )
+                                .arg( QString::number( 1000 ) )
                                 .arg( QLocale().negativeSign() )
                                 .arg( QLocale().exponential() ) );
   setRegularExpression( reg );
