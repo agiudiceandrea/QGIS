@@ -76,8 +76,8 @@ void TestQgsDoubleValidator::validate_data()
   QTest::newRow( "locale decimal exponent <E> positive sign" ) << QString( "444ld46E+1" ) << int( QValidator::Acceptable ) << false;
   QTest::newRow( "locale exponent locale negative" ) << QString( "4446leln1" ) << int( QValidator::Acceptable ) << false;
 
-  QTest::newRow( "exponent <e> without exponent digits" ) << QString( "4446e" ) << int( QValidator::Intermediate ) << false;
-  QTest::newRow( "exponent <e> without more then 3 digits" ) << QString( "4446e0001" ) << int( QValidator::Intermediate ) << false;
+  QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << int( QValidator::Invalid ) << false;
+  QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Intermediate ) << false;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
@@ -114,8 +114,8 @@ void TestQgsDoubleValidator::toDouble_data()
   QTest::newRow( "locale decimal exponent <E> positive sign" ) << QString( "444ld46E+1" ) << 4444.6;
   QTest::newRow( "locale exponent locale negative" ) << QString( "44446leln1" ) << 4444.6;
 
-  QTest::newRow( "exponent <e> without exponent digits" ) << QString( "4446e" ) << 0.0;
-  QTest::newRow( "exponent <e> without more then 3 digits" ) << QString( "4446e0001" ) << 4446;
+  QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << 0.0;
+  QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << 444.6;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
