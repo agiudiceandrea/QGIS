@@ -76,8 +76,10 @@ void TestQgsDoubleValidator::validate_data()
   QTest::newRow( "locale decimal exponent <E> positive sign" ) << QString( "444ld46E+1" ) << int( QValidator::Acceptable ) << false;
   QTest::newRow( "locale exponent locale negative" ) << QString( "4446leln1" ) << int( QValidator::Acceptable ) << false;
 
-  QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << int( QValidator::Invalid ) << false;
+  QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << int( QValidator::Intermediate ) << false;
   QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Intermediate ) << false;
+
+  QTest::newRow( "locale decimal with many decimals exponent <e>" ) << QString( "0ld00000000000000000000000000000123e30" ) << int( QValidator::Acceptable ) << false;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
@@ -116,6 +118,8 @@ void TestQgsDoubleValidator::toDouble_data()
 
   QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << 0.0;
   QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << 444.6;
+
+  QTest::newRow( "locale decimal with many decimals and exponent <e>" ) << QString( "0ld00000000000000000000000000000123e30" ) << 1.23;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
@@ -178,7 +182,7 @@ void TestQgsDoubleValidator::validate()
     //                       and validator->validate(4cg444cd6) == 1 and not 0
     if ( ( QLocale( QLocale::C ).groupSeparator() == QLocale().groupSeparator() ||
            QLocale( QLocale::C ).decimalPoint() == QLocale().decimalPoint() )
-         && value != "string" && expectedValue == 0 )
+         && value != "string" && value != "4446e" && expectedValue == 0 )
       expectedValue = 1;
     // There is another corner case in the test where the group separator is equal
     // to the C decimal point and there is no decimal point,
@@ -186,7 +190,7 @@ void TestQgsDoubleValidator::validate()
     // back check is to test after removing all group separators
     if ( QLocale().groupSeparator() == QLocale( QLocale::C ).decimalPoint()
          && ! value.contains( QLocale().decimalPoint() )
-         && value != "string" && expectedValue == 0 )
+         && value != "string" && value != "4446e" && expectedValue == 0 )
     {
       expectedValue = 1;
     }
@@ -230,7 +234,7 @@ void TestQgsDoubleValidator::toDouble()
     //                       and QgsDoubleValidator::toDouble(4cg444cd6) == 4444.6 and not 0.0
     if ( ( QLocale( QLocale::C ).groupSeparator() == QLocale().groupSeparator() ||
            QLocale( QLocale::C ).decimalPoint() == QLocale().decimalPoint() )
-         && value != "string" && expectedValue == 0.0 )
+         && value != "string" && value != "4446e" && expectedValue == 0.0 )
       expectedValue = 4444.6;
     // There is another corner case in the test where the group separator is equal
     // to the C decimal point and there is no decimal point,
@@ -238,7 +242,7 @@ void TestQgsDoubleValidator::toDouble()
     // back check is to test after removing all group separators
     if ( QLocale().groupSeparator() == QLocale( QLocale::C ).decimalPoint()
          && ! value.contains( QLocale().decimalPoint() )
-         && value != "string" && expectedValue == 0 )
+         && value != "string" && value != "4446e" && expectedValue == 0 )
     {
       expectedValue = 44446;
     }
