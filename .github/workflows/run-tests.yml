@@ -36,6 +36,7 @@ jobs:
 
     strategy:
       matrix:
+        include:
           - distro-version: '22.04'
             qt-version: 5
             run-tests: true
@@ -51,7 +52,6 @@ jobs:
             # LD_PRELOAD: /lib/x86_64-linux-gnu/libSegFault.so
             experimental: false
 
-        include:
           - distro-version: '38'
             qt-version: 6
             run-tests: true
