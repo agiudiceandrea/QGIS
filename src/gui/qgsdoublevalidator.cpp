@@ -25,7 +25,7 @@
 
 #include "qgsdoublevalidator.h"
 
-const QString PERMISSIVE_DOUBLE = R"([+\-%3]?[\d]{0,1000}([\.%1][\d]{0,1000})?([eE%4][+\-%3]?[\d]{0,%2})?)";
+const QString PERMISSIVE_DOUBLE = R"([+\-%3]?[\d]{0,1000}([\.%1][\d]{0,%2})?([eE%4][+\-%3]?[\d]{0,3})?)";
 
 QgsDoubleValidator::QgsDoubleValidator( QObject *parent )
   : QRegularExpressionValidator( parent )
@@ -34,7 +34,7 @@ QgsDoubleValidator::QgsDoubleValidator( QObject *parent )
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
-                                .arg( QString::number( 1000 ) )
+                                .arg( 1000 )
                                 .arg( QLocale().negativeSign() )
                                 .arg( QLocale().exponential() ) );
   setRegularExpression( reg );
@@ -55,7 +55,7 @@ QgsDoubleValidator::QgsDoubleValidator( double bottom, double top, QObject *pare
 {
   // The regular expression accept double with point as decimal point but also the locale decimal point
   const QRegularExpression reg( PERMISSIVE_DOUBLE.arg( QLocale().decimalPoint() )
-                                .arg( QString::number( 1000 ) )
+                                .arg( 1000 )
                                 .arg( QLocale().negativeSign() )
                                 .arg( QLocale().exponential() ) );
   setRegularExpression( reg );

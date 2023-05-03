@@ -77,7 +77,7 @@ void TestQgsDoubleValidator::validate_data()
   QTest::newRow( "locale exponent locale negative" ) << QString( "4446leln1" ) << int( QValidator::Acceptable ) << false;
 
   QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << int( QValidator::Intermediate ) << false;
-  QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Intermediate ) << false;
 
   QTest::newRow( "locale decimal with many decimals exponent <e>" ) << QString( "0ld0000000000000000000000000000046e30" ) << int( QValidator::Acceptable ) << false;
 
