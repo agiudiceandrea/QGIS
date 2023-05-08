@@ -61,12 +61,12 @@ void TestQgsDoubleValidator::validate_data()
   QTest::addColumn<bool>( "negative" );
 
   QTest::newRow( "C decimal" ) << QString( "4cd6" ) << int( QValidator::Acceptable ) << false;
-  QTest::newRow( "locale decimal" ) << QString( "4ld6" ) << int( QValidator::Acceptable ) << false;
-  QTest::newRow( "locale decimal" ) << QString( "4444ld6" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "locale decimal 1" ) << QString( "4ld6" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "locale decimal 2" ) << QString( "4444ld6" ) << int( QValidator::Acceptable ) << false;
 
   QTest::newRow( "C negative C decimal" ) << QString( "cn4cd6" ) << int( QValidator::Acceptable ) << true;
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4ld6" ) << int( QValidator::Acceptable ) << true;
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4444ld6" ) << int( QValidator::Acceptable ) << true;
+  QTest::newRow( "locale negative locale decimal 1" ) << QString( "ln4ld6" ) << int( QValidator::Acceptable ) << true;
+  QTest::newRow( "locale negative locale decimal 2" ) << QString( "ln4444ld6" ) << int( QValidator::Acceptable ) << true;
 
   QTest::newRow( "positive sign C decimal" ) << QString( "+4cd6" ) << int( QValidator::Acceptable ) << false;
 
@@ -80,6 +80,7 @@ void TestQgsDoubleValidator::validate_data()
   QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Intermediate ) << false;
 
   QTest::newRow( "locale decimal with many decimals exponent <e>" ) << QString( "0ld0000000000000000000000000000046e30" ) << int( QValidator::Acceptable ) << false;
+  QTest::newRow( "locale decimal with many decimals and locale exponent" ) << QString( "0ld0000000000000000000000000000046le30" ) << int( QValidator::Acceptable ) << false;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
@@ -101,12 +102,12 @@ void TestQgsDoubleValidator::toDouble_data()
   QTest::addColumn<double>( "expValue" );
 
   QTest::newRow( "C decimal" ) << QString( "4cd6" ) << 4.6;
-  QTest::newRow( "locale decimal" ) << QString( "4ld6" ) << 4.6;
-  QTest::newRow( "locale decimal" ) << QString( "4444ld6" ) << 4444.6;
+  QTest::newRow( "locale decimal 1" ) << QString( "4ld6" ) << 4.6;
+  QTest::newRow( "locale decimal 2" ) << QString( "4444ld6" ) << 4444.6;
 
   QTest::newRow( "C negative C decimal" ) << QString( "cn4cd6" ) << -4.6;
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4ld6" ) << -4.6;
-  QTest::newRow( "locale negative locale decimal" ) << QString( "ln4444ld6" ) << -4444.6;
+  QTest::newRow( "locale negative locale decimal 1" ) << QString( "ln4ld6" ) << -4.6;
+  QTest::newRow( "locale negative locale decimal 2" ) << QString( "ln4444ld6" ) << -4444.6;
 
   QTest::newRow( "positive sign C decimal" ) << QString( "+4cd6" ) << 4.6;
 
@@ -120,6 +121,7 @@ void TestQgsDoubleValidator::toDouble_data()
   QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << 444.6;
 
   QTest::newRow( "locale decimal with many decimals and exponent <e>" ) << QString( "0ld0000000000000000000000000000046e30" ) << 4.6;
+  QTest::newRow( "locale decimal with many decimals and locale exponent" ) << QString( "0ld0000000000000000000000000000046le30" ) << 4.6;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
   // so the result will be QValidator::Intermediate and not QValidator::Acceptable
@@ -194,7 +196,7 @@ void TestQgsDoubleValidator::validate()
     {
       expectedValue = 1;
     }
-    //qDebug() << value << loc << int( validator->validate( value ) ) << expectedValue;
+    // qDebug() << value << loc << int( validator->validate( value ) ) << expectedValue;
     QCOMPARE( int( validator->validate( value ) ), expectedValue );
   }
 }
@@ -205,7 +207,7 @@ void TestQgsDoubleValidator::toDouble()
   QFETCH( double, expValue );
   QString value;
   double expectedValue;
-  bool ok;
+
   const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
@@ -247,7 +249,7 @@ void TestQgsDoubleValidator::toDouble()
       expectedValue = 44446;
     }
 
-    QCOMPARE( QLocale().toDouble( value, &ok ), expectedValue );
+    QCOMPARE( QgsDoubleValidator::toDouble( value ), expectedValue );
   }
 
 }
