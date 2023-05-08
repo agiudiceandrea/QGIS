@@ -724,10 +724,8 @@ QDomElement TestQgsCompositionConverter::loadComposer( const QString &name )
   QString templatePath( QStringLiteral( TEST_DATA_DIR ) + "/layouts/" + name );
   QDomDocument doc( QStringLiteral( "mydocument" ) );
   QFile file( templatePath );
-  bool res = file.open( QIODevice::ReadOnly );
-  Q_ASSERT( res );
-  res = doc.setContent( &file );
-  Q_ASSERT( res );
+  QVERIFY( file.open( QIODevice::ReadOnly ) );
+  QVERIFY( doc.setContent( &file ) );
   file.close();
   QDomNodeList nodes( doc.elementsByTagName( QStringLiteral( "Composer" ) ) );
   if ( nodes.length() > 0 )
