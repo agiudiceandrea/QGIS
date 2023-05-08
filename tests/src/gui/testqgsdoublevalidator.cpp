@@ -205,7 +205,7 @@ void TestQgsDoubleValidator::toDouble()
   QFETCH( double, expValue );
   QString value;
   double expectedValue;
-
+  bool ok;
   const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
@@ -247,7 +247,7 @@ void TestQgsDoubleValidator::toDouble()
       expectedValue = 44446;
     }
 
-    QCOMPARE( QgsDoubleValidator::toDouble( value ), expectedValue );
+    QCOMPARE( QLocale().toDouble( value, &ok ), expectedValue );
   }
 
 }
