@@ -32,6 +32,8 @@ class TestQgsDoubleValidator: public QObject
     void validate_data();
     void toDouble_data();
     void toDouble();
+    void locale();
+    void locale_data();
 
   private:
 
@@ -254,6 +256,41 @@ void TestQgsDoubleValidator::toDouble()
 
     QCOMPARE( QgsDoubleValidator::toDouble( value ), expectedValue );
   }
+
+}
+
+void TestQgsDoubleValidator::locale_data()
+{
+  QTest::addColumn<QString>( "actualValue" );
+  QTest::addColumn<double>( "expValue" );
+
+  QTest::newRow( "locale decimal exponent <e>" ) << QString( "444,46e1" ) << 4444.6;
+  QTest::newRow( "locale decimal exponent <E>" ) << QString( "444,46E1" ) << 4444.6;
+  QTest::newRow( "locale decimal locale exponent lowercase" ) << QString( "444,46\u04351" ) << 4444.6;
+  QTest::newRow( "locale decimal locale exponent uppercase" ) << QString( "444,46\u04151" ) << 4444.6;
+
+  QTest::newRow( "exponent <e>" ) << QString( "44446e1" ) << 444460.0;
+  QTest::newRow( "exponent <E>" ) << QString( "44446E1" ) << 444460.0;
+  QTest::newRow( "locale exponent lowercase" ) << QString( "44446\u04351" ) << 444460.0;
+  QTest::newRow( "locale exponent uppercase" ) << QString( "44446\u04151" ) << 444460.0;
+
+  QTest::newRow( "locale decimal with many decimals and exponent <e>" ) << QString( "0,0000000000000000000000000000046e30" ) << 4.6;
+  QTest::newRow( "locale decimal with many decimals and exponent <E>" ) << QString( "0,0000000000000000000000000000046E30" ) << 4.6;
+  QTest::newRow( "locale decimal with many decimals and locale exponent lowercase" ) << QString( "0,0000000000000000000000000000046\u043530" ) << 4.6;
+  QTest::newRow( "locale decimal with many decimals and locale exponent uppercase" ) << QString( "0,0000000000000000000000000000046\u041530" ) << 4.6;
+  
+
+}
+
+void TestQgsDoubleValidator::locale()
+{
+  QFETCH( QString, actualValue );
+  QFETCH( double, expValue );
+  bool ok;
+
+  QLocale::setDefault( QLocale::Ukrainian );
+
+  QCOMPARE( QLocale().toDouble( actualValue, &ok ), expectedValue );
 
 }
 
