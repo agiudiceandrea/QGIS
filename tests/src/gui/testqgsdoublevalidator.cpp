@@ -77,7 +77,7 @@ void TestQgsDoubleValidator::validate_data()
   QTest::newRow( "locale exponent locale negative" ) << QString( "4446leln1" ) << int( QValidator::Acceptable ) << false;
 
   QTest::newRow( "exponent <e> without digits" ) << QString( "4446e" ) << int( QValidator::Intermediate ) << false;
-  QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Intermediate ) << false;
+  QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << int( QValidator::Acceptable ) << false;
 
   QTest::newRow( "locale decimal with many decimals exponent <e>" ) << QString( "0ld0000000000000000000000000000046e30" ) << int( QValidator::Acceptable ) << false;
   QTest::newRow( "locale decimal with many decimals and locale exponent" ) << QString( "0ld0000000000000000000000000000046le30" ) << int( QValidator::Acceptable ) << false;
@@ -115,6 +115,7 @@ void TestQgsDoubleValidator::toDouble_data()
   QTest::newRow( "exponent <e> locale negative" ) << QString( "44446eln1" ) << 4444.6;
   QTest::newRow( "locale decimal exponent <E> positive" ) << QString( "444ld46E1" ) << 4444.6;
   QTest::newRow( "locale decimal exponent <e> positive" ) << QString( "444ld46e1" ) << 4444.6;
+  QTest::newRow( "locale decimal locale exponent positive" ) << QString( "444ld46le1" ) << 4444.6;
   QTest::newRow( "locale decimal exponent <E> positive sign" ) << QString( "444ld46E+1" ) << 4444.6;
   QTest::newRow( "locale exponent locale negative" ) << QString( "44446leln1" ) << 4444.6;
 
@@ -122,6 +123,7 @@ void TestQgsDoubleValidator::toDouble_data()
   QTest::newRow( "exponent <e> with 4 digits" ) << QString( "44cd46e0001" ) << 444.6;
 
   QTest::newRow( "locale decimal with many decimals and exponent <e>" ) << QString( "0ld0000000000000000000000000000046e30" ) << 4.6;
+  QTest::newRow( "locale decimal with many decimals and exponent <E>" ) << QString( "0ld0000000000000000000000000000046E30" ) << 4.6;
   QTest::newRow( "locale decimal with many decimals and locale exponent" ) << QString( "0ld0000000000000000000000000000046le30" ) << 4.6;
 
   // QgsDoubleValidator doesn't expect group separator but it tolerates it,
@@ -148,7 +150,7 @@ void TestQgsDoubleValidator::validate()
   QString value;
   int expectedValue;
 
-  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal} );
+  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {
@@ -209,7 +211,7 @@ void TestQgsDoubleValidator::toDouble()
   QString value;
   double expectedValue;
 
-  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal} );
+  const QVector<QLocale>listLocale( {QLocale::English, QLocale::French, QLocale::German, QLocale::Italian, QLocale::NorwegianBokmal, QLocale::Ukrainian} );
   QLocale loc;
   for ( int i = 0; i < listLocale.count(); ++i )
   {
