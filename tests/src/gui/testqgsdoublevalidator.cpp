@@ -290,7 +290,7 @@ void TestQgsDoubleValidator::locale()
 
   QLocale::setDefault( QLocale::Ukrainian );
 
-  QCOMPARE( QLocale().toDouble( actualValue, &ok ), expectedValue );
+  QCOMPARE( QLocale().toDouble( actualValue, &ok ), expValue );
 
 }
 
