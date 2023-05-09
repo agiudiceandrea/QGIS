@@ -114,6 +114,7 @@ void TestQgsDoubleValidator::toDouble_data()
   QTest::newRow( "exponent <e> C negative" ) << QString( "44446ecn1" ) << 4444.6;
   QTest::newRow( "exponent <e> locale negative" ) << QString( "44446eln1" ) << 4444.6;
   QTest::newRow( "locale decimal exponent <E> positive" ) << QString( "444ld46E1" ) << 4444.6;
+  QTest::newRow( "locale decimal exponent <e> positive" ) << QString( "444ld46e1" ) << 4444.6;
   QTest::newRow( "locale decimal exponent <E> positive sign" ) << QString( "444ld46E+1" ) << 4444.6;
   QTest::newRow( "locale exponent locale negative" ) << QString( "44446leln1" ) << 4444.6;
 
