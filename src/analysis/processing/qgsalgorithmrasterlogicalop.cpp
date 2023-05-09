@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "gdal.h"
 #include "qgsalgorithmrasterlogicalop.h"
 #include "qgsrasterprojector.h"
 #include "qgsrasterfilewriter.h"
