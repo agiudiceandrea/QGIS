@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsClassificationMethod implementations
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,13 +9,21 @@ __author__ = 'Denis Rouzaud'
 __date__ = '3/09/2019'
 __copyright__ = 'Copyright 2019, The QGIS Project'
 
-import qgis  # NOQA
 import random
 
+import qgis  # NOQA
 from qgis.PyQt.QtCore import QLocale
-from qgis.testing import unittest, start_app
-from qgis.core import QgsClassificationMethod, QgsClassificationLogarithmic, QgsClassificationJenks, QgsFeature, QgsVectorLayer, QgsPointXY, \
-    QgsGeometry
+from qgis.core import (
+    QgsClassificationFixedInterval,
+    QgsClassificationJenks,
+    QgsClassificationLogarithmic,
+    QgsClassificationMethod,
+    QgsFeature,
+    QgsGeometry,
+    QgsPointXY,
+    QgsVectorLayer,
+)
+from qgis.testing import start_app, unittest
 
 start_app()
 
@@ -64,7 +71,7 @@ class TestQgsClassificationMethods(unittest.TestCase):
         r = m.classes(vl, 'value', 8)
 
         self.assertEqual(len(r), 6)
-        self.assertEqual(r[0].label(), '{} - 10^4'.format(QLocale().toString(2746.71)))
+        self.assertEqual(r[0].label(), f'{QLocale().toString(2746.71)} - 10^4')
         self.assertEqual(QgsClassificationMethod.rangesToBreaks(r),
                          [10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0, 1000000000.0])
 
@@ -132,6 +139,43 @@ class TestQgsClassificationMethods(unittest.TestCase):
         self.assertEqual(len(r), 4)
         self.assertEqual(QgsClassificationMethod.rangesToBreaks(r),
                          [-506.0, -4.0, 499.0, 1000.0])
+
+    def testQgsClassificationFixedInterval(self):
+        values = [-33, -41, -43, 16, 29, 9, -35, 56, 26, -30]
+        vl = createMemoryLayer(values)
+        m = QgsClassificationFixedInterval()
+        m.setParameterValues({'INTERVAL': 10})
+
+        r = m.classes(vl, 'value', 4)
+        self.assertEqual(len(r), 10)
+        self.assertEqual(QgsClassificationMethod.rangesToBreaks(r),
+                         [-33.0, -23.0, -13.0, -3.0, 7.0, 17.0, 27.0, 37.0, 47.0, 57.0])
+
+    def testQgsClassificationFixedIntervalInvalidInterval(self):
+        values = [-33, -41, -43, 16, 29, 9, -35, 57, 26, -30]
+        vl = createMemoryLayer(values)
+        m = QgsClassificationFixedInterval()
+        m.setParameterValues({'INTERVAL': 0})
+
+        r = m.classes(vl, 'value', 4)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(QgsClassificationMethod.rangesToBreaks(r),
+                         [57.0])
+
+    def testQgsClassificationFixedIntervalLabelForRange(self):
+
+        m = QgsClassificationFixedInterval()
+
+        # lowerValue, upperValue, labelFormat, expected
+        cases = (
+            (1, 2, '%1 - %2', '1 - 2'),
+            (1, 2, '%1', '1'),
+            (1, 2, '%2', '2'),
+        )
+
+        for lowerValue, upperValue, labelFormat, expected in cases:
+            m.setLabelFormat(labelFormat)
+            self.assertEqual(m.labelForRange(lowerValue, upperValue), expected)
 
 
 if __name__ == "__main__":

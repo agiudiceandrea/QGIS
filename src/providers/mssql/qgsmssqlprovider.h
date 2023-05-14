@@ -85,7 +85,7 @@ class QgsMssqlProvider final: public QgsVectorDataProvider
 
     QgsFeatureIterator getFeatures( const QgsFeatureRequest &request ) const override;
 
-    QgsWkbTypes::Type wkbType() const override;
+    Qgis::WkbType wkbType() const override;
 
     long long featureCount() const override;
 
@@ -151,7 +151,7 @@ class QgsMssqlProvider final: public QgsVectorDataProvider
     static Qgis::VectorExportResult createEmptyLayer(
       const QString &uri,
       const QgsFields &fields,
-      QgsWkbTypes::Type wkbType,
+      Qgis::WkbType wkbType,
       const QgsCoordinateReferenceSystem &srs,
       bool overwrite,
       QMap<int, int> *oldToNewAttrIdxMap,
@@ -175,6 +175,8 @@ class QgsMssqlProvider final: public QgsVectorDataProvider
     void loadMetadata();
 
   private:
+
+    bool execLogged( QSqlQuery &qry, const QString &sql, const QString &queryOrigin = QString() ) const;
 
     //! Fields
     QgsFields mAttributeFields;
@@ -216,7 +218,7 @@ class QgsMssqlProvider final: public QgsVectorDataProvider
     // Coordinate reference system
     mutable QgsCoordinateReferenceSystem mCrs;
 
-    mutable QgsWkbTypes::Type mWkbType = QgsWkbTypes::Unknown;
+    mutable Qgis::WkbType mWkbType = Qgis::WkbType::Unknown;
 
     // current layer name
     QString mSchemaName;
@@ -249,8 +251,8 @@ class QgsMssqlProvider final: public QgsVectorDataProvider
 
     QSqlQuery createQuery() const;
 
-    static void mssqlWkbTypeAndDimension( QgsWkbTypes::Type wkbType, QString &geometryType, int &dim );
-    static QgsWkbTypes::Type getWkbType( const QString &wkbType );
+    static void mssqlWkbTypeAndDimension( Qgis::WkbType wkbType, QString &geometryType, int &dim );
+    static Qgis::WkbType getWkbType( const QString &wkbType );
 
     QString whereClauseFid( QgsFeatureId fid );
 
@@ -294,11 +296,14 @@ class QgsMssqlSharedData
 
 class QgsMssqlProviderMetadata final: public QgsProviderMetadata
 {
+    Q_OBJECT
   public:
     QgsMssqlProviderMetadata();
+    QIcon icon() const override;
     QString getStyleById( const QString &uri, const QString &styleId, QString &errCause ) override;
     int listStyles( const QString &uri, QStringList &ids, QStringList &names, QStringList &descriptions, QString &errCause ) override;
     QString loadStyle( const QString &uri, QString &errCause ) override;
+    QString loadStoredStyle( const QString &uri, QString &styleName, QString &errCause ) override;
     bool styleExists( const QString &uri, const QString &styleId, QString &errorCause ) override;
     bool saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle,
                     const QString &styleName, const QString &styleDescription,
@@ -307,7 +312,7 @@ class QgsMssqlProviderMetadata final: public QgsProviderMetadata
     Qgis::VectorExportResult createEmptyLayer(
       const QString &uri,
       const QgsFields &fields,
-      QgsWkbTypes::Type wkbType,
+      Qgis::WkbType wkbType,
       const QgsCoordinateReferenceSystem &srs,
       bool overwrite,
       QMap<int, int> &oldToNewAttrIdxMap,
@@ -327,6 +332,11 @@ class QgsMssqlProviderMetadata final: public QgsProviderMetadata
     // Data source URI API
     QVariantMap decodeUri( const QString &uri ) const override;
     QString encodeUri( const QVariantMap &parts ) const override;
+    QList< Qgis::LayerType > supportedLayerTypes() const override;
+
+  private:
+
+    bool execLogged( QSqlQuery &qry, const QString &sql, const QString &uri, const QString &queryOrigin = QString() ) const;
 
 };
 

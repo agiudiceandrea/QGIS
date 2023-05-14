@@ -30,7 +30,6 @@
 #include "qgspointxy.h"
 #include "qgspointlocator.h"
 #include "qgssnapindicator.h"
-#include "qgscadutils.h"
 
 
 class QgsAdvancedDigitizingCanvasItem;
@@ -81,7 +80,7 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
 
     /**
      * \ingroup gui
-     * \brief The CadConstraint is an abstract class for all basic constraints (angle/distance/x/y).
+     * \brief The CadConstraint is a class for all basic constraints (angle/distance/x/y).
      * It contains all values (locked, value, relative) and pointers to corresponding widgets.
      * \note Relative is not mandatory since it is not used for distance.
      */
@@ -178,6 +177,12 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
         void setValue( double value, bool updateWidget = true );
 
         /**
+         * Returns a localized formatted string representation of the value.
+         * \since QGIS 3.32
+         */
+        QString displayValue() const;
+
+        /**
          * Toggle lock mode
          */
         void toggleLocked();
@@ -203,6 +208,24 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
          */
         void setPrecision( int precision );
 
+        /**
+         * Returns the constraint type
+         * \since QGIS 3.32
+         */
+        Qgis::CadConstraintType cadConstraintType() const;
+
+        /**
+         * Sets the constraint type to \a constraintType
+         * \since QGIS 3.32
+         */
+        void setCadConstraintType( Qgis::CadConstraintType constraintType );
+
+        /**
+         * Sets the map canvas to \a mapCanvas
+         * \since QGIS 3.32
+         */
+        void setMapCanvas( QgsMapCanvas *mapCanvas );
+
       private:
         QLineEdit *mLineEdit = nullptr;
         QToolButton *mLockerButton = nullptr;
@@ -213,6 +236,8 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
         bool mRelative;
         double mValue;
         int mPrecision = 6;
+        Qgis::CadConstraintType mCadConstraintType = Qgis::CadConstraintType::Generic;
+        QgsMapCanvas *mMapCanvas = nullptr;
     };
 
     /**
@@ -356,10 +381,16 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
     void addPoint( const QgsPointXY &point );
 
     /**
-     * Remove previous point in the CAD point list
+     * Removes previous point in the CAD point list
      * \since QGIS 3.8
      */
     void removePreviousPoint();
+
+    /**
+     * Updates the current \a point in the CAD point list
+     * \since QGIS 3.30.2
+     */
+    void updateCurrentPoint( const QgsPoint &point );
 
     /**
      * Configures list of current CAD points
@@ -538,6 +569,12 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
      * \since QGIS 3.26
      */
     CadCapacities capacities() const { return mCapacities; };
+
+    /**
+     * Returns the formatted label for common angle snapping option.
+     * \since QGIS 3.32
+     */
+    QString formatCommonAngleSnapping( double angle );
 
   signals:
 
@@ -860,6 +897,17 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
     */
     void focusOnDistanceRequested();
 
+    /**
+    * Emitted whenever the snapping to common angle option changes, angle = 0 means that the functionality is disabled.
+    * \since QGIS 3.32
+    */
+    void valueCommonAngleSnappingChanged( double angle );
+
+    /**
+     * Emitted whenever the option to show common angle snapping in the floater changes.
+     * \note Not available in Python bindings
+     */
+    void commonAngleSnappingShowInFloaterChanged( bool enabled ) SIP_SKIP;
 
   private slots:
     //! Sets the between line constraint by clicking on the perpendicular/parallel buttons
@@ -927,10 +975,6 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
      */
     QList<QgsPointXY> snapSegmentToAllLayers( const QgsPointXY &originalMapPoint, bool *snapped = nullptr ) const;
 
-    //! update the current point in the CAD point list
-    void updateCurrentPoint( const QgsPoint &point );
-
-
     /**
      * filters key press
      * \note called by eventFilter (filter on line edits), canvasKeyPressEvent (filter on map tool) and keyPressEvent (filter on dock)
@@ -950,7 +994,7 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
     CadConstraint *objectToConstraint( const QObject *obj ) const;
 
     //! Attempts to convert a user input value to double, either directly or via expression
-    double parseUserInput( const QString &inputValue, bool &ok ) const;
+    double parseUserInput( const QString &inputValue, const Qgis::CadConstraintType type, bool &ok ) const;
 
     /**
      * Updates a constraint value based on a text input.
@@ -1030,6 +1074,9 @@ class GUI_EXPORT QgsAdvancedDigitizingDockWidget : public QgsDockWidget, private
 #endif
     //! Convenient method to convert a 2D Point to a QgsPoint
     QgsPoint pointXYToPoint( const QgsPointXY &point ) const;
+
+    QMenu *mCommonAngleActionsMenu = nullptr;
+    bool mShowCommonAngleInFloater = false;
 
     friend class TestQgsAdvancedDigitizing;
     friend class TestQgsAdvancedDigitizingDockWidget;

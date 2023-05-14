@@ -16,38 +16,177 @@
  ***************************************************************************/
 
 #include "qgslazdecoder.h"
-#include "qgseptpointcloudindex.h"
 #include "qgspointcloudattribute.h"
 #include "qgsvector3d.h"
 #include "qgsconfig.h"
 #include "qgslogger.h"
 #include "qgslazinfo.h"
+#include "qgspointcloudexpression.h"
 
 #include <QFile>
 #include <QDir>
+#include <QElapsedTimer>
+#include <QTemporaryFile>
 #include <iostream>
 #include <memory>
 #include <cstring>
-#include <QElapsedTimer>
-#include <QTemporaryFile>
 #include <string>
 
 #include <zstd.h>
 
 #include "lazperf/las.hpp"
-#include <lazperf/lazperf.hpp>
+#include "lazperf/readers.hpp"
+
+#if defined(_MSC_VER)
+#define UNICODE
+#include <locale>
+#include <codecvt>
+#endif
 
 ///@cond PRIVATE
 
 template <typename T>
-bool _storeToStream( char *s, size_t position, QgsPointCloudAttribute::DataType type, T value );
+bool lazStoreToStream_( char *s, size_t position, QgsPointCloudAttribute::DataType type, T value )
+{
+  switch ( type )
+  {
+    case QgsPointCloudAttribute::Char:
+    {
+      const char val = char( value );
+      s[position] = val;
+      break;
+    }
+    case QgsPointCloudAttribute::UChar:
+    {
+      const unsigned char val = ( unsigned char )( value );
+      s[position] = val;
+      break;
+    }
 
-bool __serialize( char *data, size_t outputPosition, QgsPointCloudAttribute::DataType outputType,
-                  const char *input, QgsPointCloudAttribute::DataType inputType, int inputSize, size_t inputPosition );
+    case QgsPointCloudAttribute::Short:
+    {
+      short val = short( value );
+      memcpy( s + position, reinterpret_cast<char * >( &val ), sizeof( short ) );
+      break;
+    }
+    case QgsPointCloudAttribute::UShort:
+    {
+      unsigned short val = static_cast< unsigned short>( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ), sizeof( unsigned short ) );
+      break;
+    }
+
+    case QgsPointCloudAttribute::Int32:
+    {
+      qint32 val = qint32( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ), sizeof( qint32 ) );
+      break;
+    }
+    case QgsPointCloudAttribute::UInt32:
+    {
+      quint32 val = quint32( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ), sizeof( quint32 ) );
+      break;
+    }
+
+    case QgsPointCloudAttribute::Int64:
+    {
+      qint64 val = qint64( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ), sizeof( qint64 ) );
+      break;
+    }
+    case QgsPointCloudAttribute::UInt64:
+    {
+      quint64 val = quint64( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ), sizeof( quint64 ) );
+      break;
+    }
+
+    case QgsPointCloudAttribute::Float:
+    {
+      float val = float( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ),  sizeof( float ) );
+      break;
+    }
+    case QgsPointCloudAttribute::Double:
+    {
+      double val = double( value );
+      memcpy( s + position, reinterpret_cast< char * >( &val ), sizeof( double ) );
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool lazSerialize_( char *data, size_t outputPosition, QgsPointCloudAttribute::DataType outputType,
+                    const char *input, QgsPointCloudAttribute::DataType inputType, int inputSize, size_t inputPosition )
+{
+  if ( outputType == inputType )
+  {
+    memcpy( data + outputPosition, input + inputPosition, inputSize );
+    return true;
+  }
+
+  switch ( inputType )
+  {
+    case QgsPointCloudAttribute::Char:
+    {
+      const char val = *( input + inputPosition );
+      return lazStoreToStream_<char>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::UChar:
+    {
+      const unsigned char val = *( input + inputPosition );
+      return lazStoreToStream_<unsigned char>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::Short:
+    {
+      const short val = *reinterpret_cast< const short * >( input + inputPosition );
+      return lazStoreToStream_<short>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::UShort:
+    {
+      const unsigned short val = *reinterpret_cast< const unsigned short * >( input + inputPosition );
+      return lazStoreToStream_<unsigned short>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::Int32:
+    {
+      const qint32 val = *reinterpret_cast<const qint32 * >( input + inputPosition );
+      return lazStoreToStream_<qint32>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::UInt32:
+    {
+      const quint32 val = *reinterpret_cast<const quint32 * >( input + inputPosition );
+      return lazStoreToStream_<quint32>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::Int64:
+    {
+      const qint64 val = *reinterpret_cast<const qint64 * >( input + inputPosition );
+      return lazStoreToStream_<qint64>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::UInt64:
+    {
+      const quint64 val = *reinterpret_cast<const quint64 * >( input + inputPosition );
+      return lazStoreToStream_<quint64>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::Float:
+    {
+      const float val = *reinterpret_cast< const float * >( input + inputPosition );
+      return lazStoreToStream_<float>( data, outputPosition, outputType, val );
+    }
+    case QgsPointCloudAttribute::Double:
+    {
+      const double val = *reinterpret_cast< const double * >( input + inputPosition );
+      return lazStoreToStream_<double>( data, outputPosition, outputType, val );
+    }
+  }
+  return true;
+}
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector< QgsLazDecoder::RequestedAttributeDetails > __prepareRequestedAttributeDetails( const QgsPointCloudAttributeCollection &requestedAttributes, QVector<QgsLazInfo::ExtraBytesAttributeDetails> &extrabytesAttr )
+std::vector< QgsLazDecoder::RequestedAttributeDetails > prepareRequestedAttributeDetails_( const QgsPointCloudAttributeCollection &requestedAttributes, QVector<QgsLazInfo::ExtraBytesAttributeDetails> &extrabytesAttr )
 {
   const QVector<QgsPointCloudAttribute> requestedAttributesVector = requestedAttributes.attributes();
 
@@ -127,7 +266,7 @@ std::vector< QgsLazDecoder::RequestedAttributeDetails > __prepareRequestedAttrib
     {
       requestedAttributeDetails.emplace_back( QgsLazDecoder::RequestedAttributeDetails( QgsLazDecoder::LazAttribute::ClassificationFlags, requestedAttribute.type(), requestedAttribute.size() ) );
     }
-    else if ( requestedAttribute.name().compare( QLatin1String( "NIR" ), Qt::CaseInsensitive ) == 0 )
+    else if ( requestedAttribute.name().compare( QLatin1String( "Infrared" ), Qt::CaseInsensitive ) == 0 )
     {
       requestedAttributeDetails.emplace_back( QgsLazDecoder::RequestedAttributeDetails( QgsLazDecoder::LazAttribute::NIR, requestedAttribute.type(), requestedAttribute.size() ) );
     }
@@ -158,6 +297,7 @@ void decodePoint( char *buf, int lasPointFormat, char *dataBuffer, std::size_t &
   lazperf::las::point10 p10;
   lazperf::las::gpstime gps;
   lazperf::las::rgb rgb;
+  lazperf::las::nir14 nir;
   lazperf::las::point14 p14;
 
   bool isLas14 = ( lasPointFormat == 6 || lasPointFormat == 7 || lasPointFormat == 8 );
@@ -193,7 +333,7 @@ void decodePoint( char *buf, int lasPointFormat, char *dataBuffer, std::size_t &
     case 8: // base + rgb + nir
       p14.unpack( buf );
       rgb.unpack( buf + sizeof( lazperf::las::point14 ) );
-      // TODO: load NIR channel - need some testing data!
+      nir.unpack( buf + sizeof( lazperf::las::point14 ) + sizeof( lazperf::las::rgb ) );
       break;
 
     default:
@@ -205,72 +345,71 @@ void decodePoint( char *buf, int lasPointFormat, char *dataBuffer, std::size_t &
     switch ( requestedAttribute.attribute )
     {
       case QgsLazDecoder::LazAttribute::X:
-        _storeToStream<qint32>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.x() : p10.x );
+        lazStoreToStream_<qint32>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.x() : p10.x );
         break;
       case QgsLazDecoder::LazAttribute::Y:
-        _storeToStream<qint32>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.y() : p10.y );
+        lazStoreToStream_<qint32>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.y() : p10.y );
         break;
       case QgsLazDecoder::LazAttribute::Z:
-        _storeToStream<qint32>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.z() : p10.z );
+        lazStoreToStream_<qint32>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.z() : p10.z );
         break;
       case QgsLazDecoder::LazAttribute::Classification:
-        _storeToStream<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.classification() : p10.classification );
+        lazStoreToStream_<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.classification() : p10.classification );
         break;
       case QgsLazDecoder::LazAttribute::Intensity:
-        _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.intensity() : p10.intensity );
+        lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.intensity() : p10.intensity );
         break;
       case QgsLazDecoder::LazAttribute::ReturnNumber:
-        _storeToStream<unsigned char>( dataBuffer,  outputOffset, requestedAttribute.type, isLas14 ? p14.returnNum() : p10.return_number );
+        lazStoreToStream_<unsigned char>( dataBuffer,  outputOffset, requestedAttribute.type, isLas14 ? p14.returnNum() : p10.return_number );
         break;
       case QgsLazDecoder::LazAttribute::NumberOfReturns:
-        _storeToStream<unsigned char>( dataBuffer,  outputOffset, requestedAttribute.type, isLas14 ? p14.numReturns() : p10.number_of_returns_of_given_pulse );
+        lazStoreToStream_<unsigned char>( dataBuffer,  outputOffset, requestedAttribute.type, isLas14 ? p14.numReturns() : p10.number_of_returns_of_given_pulse );
         break;
       case QgsLazDecoder::LazAttribute::ScanDirectionFlag:
-        _storeToStream<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.scanDirFlag() : p10.scan_direction_flag );
+        lazStoreToStream_<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.scanDirFlag() : p10.scan_direction_flag );
         break;
       case QgsLazDecoder::LazAttribute::EdgeOfFlightLine:
-        _storeToStream<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.eofFlag() : p10.edge_of_flight_line );
+        lazStoreToStream_<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.eofFlag() : p10.edge_of_flight_line );
         break;
       case QgsLazDecoder::LazAttribute::ScanAngleRank:
-        _storeToStream<char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.scanAngle() : p10.scan_angle_rank );
+        lazStoreToStream_<char>( dataBuffer, outputOffset, requestedAttribute.type, char( isLas14 ? p14.scanAngle() : p10.scan_angle_rank ) );
         break;
       case QgsLazDecoder::LazAttribute::UserData:
-        _storeToStream<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.userData() : p10.user_data );
+        lazStoreToStream_<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.userData() : p10.user_data );
         break;
       case QgsLazDecoder::LazAttribute::PointSourceId:
-        _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.pointSourceID() : p10.point_source_ID );
+        lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, isLas14 ? p14.pointSourceID() : p10.point_source_ID );
         break;
       case QgsLazDecoder::LazAttribute::GpsTime:
         // lazperf internally stores gps value as int64 field, but in fact it is a double value
-        _storeToStream<double>( dataBuffer, outputOffset, requestedAttribute.type,
-                                isLas14 ? p14.gpsTime() : *reinterpret_cast<const double *>( reinterpret_cast<const void *>( &gps.value ) ) );
+        lazStoreToStream_<double>( dataBuffer, outputOffset, requestedAttribute.type,
+                                   isLas14 ? p14.gpsTime() : *reinterpret_cast<const double *>( reinterpret_cast<const void *>( &gps.value ) ) );
         break;
       case QgsLazDecoder::LazAttribute::Red:
-        _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, rgb.r );
+        lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, rgb.r );
         break;
       case QgsLazDecoder::LazAttribute::Green:
-        _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, rgb.g );
+        lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, rgb.g );
         break;
       case QgsLazDecoder::LazAttribute::Blue:
-        _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, rgb.b );
+        lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, rgb.b );
         break;
       case QgsLazDecoder::LazAttribute::ScannerChannel:
-        _storeToStream<char>( dataBuffer, outputOffset, requestedAttribute.type, p14.scannerChannel() );
+        lazStoreToStream_<char>( dataBuffer, outputOffset, requestedAttribute.type, char( p14.scannerChannel() ) );
         break;
       case QgsLazDecoder::LazAttribute::ClassificationFlags:
-        _storeToStream<char>( dataBuffer, outputOffset, requestedAttribute.type, p14.classFlags() );
+        lazStoreToStream_<char>( dataBuffer, outputOffset, requestedAttribute.type, char( p14.classFlags() ) );
         break;
       case QgsLazDecoder::LazAttribute::NIR:
       {
         if ( lasPointFormat == 8 || lasPointFormat == 10 )
         {
-          lazperf::las::nir14 nir( buf + 36 );
-          _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, nir.val );
+          lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, nir.val );
         }
         else
         {
           // just store 0 for missing attributes
-          _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, 0 );
+          lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, 0 );
         }
         break;
 
@@ -280,41 +419,41 @@ void decodePoint( char *buf, int lasPointFormat, char *dataBuffer, std::size_t &
         switch ( requestedAttribute.type )
         {
           case QgsPointCloudAttribute::Char:
-            _storeToStream<char>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<char * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<char>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<char * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::UChar:
-            _storeToStream<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<unsigned char * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<unsigned char>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<unsigned char * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::Short:
-            _storeToStream<qint16>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<qint16 * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<qint16>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<qint16 * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::UShort:
-            _storeToStream<quint16>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<quint16 * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<quint16>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<quint16 * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::Int32:
-            _storeToStream<qint32>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<qint32 * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<qint32>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<qint32 * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::UInt32:
-            _storeToStream<quint32>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<quint32 * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<quint32>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<quint32 * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::Int64:
-            _storeToStream<qint64>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<qint64 * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<qint64>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<qint64 * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::UInt64:
-            _storeToStream<quint64>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<quint64 * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<quint64>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<quint64 * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::Float:
-            _storeToStream<float>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<float * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<float>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<float * >( &buf[requestedAttribute.offset] ) );
             break;
           case QgsPointCloudAttribute::Double:
-            _storeToStream<double>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<double * >( &buf[requestedAttribute.offset] ) );
+            lazStoreToStream_<double>( dataBuffer, outputOffset, requestedAttribute.type, *reinterpret_cast<double * >( &buf[requestedAttribute.offset] ) );
             break;
         }
       }
       break;
       case QgsLazDecoder::LazAttribute::MissingOrUnknown:
         // just store 0 for unknown/missing attributes
-        _storeToStream<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, 0 );
+        lazStoreToStream_<unsigned short>( dataBuffer, outputOffset, requestedAttribute.type, 0 );
         break;
     }
 
@@ -323,7 +462,7 @@ void decodePoint( char *buf, int lasPointFormat, char *dataBuffer, std::size_t &
 }
 
 template<typename FileType>
-QgsPointCloudBlock *__decompressLaz( FileType &file, const QgsPointCloudAttributeCollection &requestedAttributes, QgsPointCloudExpression &filterExpression )
+QgsPointCloudBlock *decompressLaz_( FileType &file, const QgsPointCloudAttributeCollection &requestedAttributes, QgsPointCloudExpression &filterExpression, QgsRectangle &filterRect )
 {
   if ( ! file.good() )
     return nullptr;
@@ -333,99 +472,132 @@ QgsPointCloudBlock *__decompressLaz( FileType &file, const QgsPointCloudAttribut
   t.start();
 #endif
 
-  lazperf::reader::generic_file f( file );
-
-  // output file formats from entwine/untwine:
-  // - older versions write LAZ 1.2 files with point formats 0, 1, 2 or 3
-  // - newer versions write LAZ 1.4 files with point formats 6, 7 or 8
-
-  int lasPointFormat = f.header().pointFormat();
-  if ( lasPointFormat != 0 && lasPointFormat != 1 && lasPointFormat != 2 && lasPointFormat != 3 &&
-       lasPointFormat != 6 && lasPointFormat != 7 && lasPointFormat != 8 )
+  // lazperf may throw exceptions
+  try
   {
-    QgsDebugMsg( QStringLiteral( "Unexpected point format record (%1) - only 0, 1, 2, 3, 6, 7, 8 are supported" ).arg( lasPointFormat ) );
-    return nullptr;
-  }
+    lazperf::reader::generic_file f( file );
 
-  const size_t count = f.header().point_count;
-  const QgsVector3D scale( f.header().scale.x, f.header().scale.y, f.header().scale.z );
-  const QgsVector3D offset( f.header().offset.x, f.header().offset.y, f.header().offset.z );
 
-  QByteArray bufArray( f.header().point_record_length, 0 );
-  char *buf = bufArray.data();
+    // output file formats from entwine/untwine:
+    // - older versions write LAZ 1.2 files with point formats 0, 1, 2 or 3
+    // - newer versions write LAZ 1.4 files with point formats 6, 7 or 8
 
-  const size_t requestedPointRecordSize = requestedAttributes.pointRecordSize();
-  QByteArray data;
-  data.resize( requestedPointRecordSize * count );
-  char *dataBuffer = data.data();
-
-  std::size_t outputOffset = 0;
-
-  std::unique_ptr< QgsPointCloudBlock > block = std::make_unique< QgsPointCloudBlock >(
-        count,
-        requestedAttributes,
-        data, scale, offset
-      );
-
-  int skippedPoints = 0;
-  const bool filterIsValid = filterExpression.isValid();
-  if ( !filterExpression.prepare( block.get() ) && filterIsValid )
-  {
-    // skip processing if the expression cannot be prepared
-    block->setPointCount( 0 );
-    return block.release();
-  }
-
-  std::vector<char> rawExtrabytes = f.vlrData( "LASF_Spec", 4 );
-  QVector<QgsLazInfo::ExtraBytesAttributeDetails> extrabyteAttributesDetails = QgsLazInfo::parseExtrabytes( rawExtrabytes.data(), rawExtrabytes.size(), f.header().point_record_length );
-  std::vector< QgsLazDecoder::RequestedAttributeDetails > requestedAttributeDetails = __prepareRequestedAttributeDetails( requestedAttributes, extrabyteAttributesDetails );
-
-  for ( size_t i = 0 ; i < count ; i ++ )
-  {
-    f.readPoint( buf ); // read the point out
-
-    decodePoint( buf, lasPointFormat, dataBuffer, outputOffset, requestedAttributeDetails );
-
-    // check if point needs to be filtered out
-    if ( filterIsValid )
+    int lasPointFormat = f.header().pointFormat();
+    if ( lasPointFormat != 0 && lasPointFormat != 1 && lasPointFormat != 2 && lasPointFormat != 3 &&
+         lasPointFormat != 6 && lasPointFormat != 7 && lasPointFormat != 8 )
     {
-      // we're always evaluating the last written point in the buffer
-      double eval = filterExpression.evaluate( i - skippedPoints );
-      if ( !eval || std::isnan( eval ) )
+      QgsDebugMsg( QStringLiteral( "Unexpected point format record (%1) - only 0, 1, 2, 3, 6, 7, 8 are supported" ).arg( lasPointFormat ) );
+      return nullptr;
+    }
+
+    const size_t count = f.header().point_count;
+    const QgsVector3D scale( f.header().scale.x, f.header().scale.y, f.header().scale.z );
+    const QgsVector3D offset( f.header().offset.x, f.header().offset.y, f.header().offset.z );
+
+    QByteArray bufArray( f.header().point_record_length, 0 );
+    char *buf = bufArray.data();
+
+    const size_t requestedPointRecordSize = requestedAttributes.pointRecordSize();
+    QByteArray data;
+    data.resize( requestedPointRecordSize * count );
+    char *dataBuffer = data.data();
+
+    std::size_t outputOffset = 0;
+
+    std::unique_ptr< QgsPointCloudBlock > block = std::make_unique< QgsPointCloudBlock >(
+          count,
+          requestedAttributes,
+          data, scale, offset
+        );
+
+    int skippedPoints = 0;
+    const bool filterIsValid = filterExpression.isValid();
+    if ( !filterExpression.prepare( block.get() ) && filterIsValid )
+    {
+      // skip processing if the expression cannot be prepared
+      block->setPointCount( 0 );
+      return block.release();
+    }
+
+    int xAttributeOffset, yAttributeOffset;
+    const QgsPointCloudAttribute *attributeX = nullptr;
+    const QgsPointCloudAttribute *attributeY = nullptr;
+    const bool hasFilterRect = !filterRect.isEmpty();
+    if ( hasFilterRect )
+    {
+      attributeX = requestedAttributes.find( QLatin1String( "X" ), xAttributeOffset );
+      attributeY = requestedAttributes.find( QLatin1String( "Y" ), yAttributeOffset );
+      filterRect.setXMinimum( ( filterRect.xMinimum() - offset.x() ) / scale.x() );
+      filterRect.setXMaximum( ( filterRect.xMaximum() - offset.x() ) / scale.x() );
+      filterRect.setYMinimum( ( filterRect.yMinimum() - offset.y() ) / scale.y() );
+      filterRect.setYMaximum( ( filterRect.yMaximum() - offset.y() ) / scale.y() );
+    }
+
+    std::vector<char> rawExtrabytes = f.vlrData( "LASF_Spec", 4 );
+    QVector<QgsLazInfo::ExtraBytesAttributeDetails> extrabyteAttributesDetails = QgsLazInfo::parseExtrabytes( rawExtrabytes.data(), rawExtrabytes.size(), f.header().point_record_length );
+    std::vector< QgsLazDecoder::RequestedAttributeDetails > requestedAttributeDetails = prepareRequestedAttributeDetails_( requestedAttributes, extrabyteAttributesDetails );
+
+    for ( size_t i = 0 ; i < count ; i ++ )
+    {
+      f.readPoint( buf ); // read the point out
+
+      decodePoint( buf, lasPointFormat, dataBuffer, outputOffset, requestedAttributeDetails );
+
+      // check if point needs to be filtered out
+      bool skipThisPoint = false;
+      if ( hasFilterRect && attributeX && attributeY )
+      {
+        const double x = attributeX->convertValueToDouble( dataBuffer + outputOffset - requestedPointRecordSize + xAttributeOffset );
+        const double y = attributeY->convertValueToDouble( dataBuffer + outputOffset - requestedPointRecordSize + yAttributeOffset );
+        if ( !filterRect.contains( x, y ) )
+          skipThisPoint = true;
+      }
+      if ( !skipThisPoint && filterIsValid )
+      {
+        // we're always evaluating the last written point in the buffer
+        double eval = filterExpression.evaluate( i - skippedPoints );
+        if ( !eval || std::isnan( eval ) )
+          skipThisPoint = true;
+      }
+      if ( skipThisPoint )
       {
         // if the point is filtered out, rewind the offset so the next point is written over it
         outputOffset -= requestedPointRecordSize;
         ++skippedPoints;
       }
     }
-  }
 
 #ifdef QGISDEBUG
-  QgsDebugMsgLevel( QStringLiteral( "LAZ-PERF Read through the points in %1 seconds." ).arg( t.elapsed() / 1000. ), 2 );
+    QgsDebugMsgLevel( QStringLiteral( "LAZ-PERF Read through the points in %1 seconds." ).arg( t.elapsed() / 1000. ), 2 );
 #endif
-  block->setPointCount( count - skippedPoints );
-  return block.release();
+    block->setPointCount( count - skippedPoints );
+    return block.release();
+  }
+  catch ( std::exception &e )
+  {
+    QgsDebugMsg( "Error decompressing laz file: " + QString::fromLatin1( e.what() ) );
+    return nullptr;
+  }
 }
 
 QgsPointCloudBlock *QgsLazDecoder::decompressLaz( const QString &filename,
     const QgsPointCloudAttributeCollection &requestedAttributes,
-    QgsPointCloudExpression &filterExpression )
+    QgsPointCloudExpression &filterExpression, QgsRectangle &filterRect )
 {
-  const QByteArray arr = filename.toUtf8();
-  std::ifstream file( arr.constData(), std::ios::binary );
+  std::ifstream file( toNativePath( filename ), std::ios::binary );
 
-  return __decompressLaz<std::ifstream>( file, requestedAttributes, filterExpression );
+  return decompressLaz_<std::ifstream>( file, requestedAttributes, filterExpression, filterRect );
 }
 
 QgsPointCloudBlock *QgsLazDecoder::decompressLaz( const QByteArray &byteArrayData,
     const QgsPointCloudAttributeCollection &requestedAttributes,
-    QgsPointCloudExpression &filterExpression )
+    QgsPointCloudExpression &filterExpression, QgsRectangle &filterRect )
 {
   std::istringstream file( byteArrayData.toStdString() );
-  return __decompressLaz<std::istringstream>( file, requestedAttributes, filterExpression );
+  return decompressLaz_<std::istringstream>( file, requestedAttributes, filterExpression, filterRect );
 }
 
-QgsPointCloudBlock *QgsLazDecoder::decompressCopc( const QByteArray &data, QgsLazInfo &lazInfo, int32_t pointCount, const QgsPointCloudAttributeCollection &requestedAttributes, QgsPointCloudExpression &filterExpression )
+QgsPointCloudBlock *QgsLazDecoder::decompressCopc( const QByteArray &data, QgsLazInfo &lazInfo, int32_t pointCount, const QgsPointCloudAttributeCollection &requestedAttributes, QgsPointCloudExpression &filterExpression, QgsRectangle &filterRect )
 {
   // COPC only supports point formats 6, 7 and 8
   int lasPointFormat = lazInfo.pointFormat();
@@ -435,7 +607,7 @@ QgsPointCloudBlock *QgsLazDecoder::decompressCopc( const QByteArray &data, QgsLa
     return nullptr;
   }
 
-  std::unique_ptr<char> decodedData( new char[ lazInfo.pointRecordLength() ] );
+  std::unique_ptr<char []> decodedData( new char[ lazInfo.pointRecordLength() ] );
 
   lazperf::reader::chunk_decompressor decompressor( lasPointFormat, lazInfo.extrabytesCount(), data.data() );
 
@@ -447,7 +619,7 @@ QgsPointCloudBlock *QgsLazDecoder::decompressCopc( const QByteArray &data, QgsLa
   std::size_t outputOffset = 0;
 
   QVector<QgsLazInfo::ExtraBytesAttributeDetails> extrabyteAttributesDetails = lazInfo.extrabytes();
-  std::vector< RequestedAttributeDetails > requestedAttributeDetails = __prepareRequestedAttributeDetails( requestedAttributes, extrabyteAttributesDetails );
+  std::vector< RequestedAttributeDetails > requestedAttributeDetails = prepareRequestedAttributeDetails_( requestedAttributes, extrabyteAttributesDetails );
   std::unique_ptr< QgsPointCloudBlock > block = std::make_unique< QgsPointCloudBlock >(
         pointCount, requestedAttributes,
         blockData, lazInfo.scale(), lazInfo.offset()
@@ -462,6 +634,19 @@ QgsPointCloudBlock *QgsLazDecoder::decompressCopc( const QByteArray &data, QgsLa
     return block.release();
   }
 
+  int xAttributeOffset, yAttributeOffset;
+  const QgsPointCloudAttribute *attributeX = nullptr;
+  const QgsPointCloudAttribute *attributeY = nullptr;
+  const bool hasFilterRect = !filterRect.isEmpty();
+  if ( hasFilterRect )
+  {
+    attributeX = requestedAttributes.find( QLatin1String( "X" ), xAttributeOffset );
+    attributeY = requestedAttributes.find( QLatin1String( "Y" ), yAttributeOffset );
+    filterRect.setXMinimum( ( filterRect.xMinimum() - lazInfo.offset().x() ) / lazInfo.scale().x() );
+    filterRect.setXMaximum( ( filterRect.xMaximum() - lazInfo.offset().x() ) / lazInfo.scale().x() );
+    filterRect.setYMinimum( ( filterRect.yMinimum() - lazInfo.offset().y() ) / lazInfo.scale().y() );
+    filterRect.setYMaximum( ( filterRect.yMaximum() - lazInfo.offset().y() ) / lazInfo.scale().y() );
+  }
   for ( int i = 0 ; i < pointCount; ++i )
   {
     decompressor.decompress( decodedData.get() );
@@ -470,21 +655,45 @@ QgsPointCloudBlock *QgsLazDecoder::decompressCopc( const QByteArray &data, QgsLa
     decodePoint( buf, lasPointFormat, dataBuffer, outputOffset, requestedAttributeDetails );
 
     // check if point needs to be filtered out
-    if ( filterIsValid )
+    bool skipThisPoint = false;
+
+    if ( hasFilterRect && attributeX && attributeY )
+    {
+      const double x = attributeX->convertValueToDouble( dataBuffer + outputOffset - requestedPointRecordSize + xAttributeOffset );
+      const double y = attributeY->convertValueToDouble( dataBuffer + outputOffset - requestedPointRecordSize + yAttributeOffset );
+      if ( !filterRect.contains( x, y ) )
+        skipThisPoint = true;
+    }
+    if ( !skipThisPoint && filterIsValid )
     {
       // we're always evaluating the last written point in the buffer
       double eval = filterExpression.evaluate( i - skippedPoints );
       if ( !eval || std::isnan( eval ) )
-      {
-        // if the point is filtered out, rewind the offset so the next point is written over it
-        outputOffset -= requestedPointRecordSize;
-        ++skippedPoints;
-      }
+        skipThisPoint = true;
+    }
+    if ( skipThisPoint )
+    {
+      // if the point is filtered out, rewind the offset so the next point is written over it
+      outputOffset -= requestedPointRecordSize;
+      ++skippedPoints;
     }
   }
 
   block->setPointCount( pointCount - skippedPoints );
   return block.release();
 }
+
+#if defined(_MSC_VER)
+std::wstring QgsLazDecoder::toNativePath( const QString &filename )
+{
+  std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > > converter;
+  return converter.from_bytes( filename.toStdString() );
+}
+#else
+std::string QgsLazDecoder::toNativePath( const QString &filename )
+{
+  return filename.toStdString();
+}
+#endif
 
 ///@endcond

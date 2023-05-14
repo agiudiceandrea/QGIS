@@ -20,19 +20,14 @@
 
 #include "ui_qgsvectorlayersaveasdialogbase.h"
 #include <QDialog>
-#include "qgshelp.h"
-#include "qgsfields.h"
 #include "qgsvectorfilewriter.h"
 #include "qgis_gui.h"
-
-#define SIP_NO_FILE
 
 class QgsVectorLayer;
 
 /**
  * \ingroup gui
  * \brief Class to select destination file, type and CRS for ogr layers
- * \note not available in Python bindings
  * \since QGIS 1.0
  */
 class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVectorLayerSaveAsDialogBase
@@ -61,7 +56,7 @@ class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVec
      *
      * \deprecated since QGIS 3.14 - will be removed in QGIS 4.0
      */
-    Q_DECL_DEPRECATED QgsVectorLayerSaveAsDialog( long srsid, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags() );
+    Q_DECL_DEPRECATED QgsVectorLayerSaveAsDialog( long srsid, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags() ) SIP_SKIP;
 
     /**
      * Construct a new QgsVectorLayerSaveAsDialog
@@ -106,7 +101,7 @@ class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVec
      * \see QgsCoordinateReferenceSystem::srsid()
      * \deprecated since QGIS 3.14 - will be removed in QGIS 4.0. Use crsObject() instead.
      */
-    Q_DECL_DEPRECATED long crs() const;
+    Q_DECL_DEPRECATED long crs() const SIP_SKIP;
 
     /**
      * Returns the CRS chosen for export
@@ -195,7 +190,7 @@ class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVec
      * \see forceMulti()
      * \see includeZ()
      */
-    QgsWkbTypes::Type geometryType() const;
+    Qgis::WkbType geometryType() const;
 
     /**
      * Returns TRUE if geometry type is set to automatic.
@@ -228,6 +223,8 @@ class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVec
     //! Returns creation action
     QgsVectorFileWriter::ActionOnExistingFile creationActionOnExistingFile() const;
 
+    void accept() override;
+
   private slots:
 
     void mFormatComboBox_currentIndexChanged( int idx );
@@ -235,7 +232,6 @@ class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVec
     void showHelp();
     void mSymbologyExportComboBox_currentIndexChanged( const QString &text );
     void mGeometryTypeComboBox_currentIndexChanged( int index );
-    void accept() override;
     void mSelectAllAttributes_clicked();
     void mDeselectAllAttributes_clicked();
     void mUseAliasesForExportedName_stateChanged( int state );
@@ -263,6 +259,7 @@ class GUI_EXPORT QgsVectorLayerSaveAsDialog : public QDialog, private Ui::QgsVec
     QgsMapCanvas *mMapCanvas = nullptr;
     QgsVectorFileWriter::ActionOnExistingFile mActionOnExistingFile;
     Options mOptions = AllOptions;
+    QString mDefaultOutputLayerNameFromInputLayerName;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsVectorLayerSaveAsDialog::Options )

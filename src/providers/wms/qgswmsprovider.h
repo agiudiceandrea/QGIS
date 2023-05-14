@@ -291,7 +291,8 @@ class QgsWmsProvider final: public QgsRasterDataProvider
     Qgis::DataType sourceDataType( int bandNo ) const override;
     int bandCount() const override;
     QString htmlMetadata() override;
-    QgsRasterIdentifyResult identify( const QgsPointXY &point, QgsRaster::IdentifyFormat format, const QgsRectangle &boundingBox = QgsRectangle(), int width = 0, int height = 0, int dpi = 96 ) override;
+    QgsRasterIdentifyResult identify( const QgsPointXY &point, Qgis::RasterIdentifyFormat format, const QgsRectangle &boundingBox = QgsRectangle(), int width = 0, int height = 0, int dpi = 96 ) override;
+    double sample( const QgsPointXY &point, int band, bool *ok = nullptr, const QgsRectangle &boundingBox = QgsRectangle(), int width = 0, int height = 0, int dpi = 96 ) override;
     QString lastErrorTitle() override;
     QString lastError() override;
     QString lastErrorFormat() override;
@@ -453,6 +454,11 @@ class QgsWmsProvider final: public QgsRasterDataProvider
       * \since QGIS 3.14
       */
     void addWmstParameters( QUrlQuery &query );
+
+    /**
+      * Add WMTS time dimension to a query.
+      */
+    QString calculateWmtsTimeDimensionValue() const;
 
     //! Helper structure to store a cached tile image with its rectangle
     typedef struct TileImage
@@ -642,8 +648,8 @@ class QgsWmsTiledImageDownloadHandler : public QObject
                                      QImage *image,
                                      const QgsRectangle &viewExtent,
                                      double sourceResolution,
-                                     bool resamplingEnabled,
                                      bool smoothPixmapTransform,
+                                     bool resamplingEnabled,
                                      QgsRasterBlockFeedback *feedback );
     ~QgsWmsTiledImageDownloadHandler() override;
 
@@ -719,12 +725,26 @@ Q_DECLARE_TYPEINFO( QgsWmsProvider::TilePosition, Q_PRIMITIVE_TYPE );
 
 class QgsWmsProviderMetadata final: public QgsProviderMetadata
 {
+    Q_OBJECT
   public:
     QgsWmsProviderMetadata();
+    QIcon icon() const override;
+    QgsProviderMetadata::ProviderMetadataCapabilities capabilities() const override;
+
     QgsWmsProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
+    ProviderCapabilities providerCapabilities() const override;
+
     QList<QgsDataItemProvider *> dataItemProviders() const override;
     QVariantMap decodeUri( const QString &uri ) const override;
     QString encodeUri( const QVariantMap &parts ) const override;
+
+    QList< QgsProviderSublayerDetails > querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
+    int priorityForUri( const QString &uri ) const override;
+    QList< Qgis::LayerType > validLayerTypesForUri( const QString &uri ) const override;
+
+    QString absoluteToRelativeUri( const QString &uri, const QgsReadWriteContext &context ) const override;
+    QString relativeToAbsoluteUri( const QString &uri, const QgsReadWriteContext &context ) const override;
+    QList< Qgis::LayerType > supportedLayerTypes() const override;
 };
 
 #endif

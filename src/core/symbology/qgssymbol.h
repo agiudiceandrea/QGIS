@@ -120,7 +120,7 @@ class CORE_EXPORT QgsSymbol
      *
      * \since QGIS 3.20
      */
-    static Qgis::SymbolType symbolTypeForGeometryType( QgsWkbTypes::GeometryType type );
+    static Qgis::SymbolType symbolTypeForGeometryType( Qgis::GeometryType type );
 
     /**
      * Data definable properties.
@@ -144,7 +144,7 @@ class CORE_EXPORT QgsSymbol
      *
      * The caller takes ownership of the returned object.
      */
-    static QgsSymbol *defaultSymbol( QgsWkbTypes::GeometryType geomType ) SIP_FACTORY;
+    static QgsSymbol *defaultSymbol( Qgis::GeometryType geomType ) SIP_FACTORY;
 
     /**
      * Returns the symbol's type.
@@ -160,7 +160,7 @@ class CORE_EXPORT QgsSymbol
      * \see symbolLayerCount
      * \since QGIS 2.7
      */
-    QgsSymbolLayerList symbolLayers() { return mLayers; }
+    QgsSymbolLayerList symbolLayers() const { return mLayers; }
 
 #ifndef SIP_RUN
 
@@ -351,7 +351,7 @@ class CORE_EXPORT QgsSymbol
      *
      * \see color()
      */
-    void setColor( const QColor &color );
+    void setColor( const QColor &color ) const;
 
     /**
      * Returns the symbol's color.
@@ -447,7 +447,7 @@ class CORE_EXPORT QgsSymbol
      * \returns output unit, or QgsUnitTypes::RenderUnknownUnit if the symbol contains mixed units
      * \see setOutputUnit()
      */
-    QgsUnitTypes::RenderUnit outputUnit() const;
+    Qgis::RenderUnit outputUnit() const;
 
     /**
      * Returns TRUE if the symbol has any components which use map unit based sizes.
@@ -464,7 +464,7 @@ class CORE_EXPORT QgsSymbol
      * \param unit output units
      * \see outputUnit()
      */
-    void setOutputUnit( QgsUnitTypes::RenderUnit unit );
+    void setOutputUnit( Qgis::RenderUnit unit ) const;
 
     /**
      * Returns the map unit scale for the symbol.
@@ -485,7 +485,7 @@ class CORE_EXPORT QgsSymbol
      *
      * \see mapUnitScale()
      */
-    void setMapUnitScale( const QgsMapUnitScale &scale );
+    void setMapUnitScale( const QgsMapUnitScale &scale ) const;
 
     /**
      * Returns the opacity for the symbol.
@@ -774,7 +774,7 @@ class CORE_EXPORT QgsSymbol
      * Since QGIS 3.22, the optional \a geometryType, \a points and \a rings arguments can specify the original
      * geometry type, points and rings in which are being rendered by the parent symbol.
      */
-    void renderUsingLayer( QgsSymbolLayer *layer, QgsSymbolRenderContext &context, QgsWkbTypes::GeometryType geometryType = QgsWkbTypes::GeometryType::UnknownGeometry, const QPolygonF *points = nullptr, const QVector<QPolygonF> *rings = nullptr );
+    void renderUsingLayer( QgsSymbolLayer *layer, QgsSymbolRenderContext &context, Qgis::GeometryType geometryType = Qgis::GeometryType::Unknown, const QPolygonF *points = nullptr, const QVector<QPolygonF> *rings = nullptr );
 
     /**
      * Render editing vertex marker at specified point
@@ -825,9 +825,34 @@ class CORE_EXPORT QgsSymbol
 
     QgsPropertyCollection mDataDefinedProperties;
 
+    /**
+     * Creates a line string in screen coordinates from a QgsCurve in map coordinates
+     */
+    static QPolygonF _getLineString2d( QgsRenderContext &context, const QgsCurve &curve, bool clipToExtent = true );
+
+    /**
+     * Creates a line string in screen coordinates from a QgsCurve in map coordinates
+     */
+    static QPolygonF _getLineString3d( QgsRenderContext &context, const QgsCurve &curve, bool clipToExtent = true );
+
+    /**
+     * Creates a polygon ring in screen coordinates from a QgsCurve in map coordinates.
+     *
+     * If \a correctRingOrientation is TRUE then the ring will be oriented to match standard ring orientation, e.g.
+     * clockwise for exterior rings and counter-clockwise for interior rings.
+     */
+    static QPolygonF _getPolygonRing2d( QgsRenderContext &context, const QgsCurve &curve, bool clipToExtent, bool isExteriorRing = false, bool correctRingOrientation = false );
+
+    /**
+     * Creates a polygon ring in screen coordinates from a QgsCurve in map coordinates.
+     *
+     * If \a correctRingOrientation is TRUE then the ring will be oriented to match standard ring orientation, e.g.
+     * clockwise for exterior rings and counter-clockwise for interior rings.
+     */
+    static QPolygonF _getPolygonRing3d( QgsRenderContext &context, const QgsCurve &curve, bool clipToExtent, bool isExteriorRing = false, bool correctRingOrientation = false );
+
     Q_DISABLE_COPY( QgsSymbol )
 
 };
 
 #endif
-

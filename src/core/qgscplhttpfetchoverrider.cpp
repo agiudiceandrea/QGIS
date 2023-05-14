@@ -20,25 +20,10 @@
 #include "cpl_http.h"
 #include "gdal.h"
 
-#if GDAL_VERSION_NUM < GDAL_COMPUTE_VERSION(3,2,0)
-
 QgsCPLHTTPFetchOverrider::QgsCPLHTTPFetchOverrider( const QString &authCfg, QgsFeedback *feedback )
-{
-  Q_UNUSED( authCfg );
-  Q_UNUSED( feedback );
-  Q_UNUSED( mAuthCfg );
-  Q_UNUSED( mFeedback );
-}
-
-QgsCPLHTTPFetchOverrider::~QgsCPLHTTPFetchOverrider()
-{
-}
-
-#else
-
-QgsCPLHTTPFetchOverrider::QgsCPLHTTPFetchOverrider( const QString &authCfg, QgsFeedback *feedback ):
-  mAuthCfg( authCfg ),
-  mFeedback( feedback )
+  : mAuthCfg( authCfg )
+  , mFeedback( feedback )
+  , mThread( QThread::currentThread() )
 {
   CPLHTTPPushFetchCallback( QgsCPLHTTPFetchOverrider::callback, this );
 }
@@ -200,9 +185,17 @@ CPLHTTPResult *QgsCPLHTTPFetchOverrider::callback( const char *pszURL,
   return psResult;
 }
 
-#endif
-
 void QgsCPLHTTPFetchOverrider::setAttribute( QNetworkRequest::Attribute code, const QVariant &value )
 {
   mAttributes[code] = value;
+}
+
+void QgsCPLHTTPFetchOverrider::setFeedback( QgsFeedback *feedback )
+{
+  mFeedback = feedback;
+}
+
+QThread *QgsCPLHTTPFetchOverrider::thread() const
+{
+  return mThread;
 }

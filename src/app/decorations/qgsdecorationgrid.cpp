@@ -84,8 +84,8 @@ void QgsDecorationGrid::projectRead()
   QgsDecorationItem::projectRead();
 
   mEnabled = QgsProject::instance()->readBoolEntry( mConfigurationName, QStringLiteral( "/Enabled" ), false );
-  mMapUnits = static_cast< QgsUnitTypes::DistanceUnit >( QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/MapUnits" ),
-              QgsUnitTypes::DistanceUnknownUnit ) );
+  mMapUnits = static_cast< Qgis::DistanceUnit >( QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/MapUnits" ),
+              static_cast< int >( Qgis::DistanceUnit::Unknown ) ) );
   mGridStyle = static_cast< GridStyle >( QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/Style" ),
                                          QgsDecorationGrid::Line ) );
   mGridIntervalX = QgsProject::instance()->readDoubleEntry( mConfigurationName, QStringLiteral( "/IntervalX" ), 10 );
@@ -259,11 +259,7 @@ void QgsDecorationGrid::render( const QgsMapSettings &mapSettings, QgsRenderCont
         hIt = horizontalLines.constBegin();
         for ( ; hIt != horizontalLines.constEnd(); ++hIt )
         {
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-          if ( hIt->second.intersect( vIt->second, &intersectionPoint ) == QLineF::BoundedIntersection )
-#else
           if ( hIt->second.intersects( vIt->second, &intersectionPoint ) == QLineF::BoundedIntersection )
-#endif
           {
             mMarkerSymbol->renderPoint( intersectionPoint, nullptr, context );
           }
@@ -308,7 +304,7 @@ void QgsDecorationGrid::drawCoordinateAnnotation( QgsRenderContext &context, QPo
   const QFontMetricsF textMetrics = QgsTextRenderer::fontMetrics( context, mTextFormat );
   const double textDescent = textMetrics.descent();
   const double textWidth = QgsTextRenderer::textWidth( context, mTextFormat, annotationStringList );
-  const double textHeight = QgsTextRenderer::textHeight( context, mTextFormat, annotationStringList, QgsTextRenderer::Point );
+  const double textHeight = QgsTextRenderer::textHeight( context, mTextFormat, annotationStringList, Qgis::TextLayoutMode::Point );
 
   double xpos = pos.x();
   double ypos = pos.y();
@@ -372,7 +368,7 @@ void QgsDecorationGrid::drawCoordinateAnnotation( QgsRenderContext &context, QPo
       }
   }
 
-  QgsTextRenderer::drawText( QPointF( xpos, ypos ), rotation, QgsTextRenderer::AlignLeft, annotationStringList, context, mTextFormat );
+  QgsTextRenderer::drawText( QPointF( xpos, ypos ), rotation, Qgis::TextHorizontalAlignment::Left, annotationStringList, context, mTextFormat );
 }
 
 static bool clipByRect( QLineF &line, const QPolygonF &rect )
@@ -388,11 +384,7 @@ static bool clipByRect( QLineF &line, const QPolygonF &rect )
   for ( ; it != borderLines.constEnd(); ++it )
   {
     QPointF intersectionPoint;
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    if ( it->intersect( line, &intersectionPoint ) == QLineF::BoundedIntersection )
-#else
     if ( it->intersects( line, &intersectionPoint ) == QLineF::BoundedIntersection )
-#endif
     {
       intersectionList.push_back( intersectionPoint );
       if ( intersectionList.size() >= 2 )
@@ -533,11 +525,11 @@ void QgsDecorationGrid::checkMapUnitsChanged()
   // this is to avoid problems when CRS changes to/from geographic and projected
   // a better solution would be to change the grid interval, but this is a little tricky
   // note: we could be less picky (e.g. from degrees to DMS)
-  const QgsUnitTypes::DistanceUnit mapUnits = QgisApp::instance()->mapCanvas()->mapSettings().mapUnits();
+  const Qgis::DistanceUnit mapUnits = QgisApp::instance()->mapCanvas()->mapSettings().mapUnits();
   if ( mEnabled && ( mMapUnits != mapUnits ) )
   {
     mEnabled = false;
-    mMapUnits = QgsUnitTypes::DistanceUnknownUnit; // make sure isDirty() returns true
+    mMapUnits = Qgis::DistanceUnit::Unknown; // make sure isDirty() returns true
     if ( ! QgisApp::instance()->mapCanvas()->isFrozen() )
     {
       update();
@@ -549,7 +541,7 @@ bool QgsDecorationGrid::isDirty()
 {
   // checks if stored map units is undefined or different from canvas map units
   // or if interval is 0
-  return mMapUnits == QgsUnitTypes::DistanceUnknownUnit ||
+  return mMapUnits == Qgis::DistanceUnit::Unknown ||
          mMapUnits != QgisApp::instance()->mapCanvas()->mapSettings().mapUnits() ||
          qgsDoubleNear( mGridIntervalX, 0.0 ) || qgsDoubleNear( mGridIntervalY, 0.0 );
 }
@@ -558,7 +550,7 @@ void QgsDecorationGrid::setDirty( bool dirty )
 {
   if ( dirty )
   {
-    mMapUnits = QgsUnitTypes::DistanceUnknownUnit;
+    mMapUnits = Qgis::DistanceUnit::Unknown;
   }
   else
   {
@@ -604,7 +596,7 @@ bool QgsDecorationGrid::getIntervalFromCurrentLayer( double *values ) const
     QMessageBox::warning( nullptr, tr( "Get Interval from Layer" ), tr( "No active layer" ) );
     return false;
   }
-  if ( layer->type() != QgsMapLayerType::RasterLayer )
+  if ( layer->type() != Qgis::LayerType::Raster )
   {
     QMessageBox::warning( nullptr, tr( "Get Interval from Layer" ), tr( "Please select a raster layer." ) );
     return false;

@@ -1,5 +1,183 @@
 Change history for the QGIS Project
 
+# What's new in Version 3.30 ''s-Hertogenbosch'?
+
+This release has following new features:
+
+- Breaking Changes: Drop project backward compatibility for symbology with QGIS 3.16 and older
+- Map Tools: Raster MapTips
+- Map Tools: Identify on mouse move, no mouse click
+- User Interface: Constraint based functionality for attribute tables
+- User Interface: Additional GPS information panel and toolbar fields
+- User Interface: GPS Information Panel UX and Refactoring
+- Symbology: Improved SLD Export Options
+- Rendering: Global map terrain shading
+- Rendering: Add super and subscript support for text renderer
+- 3D Features: Limit 2D extent of 3D scene
+- Print Layouts: Shortcuts manager in print layouts
+- Print Layouts: Use text renderer in layout legends
+- Expressions: Add feature_id() function
+- Expressions: New is_feature_valid() and is_attribute_valid() functions
+- Expressions: Add x_at, y_at, z_at, m_at expression functions
+- Data Management: DateTime Field editing: segregation of display format and field value format
+- Data Management: Add option to directly log GPS points and tracks to a Geopackage or Spatialite db
+- Data Management: Add an explicit "Offset from UTC" option for storing GPS feature timestamps
+- Data Management: Raster Attribute Tables (RAT) Suppport
+- Metadata and Metasearch: Add key dates to layer and project metadata
+- Forms and Widgets: Audiovisual multimedia attribute attachments support
+- Forms and Widgets: Data defined editable state for form widgets
+- Forms and Widgets: Spacer widget for drag & drop attribute forms
+- Forms and Widgets: Dynamic text widgets with current_value support
+- Forms and Widgets: Dynamic HTML widgets with current_value support
+- Layer Legend: New layer ordering improvements
+- Processing: Additional options for XYZ Tile exports when using Leaflet html output
+- Processing: Support data defined parameter values when using qgis_process tool
+- Processing: New "load_layer" function
+- Processing: Add user interface for extent definition in GDAL Raster Calculator
+- Application and Project Options: Add option to store selected GPS component in geometry M values
+- Application and Project Options: Make GPS track destination layer an explicit user choice, remember in project
+- Profile Plots: New elevation profile canvas item for QGIS Quick
+- Browser: Add dataset relationship editing and creation capabilities in browser
+- Data Providers: Removal of Native GeoNode Provider
+- Data Providers: In data source manager, allow users to directly add an XYZ   tile layer without having to create a connection first
+- Data Providers: SQL Logging for OGR Provider
+- Data Providers: S3 Cloud Storage Support
+- Data Providers: Resolution aware WMTS layers with automatic upscaling
+- Data Providers: Drop unmaintained SAGA provider from QGIS installations
+- QGIS Server: QGIS_APPLICATION_FULL_NAME environment variable
+- QGIS Server: GeoJSON support for WFS DescribeFeatureType
+- Plugins: Topology checker rules enabling/disabling and filtering
+- Programmability: QgsExifTools Improvements
+- Programmability: Smart bracket autocomplete updates for Code Editors
+- Programmability: Add "toggle comment" action to the integrated python console
+-
+
+
+# What's new in Version 3.28 'Firenze'?
+
+This release has following new features:
+
+- Temporal: Add temporal manager support for WMTS layers with TIME dimension
+- Map Tools: Allow selecting features in vector tile layers
+- User Interface: Exclusive window based UX for data source manager
+- User Interface: Add a Show in Attribute Table action to the right click menu of legend class symbols
+- User Interface: Add setting to hide NULL values on identify result
+- Symbology: Allow control over GPS location marker
+- Symbology: Added new ellipse marker shapes
+- Labelling: Add support for HTML bold/italic/font size and font family to labelling
+- Labelling: Add option to use absolute units for line height
+- Mesh: Add option to reload mesh layer temporal properties
+- 3D Features: Ambient Occlusion 3D Effect
+- Point Clouds: Point Cloud Layer Export
+- Point Clouds: Eye Dome Lighting for point clouds in 2D map canvas
+- Print Layouts: Add FORCE_RASTER and IMAGE_COMPRESSION parameters to PDF algorithms
+- Expressions: Add new variable form of current feature expression functions
+- Expressions: Add new shared_paths function
+- Expressions: Make_valid and geom_to_array functions
+- Expressions: Concave hull function
+- Data Management: Ask for confirmation when deleting features
+- Metadata and Metasearch: Layer metadata data provider search and storage
+- Processing: Fixed precision support for select processing tools
+- Processing: Improved "Make Valid" Algorithms
+- Processing: Default option to show feature count for vector outputs from processing
+- Processing: Add relations export option to package layers algorithm
+- Processing: Add "Offset" parameter to "Drape" algorithms
+- Application and Project Options: Modified project coordinate and bearing display settings
+- Application and Project Options: Add support for "user" fonts, and automatic downloading of freely licensed fonts
+- Browser: Implement relationship discovery for OGR layers, and show relationships in browser
+- Browser: Modified UX for Geopackage and ESRI File Geodatabase creation
+- Browser: Allow drag and drop of vector layers to non-GPKG OGR database datasets
+- Browser: Expose field domain management for non-gpkg OGR sources
+- Data Providers: Define session role for PostgreSQL connections
+- Data Providers: Automatically add related tables when adding layers from GDAL datasets with embedded relationship information
+- Data Providers: Add subset string (filter) support for arcgis REST layers
+- Data Providers: Abstract database provider for renaming fields
+- Data Providers: WFS performing binary spatial operations in expressions on server
+- Data Providers: Editing ArcGIS REST Layers
+- Data Providers: Load raster sublayers from vector tile styles automatically
+- Data Providers: Add WMS layers individually
+- Data Providers: Save projects to Oracle Database Provider
+- QGIS Server: QGIS_SERVER_ALLOWED_EXTRA_SQL_TOKENS settings variable
+- QGIS Server: Open layers in a read only mode with QGIS Server
+- Plugins: Changes to plugin automatic updates behaviour
+- Programmability: Add temporal handling to maps in QGIS Quick
+- Programmability: Addition of py-args command line parameter
+-
+
+
+# What's new in Version 3.26 'Buenos Aires'?
+
+This release has following new features:
+
+- Breaking Changes: DB2 Support Removed
+- Map Tools: Selecting all features by attribute value from Identify Results panel
+- User Interface: Coordinate ordering according to CRS
+- User Interface: Select features from expression based symbols
+- User Interface: Copy preview expression value to clipboard
+- User Interface: Option to synchronize statistics panel with layer selection
+- User Interface: Implement scroll wheel action for color and symbol buttons
+- Accessibility: Horizontal table scroll with shift+wheel
+- Symbology: New "Animated Marker" symbol type
+- Symbology: Allow any symbol to be an animated symbol
+- Symbology: Point cloud style synchronization
+- Symbology: Add a new classification method for "Fixed interval"
+- Symbology: Custom dash pattern panel shows total pattern length
+- Symbology: Select style categories when storing styles in database
+- Labelling: Allow data-defined control over line anchor type
+- Labelling: Control label anchor placement relative to text position
+- Labelling: Interactively move curved line labels along their line features
+- Rendering: WMS provider resampling
+- Rendering: Selective masking vectorization
+- 3D Features: Transparency support for 3D Phong material
+- 3D Features: 3D Maps inherit terrain settings from project
+- 3D Features: Sync 2D and 3D navigation
+- 3D Features: 3D axis in 3D map viewer
+- Point Clouds: Point cloud triangulation in 3D views
+- Point Clouds: Cloud Optimized Point Clouds (COPC) support
+- Point Clouds: Point cloud filtering
+- Print Layouts: Apply font settings from layer conditional styling to layout attribute tables
+- Expressions: Between/ Not between operators
+- Expressions: Static parent variable in aggregate expression functions
+- Expressions: Static parent variable in aggregate expression functions
+- Digitising: Add a checkbox to disable vertex tool dock auto-opening behavior
+- Digitising: Integrate shape map tools into feature digitizing
+- Digitising: New constraints for advanced digitizing panel
+- Data Management: Add a "filter rules" search box to vector tile renderer and labeling widgets
+- Data Management: User defined field names in export
+- Data Management: Georeferencing vector layers in georeferencer
+- Data Management: Add field domain management capabilities to browser
+- Data Management: Buffered Transactional Editing
+- Forms and Widgets: Access form reference in python form actions
+- Forms and Widgets: Allow drag and drop forms label font and color customization
+- Forms and Widgets: Collapse form group by expression
+- Analysis Tools: "Keep disjoint features separate" option for dissolve algorithm
+- Processing: Raise message model tool
+- Processing: Run batch processing steps in tasks
+- Processing: Background processing of model algorithms
+- Processing: Allow setting Examples in graphical model help
+- Processing: Overlay tools with multiple overlay layers support
+- Application and Project Options: Project elevation properties framework
+- Application and Project Options: Optionally store UI configuration in projects
+- Application and Project Options: Optionally store layer edit state in projects
+- Application and Project Options: Project style databases support
+- Application and Project Options: Added setting to show feature counts by default for newly added layers
+- Application and Project Options: Add a "Skip" option for custom environmental variables in Settings->Options->Environment
+- Application and Project Options: Revamped projects' default symbols, color ramp , and text format
+- Profile Plots: Elevation profile plotting tool
+- Profile Plots: Flexible vector layer symbology in elevation profiles
+- Profile Plots: Flexible symbology for point cloud profile plotting
+- Profile Plots: Vector feature extrusion for profile charts
+- Browser: Rename bookmark groups context menu control
+- Data Providers: Support reading ESRI vector tile packages (.vtpk) files directly
+- Data Providers: SQL Logging in the Debugging/ Development panel
+- QGIS Server: Alternate periodic check strategy for detecting project updates
+- QGIS Server: Add more server highlight label parameters
+- QGIS Server: Temporal properties support for WMS Server
+- Programmability: Add a QgsScaleCalculator function to calculate canvas width from a given extent, scale, and dpi
+- Programmability: Clear current symbol action in symbol button widget
+-
+
+
 # What's new in Version 3.24 'Tisler'?
 
 This release has following new features:

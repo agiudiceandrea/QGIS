@@ -196,33 +196,33 @@ void QgsMssqlGeometryParser::DumpMemoryToLog( const char *pszMsg, unsigned char 
 #endif
 }
 
-QgsPoint QgsMssqlGeometryParser::readCoordinates( int iPoint )
+QgsPoint QgsMssqlGeometryParser::readCoordinates( int iPoint ) const
 {
   if ( mIsGeography )
   {
     if ( ( mProps & SP_HASZVALUES ) && ( mProps & SP_HASMVALUES ) )
-      return QgsPoint( QgsWkbTypes::PointZM, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZM, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
     else if ( mProps & SP_HASZVALUES )
-      return QgsPoint( QgsWkbTypes::PointZ, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZ, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ) );
     else if ( mProps & SP_HASMVALUES )
-      return QgsPoint( QgsWkbTypes::PointM, ReadY( iPoint ), ReadX( iPoint ), 0.0, ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointM, ReadY( iPoint ), ReadX( iPoint ), 0.0, ReadZ( iPoint ) );
     else
-      return QgsPoint( QgsWkbTypes::Point, ReadY( iPoint ), ReadX( iPoint ) );
+      return QgsPoint( Qgis::WkbType::Point, ReadY( iPoint ), ReadX( iPoint ) );
   }
   else
   {
     if ( ( mProps & SP_HASZVALUES ) && ( mProps & SP_HASMVALUES ) )
-      return QgsPoint( QgsWkbTypes::PointZM, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZM, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
     else if ( mProps & SP_HASZVALUES )
-      return QgsPoint( QgsWkbTypes::PointZ, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZ, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ) );
     else if ( mProps & SP_HASMVALUES )
-      return QgsPoint( QgsWkbTypes::PointM, ReadX( iPoint ), ReadY( iPoint ), 0.0, ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointM, ReadX( iPoint ), ReadY( iPoint ), 0.0, ReadZ( iPoint ) );
     else
-      return QgsPoint( QgsWkbTypes::Point, ReadX( iPoint ), ReadY( iPoint ) );
+      return QgsPoint( Qgis::WkbType::Point, ReadX( iPoint ), ReadY( iPoint ) );
   }
 }
 
-void QgsMssqlGeometryParser::readCoordinates( int iPoint, int iNextPoint, double *x, double *y, double *z, double *m )
+void QgsMssqlGeometryParser::readCoordinates( int iPoint, int iNextPoint, double *x, double *y, double *z, double *m ) const
 {
   int i = 0;
   if ( mIsGeography )
@@ -321,7 +321,7 @@ void QgsMssqlGeometryParser::readCoordinates( int iPoint, int iNextPoint, double
   }
 }
 
-const QgsPointSequence QgsMssqlGeometryParser::readPointSequence( int iPoint, int iNextPoint )
+const QgsPointSequence QgsMssqlGeometryParser::readPointSequence( int iPoint, int iNextPoint ) const
 {
   if ( iPoint >= iNextPoint )
     return QgsPointSequence();
@@ -785,4 +785,3 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
   return poGeom;
 }
-

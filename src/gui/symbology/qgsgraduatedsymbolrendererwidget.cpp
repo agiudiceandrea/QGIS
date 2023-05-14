@@ -40,6 +40,7 @@
 #include "qgslogger.h"
 #include "qgsludialog.h"
 #include "qgsproject.h"
+#include "qgsprojectstylesettings.h"
 #include "qgsmapcanvas.h"
 #include "qgsclassificationmethod.h"
 #include "qgsapplication.h"
@@ -488,8 +489,14 @@ QgsGraduatedSymbolRendererWidget::QgsGraduatedSymbolRendererWidget( QgsVectorLay
   btnChangeGraduatedSymbol->setLayer( mLayer );
   btnChangeGraduatedSymbol->registerExpressionContextGenerator( this );
 
-  mSizeUnitWidget->setUnits( QgsUnitTypes::RenderUnitList() << QgsUnitTypes::RenderMillimeters << QgsUnitTypes::RenderMapUnits << QgsUnitTypes::RenderPixels
-                             << QgsUnitTypes::RenderPoints << QgsUnitTypes::RenderInches );
+  mSizeUnitWidget->setUnits(
+  {
+    Qgis::RenderUnit::Millimeters,
+    Qgis::RenderUnit::MapUnits,
+    Qgis::RenderUnit::Pixels,
+    Qgis::RenderUnit::Points,
+    Qgis::RenderUnit::Inches
+  } );
 
   spinPrecision->setMinimum( QgsClassificationMethod::MIN_PRECISION );
   spinPrecision->setMaximum( QgsClassificationMethod::MAX_PRECISION );
@@ -500,10 +507,10 @@ QgsGraduatedSymbolRendererWidget::QgsGraduatedSymbolRendererWidget( QgsVectorLay
   btnColorRamp->setShowRandomColorRamp( true );
 
   // set project default color ramp
-  QString defaultColorRamp = QgsProject::instance()->readEntry( QStringLiteral( "DefaultStyles" ), QStringLiteral( "/ColorRamp" ), QString() );
-  if ( !defaultColorRamp.isEmpty() )
+  std::unique_ptr< QgsColorRamp > colorRamp( QgsProject::instance()->styleSettings()->defaultColorRamp() );
+  if ( colorRamp )
   {
-    btnColorRamp->setColorRampFromName( defaultColorRamp );
+    btnColorRamp->setColorRamp( colorRamp.get() );
   }
   else
   {
@@ -594,6 +601,9 @@ QgsGraduatedSymbolRendererWidget::QgsGraduatedSymbolRendererWidget( QgsVectorLay
   connect( mExpressionWidget, static_cast < void ( QgsFieldExpressionWidget::* )( const QString & ) >( &QgsFieldExpressionWidget::fieldChanged ), mHistogramWidget, &QgsHistogramWidget::setSourceFieldExp );
 
   mExpressionWidget->registerExpressionContextGenerator( this );
+
+  mUpdateTimer.setSingleShot( true );
+  mUpdateTimer.connect( &mUpdateTimer, &QTimer::timeout, this, &QgsGraduatedSymbolRendererWidget::classifyGraduatedImpl );
 }
 
 void QgsGraduatedSymbolRendererWidget::mSizeUnitWidget_changed()
@@ -685,6 +695,7 @@ void QgsGraduatedSymbolRendererWidget::disconnectUpdateHandlers()
 void QgsGraduatedSymbolRendererWidget::updateUiFromRenderer( bool updateCount )
 {
   disconnectUpdateHandlers();
+  mBlockUpdates++;
 
   const QgsClassificationMethod *method = mRenderer->classificationMethod();
 
@@ -724,9 +735,17 @@ void QgsGraduatedSymbolRendererWidget::updateUiFromRenderer( bool updateCount )
 
   // Only update class count if different - otherwise typing value gets very messy
   int nclasses = ranges.count();
-  if ( nclasses && updateCount )
+  if ( nclasses && ( updateCount || ( method && ( method->flags() & QgsClassificationMethod::MethodProperty::IgnoresClassCount ) ) ) )
   {
     spinGraduatedClasses->setValue( ranges.count() );
+  }
+  if ( method )
+  {
+    spinGraduatedClasses->setEnabled( !( method->flags() & QgsClassificationMethod::MethodProperty::IgnoresClassCount ) );
+  }
+  else
+  {
+    spinGraduatedClasses->setEnabled( true );
   }
 
   // set column
@@ -758,7 +777,7 @@ void QgsGraduatedSymbolRendererWidget::updateUiFromRenderer( bool updateCount )
   methodComboBox->blockSignals( true );
   switch ( mRenderer->graduatedMethod() )
   {
-    case QgsGraduatedSymbolRenderer::GraduatedColor:
+    case Qgis::GraduatedMethod::Color:
     {
       methodComboBox->setCurrentIndex( methodComboBox->findData( ColorMode ) );
       if ( mRenderer->sourceColorRamp() )
@@ -767,7 +786,7 @@ void QgsGraduatedSymbolRendererWidget::updateUiFromRenderer( bool updateCount )
       }
       break;
     }
-    case QgsGraduatedSymbolRenderer::GraduatedSize:
+    case Qgis::GraduatedMethod::Size:
     {
       methodComboBox->setCurrentIndex( methodComboBox->findData( SizeMode ) );
       if ( !mRenderer->ranges().isEmpty() ) // avoid overriding default size with zeros
@@ -788,6 +807,8 @@ void QgsGraduatedSymbolRendererWidget::updateUiFromRenderer( bool updateCount )
   mHistogramWidget->refresh();
 
   connectUpdateHandlers();
+  mBlockUpdates--;
+
   emit widgetChanged();
 }
 
@@ -804,7 +825,7 @@ void QgsGraduatedSymbolRendererWidget::methodComboBox_currentIndexChanged( int )
   {
     case ColorMode:
     {
-      mRenderer->setGraduatedMethod( QgsGraduatedSymbolRenderer::GraduatedColor );
+      mRenderer->setGraduatedMethod( Qgis::GraduatedMethod::Color );
       QgsColorRamp *ramp = btnColorRamp->colorRamp();
 
       if ( !ramp )
@@ -827,7 +848,7 @@ void QgsGraduatedSymbolRendererWidget::methodComboBox_currentIndexChanged( int )
       maxSizeSpinBox->setVisible( true );
       mSizeUnitWidget->setVisible( true );
 
-      mRenderer->setGraduatedMethod( QgsGraduatedSymbolRenderer::GraduatedSize );
+      mRenderer->setGraduatedMethod( Qgis::GraduatedMethod::Size );
       reapplySizes();
       break;
     }
@@ -857,6 +878,8 @@ void QgsGraduatedSymbolRendererWidget::updateMethodParameters()
 
     mParameterWidgetWrappers.push_back( std::unique_ptr<QgsAbstractProcessingParameterWidgetWrapper>( ppww ) );
   }
+
+  spinGraduatedClasses->setEnabled( !( method->flags() & QgsClassificationMethod::MethodProperty::IgnoresClassCount ) );
 }
 
 void QgsGraduatedSymbolRendererWidget::toggleMethodWidgets( MethodMode mode )
@@ -894,7 +917,7 @@ void QgsGraduatedSymbolRendererWidget::clearParameterWidgets()
   while ( mParametersLayout->rowCount() )
   {
     QFormLayout::TakeRowResult row = mParametersLayout->takeRow( 0 );
-    for ( QLayoutItem *item : QList<QLayoutItem *>( {row.labelItem, row.fieldItem} ) )
+    for ( QLayoutItem *item : {row.labelItem, row.fieldItem} )
       if ( item )
       {
         if ( item->widget() )
@@ -1005,6 +1028,14 @@ void QgsGraduatedSymbolRendererWidget::symmetryPointEditingFinished( )
 
 void QgsGraduatedSymbolRendererWidget::classifyGraduated()
 {
+  mUpdateTimer.start( 500 );
+}
+
+void QgsGraduatedSymbolRendererWidget::classifyGraduatedImpl( )
+{
+
+  if ( mBlockUpdates )
+    return;
 
   QgsTemporaryCursorOverride override( Qt::WaitCursor );
   QString attrName = mExpressionWidget->currentField();

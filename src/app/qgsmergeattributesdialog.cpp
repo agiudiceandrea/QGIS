@@ -16,9 +16,7 @@
  ***************************************************************************/
 
 #include "qgsmergeattributesdialog.h"
-#include "qgisapp.h"
 #include "qgsapplication.h"
-#include "qgseditorwidgetwrapper.h"
 #include "qgsfeatureiterator.h"
 #include "qgsfields.h"
 #include "qgsmapcanvas.h"
@@ -27,7 +25,6 @@
 #include "qgsvectordataprovider.h"
 #include "qgsstatisticalsummary.h"
 #include "qgseditorwidgetregistry.h"
-#include "qgssettings.h"
 #include "qgsgui.h"
 #include "qgsfieldformatter.h"
 #include "qgsfieldformatterregistry.h"
@@ -81,7 +78,7 @@ QgsMergeAttributesDialog::QgsMergeAttributesDialog( const QgsFeatureList &featur
 
   switch ( mVectorLayer->geometryType() )
   {
-    case QgsWkbTypes::PointGeometry:
+    case Qgis::GeometryType::Point:
       mTakeLargestAttributesLabel->setText( tr( "Take attributes from feature with the most points" ) );
       mFromLargestPushButton->setToolTip( tr( "Take all attributes from the MultiPoint feature with the most parts" ) );
       if ( !QgsWkbTypes::isMultiType( mVectorLayer->wkbType() ) )
@@ -91,18 +88,18 @@ QgsMergeAttributesDialog::QgsMergeAttributesDialog( const QgsFeatureList &featur
       }
       break;
 
-    case QgsWkbTypes::LineGeometry:
+    case Qgis::GeometryType::Line:
       mTakeLargestAttributesLabel->setText( tr( "Take attributes from feature with the longest length" ) );
       mFromLargestPushButton->setToolTip( tr( "Take all attributes from the Line feature with the longest length" ) );
       break;
 
-    case QgsWkbTypes::PolygonGeometry:
+    case Qgis::GeometryType::Polygon:
       mTakeLargestAttributesLabel->setText( tr( "Take attributes from feature with the largest area" ) );
       mFromLargestPushButton->setToolTip( tr( "Take all attributes from the Polygon feature with the largest area" ) );
       break;
 
-    case QgsWkbTypes::UnknownGeometry:
-    case QgsWkbTypes::NullGeometry:
+    case Qgis::GeometryType::Unknown:
+    case Qgis::GeometryType::Null:
       mTakeLargestAttributesLabel->setEnabled( false );
       mFromLargestPushButton->setEnabled( false );
       break;
@@ -233,6 +230,7 @@ void QgsMergeAttributesDialog::createTableWidgetContents()
   {
     int idx = mTableWidget->horizontalHeaderItem( j )->data( FieldIndex ).toInt();
     bool setToManual = false;
+
     if ( !mVectorLayer->dataProvider()->defaultValueClause( idx ).isEmpty() )
     {
       mTableWidget->item( mTableWidget->rowCount() - 1, j )->setData( Qt::DisplayRole, mVectorLayer->dataProvider()->defaultValueClause( idx ) );
@@ -465,6 +463,8 @@ void QgsMergeAttributesDialog::setAllAttributesFromFeature( QgsFeatureId feature
       currentComboBox->setCurrentIndex( currentComboBox->findData( QStringLiteral( "f%1" ).arg( FID_TO_STRING( featureId ) ) ) );
     }
   }
+
+  mTargetFeatureId = featureId;
 }
 
 QVariant QgsMergeAttributesDialog::calcStatistic( int col, QgsStatisticalSummary::Statistic stat )
@@ -547,7 +547,7 @@ void QgsMergeAttributesDialog::mFromLargestPushButton_clicked()
 
   switch ( mVectorLayer->geometryType() )
   {
-    case QgsWkbTypes::PointGeometry:
+    case Qgis::GeometryType::Point:
     {
       QgsFeatureList::const_iterator f_it = mFeatureList.constBegin();
       for ( ; f_it != mFeatureList.constEnd(); ++f_it )
@@ -562,7 +562,7 @@ void QgsMergeAttributesDialog::mFromLargestPushButton_clicked()
       }
       break;
     }
-    case QgsWkbTypes::LineGeometry:
+    case Qgis::GeometryType::Line:
     {
       QgsFeatureList::const_iterator f_it = mFeatureList.constBegin();
       for ( ; f_it != mFeatureList.constEnd(); ++f_it )
@@ -576,7 +576,7 @@ void QgsMergeAttributesDialog::mFromLargestPushButton_clicked()
       }
       break;
     }
-    case QgsWkbTypes::PolygonGeometry:
+    case Qgis::GeometryType::Polygon:
     {
       QgsFeatureList::const_iterator f_it = mFeatureList.constBegin();
       for ( ; f_it != mFeatureList.constEnd(); ++f_it )
@@ -666,12 +666,18 @@ void QgsMergeAttributesDialog::mRemoveFeatureFromSelectionButton_clicked()
         f_it != mFeatureList.end();
         ++f_it )
   {
+    if ( f_it->id() == mTargetFeatureId )
+      mTargetFeatureId = FID_NULL;
+
     if ( f_it->id() == featureId )
     {
       mFeatureList.erase( f_it );
       break;
     }
   }
+
+  if ( mTargetFeatureId == FID_NULL && !mFeatureList.isEmpty() )
+    mTargetFeatureId = mFeatureList.first().id();
 }
 
 void QgsMergeAttributesDialog::tableWidgetCellChanged( int row, int column )
@@ -743,6 +749,11 @@ QgsAttributes QgsMergeAttributesDialog::mergedAttributes() const
   }
 
   return results;
+}
+
+QgsFeatureId QgsMergeAttributesDialog::targetFeatureId() const
+{
+  return mTargetFeatureId;
 }
 
 QSet<int> QgsMergeAttributesDialog::skippedAttributeIndexes() const

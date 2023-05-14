@@ -36,9 +36,11 @@ add_qgis_test(testqgswmscapabilities.cpp MODULE provider LINKEDLIBRARIES provide
 add_qgis_test(testqgswmsccapabilities.cpp MODULE provider LINKEDLIBRARIES provider_wms_a qgis_core)
 add_qgis_test(testqgswmsprovider.cpp MODULE provider LINKEDLIBRARIES provider_wms_a qgis_core)
 
-add_qgis_test(testqgspostgresexpressioncompiler.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a qgis_core)
-add_qgis_test(testqgspostgresprovider.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a qgis_core)
-add_qgis_test(testqgspostgresconn.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a qgis_core LABELS "POSTGRES")
+if (POSTGRES_FOUND)
+  add_qgis_test(testqgspostgresexpressioncompiler.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a qgis_core)
+  add_qgis_test(testqgspostgresprovider.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a qgis_core LABELS "POSTGRES")
+  add_qgis_test(testqgspostgresconn.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a qgis_core LABELS "POSTGRES")
+endif()
 
 set(ENABLE_MSSQLTEST_CPP FALSE CACHE BOOL "Enable MSSQL provider C++ tests")
 if (ENABLE_MSSQLTEST_CPP)
@@ -60,6 +62,7 @@ endif()
 
 if (WITH_COPC)
   add_qgis_test(testqgscopcprovider.cpp MODULE provider LINKEDLIBRARIES qgis_core)
+  add_qgis_test(testqgsvirtualpointcloudprovider.cpp MODULE provider LINKEDLIBRARIES qgis_core)
 endif()
 
 if (WITH_PDAL)

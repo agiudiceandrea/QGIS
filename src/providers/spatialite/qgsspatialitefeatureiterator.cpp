@@ -235,6 +235,10 @@ QgsSpatiaLiteFeatureIterator::QgsSpatiaLiteFeatureIterator( QgsSpatiaLiteFeature
       sqliteStatement = nullptr;
       close();
     }
+    else
+    {
+      mQueryLogWrapper = std::make_unique<QgsDatabaseQueryLogWrapper>( mLastSql, mSource->mSqlitePath, QStringLiteral( "spatialite" ), QStringLiteral( "QgsSpatiaLiteFeatureIterator" ), QGS_QUERY_LOG_ORIGIN );
+    }
   }
 }
 
@@ -395,6 +399,7 @@ bool QgsSpatiaLiteFeatureIterator::prepareStatement( const QString &whereClause,
       QgsMessageLog::logMessage( QObject::tr( "SQLite error: %2\nSQL: %1" ).arg( sql, sqlite3_errmsg( mSqliteHandle ) ), QObject::tr( "SpatiaLite" ) );
       return false;
     }
+    mLastSql = sql;
   }
   catch ( QgsSpatiaLiteProvider::SLFieldNotFound )
   {
@@ -435,15 +440,18 @@ QString QgsSpatiaLiteFeatureIterator::whereClauseRect()
 {
   QString whereClause;
 
+  bool requiresGeom = false;
   if ( mRequest.flags() & QgsFeatureRequest::ExactIntersect )
   {
     // we are requested to evaluate a true INTERSECT relationship
     whereClause += QStringLiteral( "Intersects(%1, BuildMbr(%2)) AND " ).arg( QgsSqliteUtils::quotedIdentifier( mSource->mGeometryColumn ), mbr( mFilterRect ) );
+    requiresGeom = true;
   }
   if ( mSource->mVShapeBased )
   {
     // handling a VirtualShape layer
-    whereClause += QStringLiteral( "MbrIntersects(%1, BuildMbr(%2))" ).arg( QgsSqliteUtils::quotedIdentifier( mSource->mGeometryColumn ), mbr( mFilterRect ) );
+    whereClause += QStringLiteral( "%MbrIntersects(%1, BuildMbr(%2))" ).arg( QgsSqliteUtils::quotedIdentifier( mSource->mGeometryColumn ), mbr( mFilterRect ) );
+    requiresGeom = true;
   }
   else if ( mFilterRect.isFinite() )
   {
@@ -474,11 +482,15 @@ QString QgsSpatiaLiteFeatureIterator::whereClauseRect()
       // using simple MBR filtering
       whereClause += QStringLiteral( "MbrIntersects(%1, BuildMbr(%2))" ).arg( QgsSqliteUtils::quotedIdentifier( mSource->mGeometryColumn ), mbr( mFilterRect ) );
     }
+    requiresGeom = true;
   }
   else
   {
     whereClause = '1';
   }
+
+  if ( requiresGeom )
+    whereClause += QStringLiteral( " AND %1 IS NOT NULL" ).arg( QgsSqliteUtils::quotedIdentifier( mSource->mGeometryColumn ) );
   return whereClause;
 }
 

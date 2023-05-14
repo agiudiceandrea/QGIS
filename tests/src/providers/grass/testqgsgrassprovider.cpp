@@ -186,14 +186,15 @@ class TestQgsGrassCommandGroup
  * \ingroup UnitTests
  * This is a unit test for the QgsRasterLayer class.
  */
-class TestQgsGrassProvider: public QObject
+class TestQgsGrassProvider: public QgsTest
 {
     Q_OBJECT
+
+  public:
+    TestQgsGrassProvider() : QgsTest( QStringLiteral( "Grass provider tests" ) ) {}
+
   private slots:
     void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init() {} // will be called before each testfunction is executed.
-    void cleanup() {} // will be called after every testfunction.
 
     void fatalError();
     void locations();
@@ -230,7 +231,6 @@ class TestQgsGrassProvider: public QObject
     bool setAttributes( QgsFeature &feature, const QMap<QString, QVariant> &attributes );
     QString mGisdbase;
     QString mLocation;
-    QString mReport;
     QString mBuildMapset;
 };
 
@@ -283,21 +283,6 @@ void TestQgsGrassProvider::initTestCase()
   reportRow( "mLocation: " + mLocation );
   reportRow( "mBuildMapset: " + mBuildMapset );
   qDebug() << "mGisdbase = " << mGisdbase << " mLocation = " << mLocation;
-}
-
-//runs after all tests
-void TestQgsGrassProvider::cleanupTestCase()
-{
-  QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
-
-  //QgsApplication::exitQgis();
 }
 
 bool TestQgsGrassProvider::verify( bool ok )
@@ -924,7 +909,7 @@ QList< TestQgsGrassCommandGroup > TestQgsGrassProvider::createCommands()
   command = TestQgsGrassCommand( TestQgsGrassCommand::AddFeature );
   grassFeature = TestQgsGrassFeature( GV_POINT );
   grassFeature.setId( 1 );
-  geometry = new QgsGeometry( new QgsPoint( QgsWkbTypes::Point, 10, 10, 0 ) );
+  geometry = new QgsGeometry( new QgsPoint( Qgis::WkbType::Point, 10, 10, 0 ) );
   grassFeature.setGeometry( *geometry );
   delete geometry;
   command.grassFeatures << grassFeature;
@@ -934,7 +919,7 @@ QList< TestQgsGrassCommandGroup > TestQgsGrassProvider::createCommands()
   // Change geometry
   command = TestQgsGrassCommand( TestQgsGrassCommand::ChangeGeometry );
   command.fid = 1;
-  command.geometry = new QgsGeometry( new QgsPoint( QgsWkbTypes::Point, 20, 20, 0 ) );
+  command.geometry = new QgsGeometry( new QgsPoint( Qgis::WkbType::Point, 20, 20, 0 ) );
   commandGroup.commands << command;
 
   // Add field
@@ -1016,8 +1001,8 @@ QList< TestQgsGrassCommandGroup > TestQgsGrassProvider::createCommands()
   grassFeature.setId( 1 );
   line = new QgsLineString();
   pointList.clear();
-  pointList << QgsPoint( QgsWkbTypes::Point, 0, 0, 0 );
-  pointList << QgsPoint( QgsWkbTypes::Point, 20, 10, 0 );
+  pointList << QgsPoint( Qgis::WkbType::Point, 0, 0, 0 );
+  pointList << QgsPoint( Qgis::WkbType::Point, 20, 10, 0 );
   line->setPoints( pointList );
   pointList.clear();
   geometry = new QgsGeometry( line );

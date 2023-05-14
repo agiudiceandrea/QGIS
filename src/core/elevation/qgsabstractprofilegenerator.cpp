@@ -15,7 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsabstractprofilegenerator.h"
-
+#include "qgsprofilesnapping.h"
 
 
 QgsProfileRenderContext::QgsProfileRenderContext( QgsRenderContext &context )
@@ -58,3 +58,94 @@ void QgsProfileRenderContext::setElevationRange( const QgsDoubleRange &range )
 QgsAbstractProfileGenerator::~QgsAbstractProfileGenerator() = default;
 
 QgsAbstractProfileResults::~QgsAbstractProfileResults() = default;
+
+QgsProfileSnapResult QgsAbstractProfileResults::snapPoint( const QgsProfilePoint &, const QgsProfileSnapContext & )
+{
+  return QgsProfileSnapResult();
+}
+
+QVector<QgsProfileIdentifyResults> QgsAbstractProfileResults::identify( const QgsProfilePoint &, const QgsProfileIdentifyContext & )
+{
+  return {};
+}
+
+QVector<QgsProfileIdentifyResults> QgsAbstractProfileResults::identify( const QgsDoubleRange &, const QgsDoubleRange &, const QgsProfileIdentifyContext & )
+{
+  return {};
+}
+
+void QgsAbstractProfileResults::copyPropertiesFromGenerator( const QgsAbstractProfileGenerator * )
+{
+
+}
+
+//
+// QgsProfileGenerationContext
+//
+
+#define POINTS_TO_MM 2.83464567
+#define INCH_TO_MM 25.4
+
+double QgsProfileGenerationContext::convertDistanceToPixels( double size, Qgis::RenderUnit unit ) const
+{
+  double conversionFactor = 1.0;
+  const double pixelsPerMillimeter = mDpi / 25.4;
+  switch ( unit )
+  {
+    case Qgis::RenderUnit::Millimeters:
+      conversionFactor = pixelsPerMillimeter;
+      break;
+
+    case Qgis::RenderUnit::Points:
+      conversionFactor = pixelsPerMillimeter / POINTS_TO_MM;
+      break;
+
+    case Qgis::RenderUnit::Inches:
+      conversionFactor = pixelsPerMillimeter * INCH_TO_MM;
+      break;
+
+    case Qgis::RenderUnit::MapUnits:
+    {
+      conversionFactor = 1.0 / mMapUnitsPerDistancePixel;
+      break;
+    }
+    case Qgis::RenderUnit::Pixels:
+      conversionFactor = 1.0;
+      break;
+
+    case Qgis::RenderUnit::Unknown:
+    case Qgis::RenderUnit::Percentage:
+    case Qgis::RenderUnit::MetersInMapUnits:
+      //not supported
+      conversionFactor = 1.0;
+      break;
+  }
+
+  return size * conversionFactor;
+}
+
+bool QgsProfileGenerationContext::operator==( const QgsProfileGenerationContext &other ) const
+{
+  return qgsDoubleNear( mMaxErrorMapUnits, other.mMaxErrorMapUnits )
+         && qgsDoubleNear( mMapUnitsPerDistancePixel, other.mMapUnitsPerDistancePixel )
+         && qgsDoubleNear( mDpi, other.mDpi )
+         && mDistanceRange == other.mDistanceRange
+         && mElevationRange == other.mElevationRange;
+}
+
+bool QgsProfileGenerationContext::operator!=( const QgsProfileGenerationContext &other ) const
+{
+  return !( *this == other );
+}
+
+Qgis::ProfileGeneratorFlags QgsAbstractProfileGenerator::flags() const
+{
+  return Qgis::ProfileGeneratorFlags();
+}
+
+QgsProfileIdentifyResults::QgsProfileIdentifyResults( QgsMapLayer *layer, const QVector<QVariantMap> &results )
+  : mLayer( layer )
+  , mResults( results )
+{
+
+}

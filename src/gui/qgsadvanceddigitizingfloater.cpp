@@ -24,7 +24,9 @@
 #include "qgsfocuswatcher.h"
 
 QgsAdvancedDigitizingFloater::QgsAdvancedDigitizingFloater( QgsMapCanvas *canvas, QgsAdvancedDigitizingDockWidget *cadDockWidget )
-  : QWidget( canvas->viewport() ), mMapCanvas( canvas ), mCadDockWidget( cadDockWidget )
+  : QWidget( canvas->viewport() )
+  , mMapCanvas( canvas )
+  , mCadDockWidget( cadDockWidget )
 {
   setupUi( this );
 
@@ -34,6 +36,8 @@ QgsAdvancedDigitizingFloater::QgsAdvancedDigitizingFloater( QgsMapCanvas *canvas
   setActive( QgsSettings().value( QStringLiteral( "/Cad/Floater" ), false ).toBool() );
 
   hideIfDisabled();
+
+  enabledCommonAngleSnapping( cadDockWidget->commonAngleConstraint() );
 
   // This is required to be able to track mouse move events
   mMapCanvas->viewport()->installEventFilter( this );
@@ -55,6 +59,8 @@ QgsAdvancedDigitizingFloater::QgsAdvancedDigitizingFloater( QgsMapCanvas *canvas
   connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::valueZChanged, this, &QgsAdvancedDigitizingFloater::changeZ );
   connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::valueMChanged, this, &QgsAdvancedDigitizingFloater::changeM );
   connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::valueAngleChanged, this, &QgsAdvancedDigitizingFloater::changeAngle );
+  connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::valueCommonAngleSnappingChanged, this, &QgsAdvancedDigitizingFloater::changeCommonAngleSnapping );
+  connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::commonAngleSnappingShowInFloaterChanged, this, &QgsAdvancedDigitizingFloater::enabledCommonAngleSnapping );
   connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::valueDistanceChanged, this, &QgsAdvancedDigitizingFloater::changeDistance );
 
   connect( cadDockWidget, &QgsAdvancedDigitizingDockWidget::lockXChanged, this, &QgsAdvancedDigitizingFloater::changeLockX );
@@ -112,12 +118,13 @@ QgsAdvancedDigitizingFloater::QgsAdvancedDigitizingFloater( QgsMapCanvas *canvas
   connect( angleWatcher, &QgsFocusWatcher::focusOut, cadDockWidget, [ = ]() { cadDockWidget->setAngle( mAngleLineEdit->text(), QgsAdvancedDigitizingDockWidget::WidgetSetMode::FocusOut ); } );
   QgsFocusWatcher *distanceWatcher = new QgsFocusWatcher( mDistanceLineEdit );
   connect( distanceWatcher, &QgsFocusWatcher::focusOut, cadDockWidget, [ = ]() { cadDockWidget->setDistance( mDistanceLineEdit->text(), QgsAdvancedDigitizingDockWidget::WidgetSetMode::FocusOut ); } );
+  changeCommonAngleSnapping( mCadDockWidget->commonAngleConstraint() );
 
 }
 
 bool QgsAdvancedDigitizingFloater::eventFilter( QObject *obj, QEvent *event )
 {
-  if ( mCadDockWidget->cadEnabled() && mActive )
+  if ( mCadDockWidget && mCadDockWidget->cadEnabled() && mActive )
   {
     if ( event->type() == QEvent::MouseMove )
     {
@@ -163,7 +170,7 @@ void QgsAdvancedDigitizingFloater::updatePos( const QPoint &pos )
 
 void QgsAdvancedDigitizingFloater::hideIfDisabled()
 {
-  if ( ! mCadDockWidget->cadEnabled() || ! mActive )
+  if ( !mCadDockWidget || ! mCadDockWidget->cadEnabled() || ! mActive )
   {
     setVisible( false );
   }
@@ -187,6 +194,11 @@ void QgsAdvancedDigitizingFloater::changeZ( const QString &text )
 void QgsAdvancedDigitizingFloater::changeM( const QString &text )
 {
   mMLineEdit->setText( text );
+}
+
+void QgsAdvancedDigitizingFloater::changeCommonAngleSnapping( double angle )
+{
+  mCommonAngleSnappingLineEdit->setText( qgsDoubleNear( angle, 0.0 ) ? tr( "disabled" ) : QLocale().toString( angle ).append( tr( " °" ) ) );
 }
 
 void QgsAdvancedDigitizingFloater::changeDistance( const QString &text )
@@ -438,6 +450,13 @@ void QgsAdvancedDigitizingFloater::enabledChangedDistance( bool enabled )
 {
   mDistanceLineEdit->setVisible( enabled );
   mDistanceLabel->setVisible( enabled );
+  adjustSize();
+}
+
+void QgsAdvancedDigitizingFloater::enabledCommonAngleSnapping( bool enabled )
+{
+  mCommonAngleSnappingLineEdit->setVisible( enabled );
+  mCommonAngleSnappingLabel->setVisible( enabled );
   adjustSize();
 }
 

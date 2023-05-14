@@ -21,6 +21,7 @@
 #include "ui_qgsprojectelevationsettingswidgetbase.h"
 
 class QgsVectorLayer;
+class QgsElevationShadingRendererSettingsWidget;
 
 class QgsProjectElevationSettingsWidget : public QgsOptionsPageWidget, private Ui::QgsProjectElevationSettingsWidgetBase
 {
@@ -37,6 +38,9 @@ class QgsProjectElevationSettingsWidget : public QgsOptionsPageWidget, private U
 
     bool validate();
 
+  private:
+    QgsElevationShadingRendererSettingsWidget *mElevationShadingSettingsWidget = nullptr;
+
 };
 
 
@@ -45,9 +49,6 @@ class QgsProjectElevationSettingsWidgetFactory : public QgsOptionsWidgetFactory
     Q_OBJECT
   public:
     explicit QgsProjectElevationSettingsWidgetFactory( QObject *parent = nullptr );
-
-    QString title() const override;
-    QIcon icon() const override;
 
     QgsOptionsPageWidget *createWidget( QWidget *parent = nullptr ) const override;
 };

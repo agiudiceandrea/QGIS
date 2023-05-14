@@ -13,7 +13,9 @@
  *                                                                         *
  ***************************************************************************/
 
+#include <QLocale>
 #include <QString>
+
 #include "qgstest.h"
 #include "qgscoordinateutils.h"
 
@@ -22,9 +24,34 @@ class TestQgsCoordinateUtils : public QObject
     Q_OBJECT
   private slots:
 
+    void testPrecisionForCrs();
     void testDegreeWithSuffix();
+    void testLocale();
+    void initTestCase();
+    void cleanupTestCase();
 };
 
+
+void TestQgsCoordinateUtils::initTestCase()
+{
+  QgsApplication::init();
+  QgsApplication::initQgis();
+}
+
+void TestQgsCoordinateUtils::cleanupTestCase()
+{
+  QgsApplication::exitQgis();
+}
+
+void TestQgsCoordinateUtils::testPrecisionForCrs()
+{
+  // 8 decimal places for degrees based crs
+  QCOMPARE( QgsCoordinateUtils::calculateCoordinatePrecision( QgsCoordinateReferenceSystem( "EPSG:4326" ) ), 8 );
+  // 3 decimal places for others
+  QCOMPARE( QgsCoordinateUtils::calculateCoordinatePrecision( QgsCoordinateReferenceSystem( "EPSG:3857" ) ), 3 );
+  QCOMPARE( QgsCoordinateUtils::calculateCoordinatePrecision( QgsCoordinateReferenceSystem( "EPSG:3111" ) ), 3 );
+  QCOMPARE( QgsCoordinateUtils::calculateCoordinatePrecision( QgsCoordinateReferenceSystem() ), 3 );
+}
 
 void TestQgsCoordinateUtils::testDegreeWithSuffix()
 {
@@ -60,6 +87,25 @@ void TestQgsCoordinateUtils::testDegreeWithSuffix()
   value = QgsCoordinateUtils::degreeToDecimal( QStringLiteral( "bad string" ), &ok, &isEasting );
   QCOMPARE( ok, false );
   QCOMPARE( value, 0.0 );
+}
+
+void TestQgsCoordinateUtils::testLocale()
+{
+  bool ok = false ;
+  bool isEasting = false;
+  double value = 0.0;
+
+  QLocale::setDefault( QLocale::French );
+
+  value = QgsCoordinateUtils::dmsToDecimal( QStringLiteral( "6°26'55,7\"" ), &ok, &isEasting );
+  QCOMPARE( ok, true );
+  QGSCOMPARENEAR( value, 6.448805, 0.000001 );
+
+  value = QgsCoordinateUtils::degreeToDecimal( QStringLiteral( "104,34936E" ), &ok, &isEasting );
+  QCOMPARE( ok, true );
+  QCOMPARE( value, 104.34936 );
+
+  QLocale::setDefault( QLocale::English );
 }
 
 QGSTEST_MAIN( TestQgsCoordinateUtils )

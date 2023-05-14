@@ -16,8 +16,6 @@
  ***************************************************************************/
 
 #include "qgis.h"
-#include "qgslogger.h"
-#include "qgsproviderregistry.h"
 #include "qgscopcprovider.h"
 #include "qgscopcpointcloudindex.h"
 #include "qgsremotecopcpointcloudindex.h"
@@ -25,8 +23,9 @@
 #include "qgsapplication.h"
 #include "qgsprovidersublayerdetails.h"
 #include "qgsproviderutils.h"
+#include "qgsthreadingutils.h"
 
-#include <QFileInfo>
+#include <QIcon>
 
 ///@cond PRIVATE
 
@@ -39,7 +38,8 @@ QgsCopcProvider::QgsCopcProvider(
   QgsDataProvider::ReadFlags flags )
   : QgsPointCloudDataProvider( uri, options, flags )
 {
-  if ( uri.startsWith( QStringLiteral( "http" ), Qt::CaseSensitivity::CaseInsensitive ) )
+  bool isRemote = uri.startsWith( QStringLiteral( "http" ), Qt::CaseSensitivity::CaseInsensitive );
+  if ( isRemote )
     mIndex.reset( new QgsRemoteCopcPointCloudIndex );
   else
     mIndex.reset( new QgsCopcPointCloudIndex );
@@ -49,27 +49,39 @@ QgsCopcProvider::QgsCopcProvider(
     profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Open data source" ), QStringLiteral( "projectload" ) );
 
   loadIndex( );
+  if ( mIndex && !mIndex->isValid() )
+  {
+    appendError( mIndex->error() );
+  }
 }
 
 QgsCopcProvider::~QgsCopcProvider() = default;
 
 QgsCoordinateReferenceSystem QgsCopcProvider::crs() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mIndex->crs();
 }
 
 QgsRectangle QgsCopcProvider::extent() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mIndex->extent();
 }
 
 QgsPointCloudAttributeCollection QgsCopcProvider::attributes() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mIndex->attributes();
 }
 
 bool QgsCopcProvider::isValid() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( !mIndex.get() )
   {
     return false;
@@ -79,36 +91,38 @@ bool QgsCopcProvider::isValid() const
 
 QString QgsCopcProvider::name() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return QStringLiteral( "copc" );
 }
 
 QString QgsCopcProvider::description() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return QStringLiteral( "Point Clouds COPC" );
 }
 
 QgsPointCloudIndex *QgsCopcProvider::index() const
 {
+  // non fatal for now -- 2d rendering of point clouds is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mIndex.get();
 }
 
 qint64 QgsCopcProvider::pointCount() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mIndex->pointCount();
-}
-
-QVariantList QgsCopcProvider::metadataClasses( const QString &attribute ) const
-{
-  return mIndex->metadataClasses( attribute );
-}
-
-QVariant QgsCopcProvider::metadataClassStatistic( const QString &attribute, const QVariant &value, QgsStatisticalSummary::Statistic statistic ) const
-{
-  return mIndex->metadataClassStatistic( attribute, value, statistic );
 }
 
 void QgsCopcProvider::loadIndex( )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  // Index already loaded -> no need to load
   if ( mIndex->isValid() )
     return;
   mIndex->load( dataSourceUri() );
@@ -116,22 +130,26 @@ void QgsCopcProvider::loadIndex( )
 
 QVariantMap QgsCopcProvider::originalMetadata() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mIndex->originalMetadata();
 }
 
 void QgsCopcProvider::generateIndex()
 {
-  //no-op, index is always generated
-}
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-QVariant QgsCopcProvider::metadataStatistic( const QString &attribute, QgsStatisticalSummary::Statistic statistic ) const
-{
-  return mIndex->metadataStatistic( attribute, statistic );
+  //no-op, index is always generated
 }
 
 QgsCopcProviderMetadata::QgsCopcProviderMetadata():
   QgsProviderMetadata( PROVIDER_KEY, PROVIDER_DESCRIPTION )
 {
+}
+
+QIcon QgsCopcProviderMetadata::icon() const
+{
+  return QgsApplication::getThemeIcon( QStringLiteral( "mIconPointCloudLayer.svg" ) );
 }
 
 QgsCopcProvider *QgsCopcProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
@@ -142,12 +160,12 @@ QgsCopcProvider *QgsCopcProviderMetadata::createProvider( const QString &uri, co
 QList<QgsProviderSublayerDetails> QgsCopcProviderMetadata::querySublayers( const QString &uri, Qgis::SublayerQueryFlags, QgsFeedback * ) const
 {
   const QVariantMap parts = decodeUri( uri );
-  if ( parts.value( QStringLiteral( "path" ) ).toString().endsWith( ".copc.laz", Qt::CaseSensitivity::CaseInsensitive ) )
+  if ( parts.value( QStringLiteral( "file-name" ) ).toString().endsWith( ".copc.laz", Qt::CaseSensitivity::CaseInsensitive ) )
   {
     QgsProviderSublayerDetails details;
     details.setUri( uri );
     details.setProviderKey( QStringLiteral( "copc" ) );
-    details.setType( QgsMapLayerType::PointCloudLayer );
+    details.setType( Qgis::LayerType::PointCloud );
     details.setName( QgsProviderUtils::suggestLayerNameFromFilePath( uri ) );
     return {details};
   }
@@ -160,42 +178,42 @@ QList<QgsProviderSublayerDetails> QgsCopcProviderMetadata::querySublayers( const
 int QgsCopcProviderMetadata::priorityForUri( const QString &uri ) const
 {
   const QVariantMap parts = decodeUri( uri );
-  const QFileInfo fi( parts.value( QStringLiteral( "path" ) ).toString() );
-  if ( parts.value( QStringLiteral( "path" ) ).toString().endsWith( ".copc.laz", Qt::CaseSensitivity::CaseInsensitive ) )
+  if ( parts.value( QStringLiteral( "file-name" ) ).toString().endsWith( ".copc.laz", Qt::CaseSensitivity::CaseInsensitive ) )
     return 100;
 
   return 0;
 }
 
-QList<QgsMapLayerType> QgsCopcProviderMetadata::validLayerTypesForUri( const QString &uri ) const
+QList<Qgis::LayerType> QgsCopcProviderMetadata::validLayerTypesForUri( const QString &uri ) const
 {
   const QVariantMap parts = decodeUri( uri );
-  const QFileInfo fi( parts.value( QStringLiteral( "path" ) ).toString() );
-  if ( parts.value( QStringLiteral( "path" ) ).toString().endsWith( ".copc.laz", Qt::CaseSensitivity::CaseInsensitive ) )
-    return QList< QgsMapLayerType>() << QgsMapLayerType::PointCloudLayer;
+  if ( parts.value( QStringLiteral( "file-name" ) ).toString().endsWith( ".copc.laz", Qt::CaseSensitivity::CaseInsensitive ) )
+    return QList< Qgis::LayerType>() << Qgis::LayerType::PointCloud;
 
-  return QList< QgsMapLayerType>();
+  return QList< Qgis::LayerType>();
 }
 
 QVariantMap QgsCopcProviderMetadata::decodeUri( const QString &uri ) const
 {
-  const QString path = uri;
   QVariantMap uriComponents;
-  uriComponents.insert( QStringLiteral( "path" ), path );
+  QUrl url = QUrl::fromUserInput( uri );
+  uriComponents.insert( QStringLiteral( "file-name" ), url.fileName() );
+  uriComponents.insert( QStringLiteral( "path" ), uri );
   return uriComponents;
 }
 
-QString QgsCopcProviderMetadata::filters( QgsProviderMetadata::FilterType type )
+QString QgsCopcProviderMetadata::filters( Qgis::FileFilterType type )
 {
   switch ( type )
   {
-    case QgsProviderMetadata::FilterType::FilterVector:
-    case QgsProviderMetadata::FilterType::FilterRaster:
-    case QgsProviderMetadata::FilterType::FilterMesh:
-    case QgsProviderMetadata::FilterType::FilterMeshDataset:
+    case Qgis::FileFilterType::Vector:
+    case Qgis::FileFilterType::Raster:
+    case Qgis::FileFilterType::Mesh:
+    case Qgis::FileFilterType::MeshDataset:
+    case Qgis::FileFilterType::VectorTile:
       return QString();
 
-    case QgsProviderMetadata::FilterType::FilterPointCloud:
+    case Qgis::FileFilterType::PointCloud:
       return QObject::tr( "COPC Point Clouds" ) + QStringLiteral( " (*.copc.laz *.COPC.LAZ)" );
   }
   return QString();
@@ -204,6 +222,11 @@ QString QgsCopcProviderMetadata::filters( QgsProviderMetadata::FilterType type )
 QgsProviderMetadata::ProviderCapabilities QgsCopcProviderMetadata::providerCapabilities() const
 {
   return FileBasedUris;
+}
+
+QList<Qgis::LayerType> QgsCopcProviderMetadata::supportedLayerTypes() const
+{
+  return { Qgis::LayerType::PointCloud };
 }
 
 QString QgsCopcProviderMetadata::encodeUri( const QVariantMap &parts ) const

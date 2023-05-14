@@ -117,6 +117,28 @@ void QgsUserProfileManager::setDefaultFromActive()
   setDefaultProfileName( userProfile()->name() );
 }
 
+QString QgsUserProfileManager::lastProfileName() const
+{
+  return mSettings->value( QStringLiteral( "/core/lastProfile" ), QString() ).toString();
+}
+
+void QgsUserProfileManager::updateLastProfileName( )
+{
+  mSettings->setValue( QStringLiteral( "/core/lastProfile" ), userProfile()->name() );
+  mSettings->sync();
+}
+
+Qgis::UserProfileSelectionPolicy QgsUserProfileManager::userProfileSelectionPolicy() const
+{
+  return static_cast< Qgis::UserProfileSelectionPolicy >( mSettings->value( QStringLiteral( "/core/selectionPolicy" ), 0 ).toInt() );
+}
+
+void QgsUserProfileManager::setUserProfileSelectionPolicy( Qgis::UserProfileSelectionPolicy policy )
+{
+  mSettings->setValue( QStringLiteral( "/core/selectionPolicy" ), static_cast< int >( policy ) );
+  mSettings->sync();
+}
+
 QStringList QgsUserProfileManager::allProfiles() const
 {
   return QDir( mRootProfilePath ).entryList( QDir::Dirs | QDir::NoDotAndDotDot );
@@ -142,7 +164,11 @@ QgsError QgsUserProfileManager::createUserProfile( const QString &name )
   const QDir folder( mRootProfilePath + QDir::separator() + name );
   if ( !folder.exists() )
   {
-    QDir().mkpath( folder.absolutePath() );
+    if ( !QDir().mkpath( folder.absolutePath() ) )
+    {
+      error.append( tr( "Cannot write '%1'" ).arg( folder.absolutePath() ) );
+      return error;
+    }
   }
 
   QFile qgisPrivateDbFile( folder.absolutePath() + QDir::separator() + "qgis.db" );

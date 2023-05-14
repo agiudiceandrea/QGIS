@@ -39,9 +39,6 @@
 #include "qgsfillsymbollayer.h"
 #include "qgslinesymbollayer.h"
 #include "qgspallabeling.h"
-#include "qgsmapcanvas.h"
-#include "qgsprojectionselectiondialog.h"
-#include "qgsmessagelog.h"
 #include "qgslogger.h"
 #include "qgsproperty.h"
 #include "qgslayertree.h"
@@ -213,7 +210,7 @@ void QgsDwgImportDialog::pbLoadDatabase_clicked()
       const int row = mLayers->rowCount();
       mLayers->setRowCount( row + 1 );
 
-      QgsDebugMsg( QStringLiteral( "name:%1 color:%2 flags:%3" ).arg( f.attribute( idxName ).toString() ).arg( f.attribute( idxColor ).toInt() ).arg( f.attribute( idxFlags ).toString(), 0, 16 ) );
+      QgsDebugMsg( QStringLiteral( "name:%1 color:%2 flags:%3" ).arg( f.attribute( idxName ).toString() ).arg( f.attribute( idxColor ).toInt() ).arg( f.attribute( idxFlags ).toInt(), 0, 16 ) );
 
       QTableWidgetItem *item = nullptr;
       item = new QTableWidgetItem( f.attribute( idxName ).toString() );
@@ -332,7 +329,7 @@ void QgsDwgImportDialog::createGroup( QgsLayerTreeGroup *group, const QString &n
     // sll->setDataDefinedProperty( QgsSymbolLayer::PropertyCustomDash, QgsProperty::fromField( "linetype" ) );
     sym = new QgsLineSymbol();
     sym->changeSymbolLayer( 0, sll );
-    sym->setOutputUnit( QgsUnitTypes::RenderMillimeters );
+    sym->setOutputUnit( Qgis::RenderUnit::Millimeters );
     l->setRenderer( new QgsSingleSymbolRenderer( sym ) );
   }
 
@@ -346,7 +343,7 @@ void QgsDwgImportDialog::createGroup( QgsLayerTreeGroup *group, const QString &n
     sll->setPenJoinStyle( Qt::MiterJoin );
     sll->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, QgsProperty::fromField( QStringLiteral( "width" ) ) );
     sll->setDataDefinedProperty( QgsSymbolLayer::PropertyLayerEnabled, QgsProperty::fromExpression( QStringLiteral( "width>0" ) ) );
-    sll->setOutputUnit( QgsUnitTypes::RenderMapUnits );
+    sll->setOutputUnit( Qgis::RenderUnit::MapUnits );
     // sll->setUseCustomDashPattern( true );
     // sll->setCustomDashPatternUnit( QgsSymbolV2::MapUnit );
     // sll->setDataDefinedProperty( QgsSymbolLayer::PropertyCustomDash, QgsProperty::fromField( "linetype" ) );
@@ -357,7 +354,7 @@ void QgsDwgImportDialog::createGroup( QgsLayerTreeGroup *group, const QString &n
     sll->setPenJoinStyle( Qt::MiterJoin );
     sll->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, QgsProperty::fromField( QStringLiteral( "linewidth" ) ) );
     sll->setDataDefinedProperty( QgsSymbolLayer::PropertyLayerEnabled, QgsProperty::fromExpression( QStringLiteral( "width=0" ) ) );
-    sll->setOutputUnit( QgsUnitTypes::RenderMillimeters );
+    sll->setOutputUnit( Qgis::RenderUnit::Millimeters );
     sym->appendSymbolLayer( sll );
 
     l->setRenderer( new QgsSingleSymbolRenderer( sym ) );
@@ -369,7 +366,7 @@ void QgsDwgImportDialog::createGroup( QgsLayerTreeGroup *group, const QString &n
     l->setRenderer( new QgsNullSymbolRenderer() );
 
     QgsTextFormat tf;
-    tf.setSizeUnit( QgsUnitTypes::RenderMapUnits );
+    tf.setSizeUnit( Qgis::RenderUnit::MapUnits );
 
     QgsPalLayerSettings pls;
     pls.setFormat( tf );

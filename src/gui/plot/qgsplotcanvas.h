@@ -148,7 +148,16 @@ class GUI_EXPORT QgsPlotCanvas : public QGraphicsView
      *
      * The default implementation does nothing.
      */
-    virtual void zoomToRect( const QRectF rect );
+    virtual void zoomToRect( const QRectF &rect );
+
+    /**
+     * Snap a canvas point to the plot
+     *
+     * Returns an empty point if snapping was not possible.
+     *
+     * \param point point in canvas coordinates
+     */
+    virtual QgsPointXY snapToPlot( QPoint point );
 
   public slots:
 
@@ -163,6 +172,11 @@ class GUI_EXPORT QgsPlotCanvas : public QGraphicsView
      * Emitted when the plot tool is changed.
      */
     void toolChanged( QgsPlotTool *newTool );
+
+    /**
+     * Emitted whenever the visible area of the plot is changed.
+     */
+    void plotAreaChanged();
 
     /**
      * Emitted before the canvas context menu will be shown.

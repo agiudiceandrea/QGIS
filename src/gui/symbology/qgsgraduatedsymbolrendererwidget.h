@@ -26,6 +26,7 @@
 #include "qgsprocessingwidgetwrapper.h"
 #include "qgsdoublevalidator.h"
 
+#include "qtimer.h"
 #include "ui_qgsgraduatedsymbolrendererwidget.h"
 
 #include "qgis_gui.h"
@@ -148,6 +149,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
     void changeGraduatedSymbol();
     void selectionChanged( const QItemSelection &selected, const QItemSelection &deselected );
     void symmetryPointEditingFinished();
+    void classifyGraduatedImpl();
 
   protected slots:
 
@@ -201,6 +203,10 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
     QgsDoubleValidator *mSymmetryPointValidator = nullptr;
     QAction *mActionLevels = nullptr;
     std::vector< std::unique_ptr< QgsAbstractProcessingParameterWidgetWrapper >> mParameterWidgetWrappers;
+
+    int mBlockUpdates = 0;
+
+    QTimer mUpdateTimer;
 };
 
 

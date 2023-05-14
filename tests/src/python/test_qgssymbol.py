@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     test_qgssymbol.py
@@ -22,47 +20,47 @@ __date__ = 'January 2016'
 __copyright__ = '(C) 2016, Nyall Dawson'
 
 import qgis  # NOQA
+from qgis.PyQt.QtCore import QDir, QSize, Qt
+from qgis.PyQt.QtGui import QColor, QImage, QPainter
+from qgis.PyQt.QtXml import QDomDocument
+from qgis.core import (
+    Qgis,
+    QgsArrowSymbolLayer,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsFeature,
+    QgsFillSymbol,
+    QgsGeometry,
+    QgsGeometryGeneratorSymbolLayer,
+    QgsLineString,
+    QgsLineSymbol,
+    QgsMapSettings,
+    QgsMapUnitScale,
+    QgsMarkerLineSymbolLayer,
+    QgsMarkerSymbol,
+    QgsMultiPolygon,
+    QgsPoint,
+    QgsPolygon,
+    QgsProject,
+    QgsProperty,
+    QgsRasterFillSymbolLayer,
+    QgsReadWriteContext,
+    QgsRectangle,
+    QgsRenderChecker,
+    QgsRenderContext,
+    QgsSimpleFillSymbolLayer,
+    QgsSimpleLineSymbolLayer,
+    QgsSimpleMarkerSymbolLayer,
+    QgsSimpleMarkerSymbolLayerBase,
+    QgsSymbol,
+    QgsSymbolLayer,
+    QgsSymbolLayerUtils,
+    QgsUnitTypes,
+    QgsWkbTypes,
+)
+from qgis.testing import start_app, unittest
 
 from utilities import unitTestDataPath
-
-from qgis.PyQt.QtCore import QDir, Qt, QSize
-from qgis.PyQt.QtGui import QImage, QColor, QPainter
-from qgis.PyQt.QtXml import QDomDocument
-
-from qgis.core import (QgsGeometry,
-                       QgsRectangle,
-                       QgsCoordinateTransform,
-                       QgsCoordinateReferenceSystem,
-                       QgsMapUnitScale,
-                       QgsMarkerSymbol,
-                       QgsMultiPolygon,
-                       QgsPolygon,
-                       QgsLineString,
-                       QgsFillSymbol,
-                       QgsLineSymbol,
-                       QgsRenderContext,
-                       QgsFeature,
-                       QgsMapSettings,
-                       QgsRenderChecker,
-                       QgsSimpleMarkerSymbolLayer,
-                       QgsSimpleMarkerSymbolLayerBase,
-                       QgsSimpleLineSymbolLayer,
-                       QgsSimpleFillSymbolLayer,
-                       QgsUnitTypes,
-                       QgsWkbTypes,
-                       QgsProject,
-                       QgsReadWriteContext,
-                       QgsSymbolLayerUtils,
-                       QgsMarkerLineSymbolLayer,
-                       QgsArrowSymbolLayer,
-                       QgsSymbol,
-                       Qgis,
-                       QgsSymbolLayer,
-                       QgsProperty,
-                       QgsRasterFillSymbolLayer
-                       )
-
-from qgis.testing import unittest, start_app
 
 start_app()
 TEST_DATA_DIR = unitTestDataPath()
@@ -78,7 +76,7 @@ class TestQgsSymbol(unittest.TestCase):
         self.report = "<h1>Python QgsSymbol Tests</h1>\n"
 
     def tearDown(self):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
+        report_file_path = f"{QDir.tempPath()}/qgistest.html"
         with open(report_file_path, 'a') as report_file:
             report_file.write(self.report)
 
@@ -267,10 +265,12 @@ class TestQgsSymbol(unittest.TestCase):
                   'reference_image': 'empty'},
                  {'name': 'CircularString',
                   'wkt': 'CIRCULARSTRING(268 415,227 505,227 406)',
-                  'reference_image': 'circular_string'},
+                  'reference_image': 'circular_string',
+                  'clip_size': 30},
                  {'name': 'CompoundCurve',
                   'wkt': 'COMPOUNDCURVE((5 3, 5 13), CIRCULARSTRING(5 13, 7 15, 9 13), (9 13, 9 3), CIRCULARSTRING(9 3, 7 1, 5 3))',
-                  'reference_image': 'compound_curve'},
+                  'reference_image': 'compound_curve',
+                  'clip_size': 30},
                  {'name': 'CurvePolygon',
                   'wkt': 'CURVEPOLYGON(CIRCULARSTRING(1 3, 3 5, 4 7, 7 3, 1 3))',
                   'reference_image': 'curve_polygon'},
@@ -286,7 +286,7 @@ class TestQgsSymbol(unittest.TestCase):
             def get_geom():
                 if 'geom' not in test:
                     geom = QgsGeometry.fromWkt(test['wkt'])
-                    assert geom and not geom.isNull(), 'Could not create geometry {}'.format(test['wkt'])
+                    assert geom and not geom.isNull(), f"Could not create geometry {test['wkt']}"
                 else:
                     geom = test['geom']
                 return geom
@@ -315,7 +315,30 @@ class TestQgsSymbol(unittest.TestCase):
             rendered_image = self.renderGeometry(geom_m)
             assert self.imageCheck(test['name'] + 'M', test['reference_image'], rendered_image)
 
-    def renderGeometry(self, geom):
+            # test with clipping
+
+            geom = get_geom()
+            rendered_image = self.renderGeometry(geom, clipped_geometry=True, clip_size=test.get('clip_size', 10))
+            self.assertTrue(self.imageCheck(test['name'], test['reference_image'] + '_clipped', rendered_image), test['name'])
+
+            # test with Z
+            geom_z = get_geom()
+            geom_z.get().addZValue(5)
+            rendered_image = self.renderGeometry(geom_z, clipped_geometry=True, clip_size=test.get('clip_size', 10))
+            assert self.imageCheck(test['name'] + 'Z', test['reference_image'] + '_clipped', rendered_image)
+
+            # test with ZM
+            geom_z.get().addMValue(15)
+            rendered_image = self.renderGeometry(geom_z, clipped_geometry=True, clip_size=test.get('clip_size', 10))
+            assert self.imageCheck(test['name'] + 'ZM', test['reference_image'] + '_clipped', rendered_image)
+
+            # test with M
+            geom_m = get_geom()
+            geom_m.get().addMValue(15)
+            rendered_image = self.renderGeometry(geom_m, clipped_geometry=True, clip_size=test.get('clip_size', 10))
+            assert self.imageCheck(test['name'] + 'M', test['reference_image'] + '_clipped', rendered_image)
+
+    def renderGeometry(self, geom, clipped_geometry=False, clip_size=10):
         f = QgsFeature()
         f.setGeometry(geom)
 
@@ -326,7 +349,10 @@ class TestQgsSymbol(unittest.TestCase):
         extent = geom.get().boundingBox()
         # buffer extent by 10%
         if extent.width() > 0:
-            extent = extent.buffered((extent.height() + extent.width()) / 20.0)
+            if clipped_geometry:
+                extent = extent.buffered(-(extent.height() + extent.width()) / clip_size)
+            else:
+                extent = extent.buffered((extent.height() + extent.width()) / 20.0)
         else:
             extent = extent.buffered(10)
 
@@ -690,6 +716,81 @@ class TestQgsSymbol(unittest.TestCase):
 
         return image
 
+    def test_render_line_nan_z(self):
+        geom = QgsGeometry.fromPolyline([
+            QgsPoint(10, 10, 0),
+            QgsPoint(20, 20, 0),
+            QgsPoint(30, 10, float("nan")),
+        ])
+
+        f = QgsFeature()
+        f.setGeometry(geom)
+
+        image = QImage(200, 200, QImage.Format_RGB32)
+
+        painter = QPainter()
+        ms = QgsMapSettings()
+        extent = geom.get().boundingBox()
+        # buffer extent by 10%
+        extent = extent.buffered((extent.height() + extent.width()) / 20.0)
+
+        ms.setExtent(extent)
+        ms.setOutputSize(image.size())
+        context = QgsRenderContext.fromMapSettings(ms)
+        context.setPainter(painter)
+        context.setScaleFactor(96 / 25.4)  # 96 DPI
+
+        symbol = QgsLineSymbol.createSimple({'color': '#ffffff', 'line_width': '3'})
+
+        painter.begin(image)
+        try:
+            image.fill(QColor(0, 0, 0))
+            symbol.startRender(context)
+            symbol.renderFeature(f, context)
+            symbol.stopRender(context)
+        finally:
+            painter.end()
+
+        assert self.imageCheck('Linestring with nan z', 'linestring_nan_z', image)
+
+    def test_render_polygon_nan_z(self):
+        geom = QgsGeometry(QgsPolygon(QgsLineString([
+            QgsPoint(10, 10, 0),
+            QgsPoint(20, 20, 0),
+            QgsPoint(30, 10, float("nan")),
+            QgsPoint(10, 10, 0),
+        ])))
+
+        f = QgsFeature()
+        f.setGeometry(geom)
+
+        image = QImage(200, 200, QImage.Format_RGB32)
+
+        painter = QPainter()
+        ms = QgsMapSettings()
+        extent = geom.get().boundingBox()
+        # buffer extent by 10%
+        extent = extent.buffered((extent.height() + extent.width()) / 20.0)
+
+        ms.setExtent(extent)
+        ms.setOutputSize(image.size())
+        context = QgsRenderContext.fromMapSettings(ms)
+        context.setPainter(painter)
+        context.setScaleFactor(96 / 25.4)  # 96 DPI
+
+        symbol = QgsFillSymbol.createSimple({'color': '#ffffff', 'outline_color': '#ffffff', 'outline_width': '3'})
+
+        painter.begin(image)
+        try:
+            image.fill(QColor(0, 0, 0))
+            symbol.startRender(context)
+            symbol.renderFeature(f, context)
+            symbol.stopRender(context)
+        finally:
+            painter.end()
+
+        assert self.imageCheck('Polygon with nan z', 'polygon_nan_z', image)
+
     def testGeometryCollectionRender(self):
         tests = [{'name': 'Marker',
                   'wkt': 'GeometryCollection (Point(1 2))',
@@ -751,7 +852,7 @@ class TestQgsSymbol(unittest.TestCase):
             self.assertTrue(self.imageCheck(test['name'], test['reference_image'], rendered_image, '_collection'), test['name'])
 
     def imageCheck(self, name, reference_image, image, extra=''):
-        self.report += "<h2>Render {}</h2>\n".format(name)
+        self.report += f"<h2>Render {name}</h2>\n"
         temp_dir = QDir.tempPath() + '/'
         file_name = temp_dir + 'symbol_' + name + extra + ".png"
         image.save(file_name, "PNG")
@@ -762,7 +863,7 @@ class TestQgsSymbol(unittest.TestCase):
         checker.setColorTolerance(2)
         result = checker.compareImages(name, 20)
         self.report += checker.report()
-        print((self.report))
+        print(self.report)
         return result
 
 
@@ -772,7 +873,7 @@ class TestQgsMarkerSymbol(unittest.TestCase):
         self.report = "<h1>Python QgsMarkerSymbol Tests</h1>\n"
 
     def tearDown(self):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
+        report_file_path = f"{QDir.tempPath()}/qgistest.html"
         with open(report_file_path, 'a') as report_file:
             report_file.write(self.report)
 
@@ -832,6 +933,34 @@ class TestQgsMarkerSymbol(unittest.TestCase):
         markerSymbol.symbolLayer(1).setSize(45)
         self.assertAlmostEqual(markerSymbol.size(context), 45, 3)
         self.assertAlmostEqual(markerSymbol.size(context2), 45, 3)
+
+    def testGeometryGeneratorSize(self):
+        # test marker symbol size propagation to geometry generated sub marker symbols
+        geomGeneratorSymbolLayer = QgsGeometryGeneratorSymbolLayer.create({'geometryModifier': '$geometry'})
+        geomGeneratorSymbolLayer.setSymbolType(QgsSymbol.Marker)
+        geomGeneratorSymbolLayer.subSymbol().setSize(2.5)
+
+        markerSymbol = QgsMarkerSymbol()
+        markerSymbol.deleteSymbolLayer(0)
+        markerSymbol.appendSymbolLayer(geomGeneratorSymbolLayer)
+        self.assertEqual(markerSymbol.size(), 2.5)
+
+        markerSymbol.setSize(10.5)
+        self.assertEqual(markerSymbol.size(), 10.5)
+
+    def testGeometryGeneratorWidth(self):
+        # test line symbol width propagation to geometry generated sub line symbols
+        geomGeneratorSymbolLayer = QgsGeometryGeneratorSymbolLayer.create({'geometryModifier': '$geometry'})
+        geomGeneratorSymbolLayer.setSymbolType(QgsSymbol.Line)
+        geomGeneratorSymbolLayer.subSymbol().setWidth(2.5)
+
+        lineSymbol = QgsLineSymbol()
+        lineSymbol.deleteSymbolLayer(0)
+        lineSymbol.appendSymbolLayer(geomGeneratorSymbolLayer)
+        self.assertEqual(lineSymbol.width(), 2.5)
+
+        lineSymbol.setWidth(10.5)
+        self.assertEqual(lineSymbol.width(), 10.5)
 
     def testAngle(self):
         # test angle and setAngle
@@ -1003,7 +1132,7 @@ class TestQgsMarkerSymbol(unittest.TestCase):
         return image
 
     def imageCheck(self, name, reference_image, image):
-        self.report += "<h2>Render {}</h2>\n".format(name)
+        self.report += f"<h2>Render {name}</h2>\n"
         temp_dir = QDir.tempPath() + '/'
         file_name = temp_dir + 'symbol_' + name + ".png"
         image.save(file_name, "PNG")
@@ -1014,7 +1143,7 @@ class TestQgsMarkerSymbol(unittest.TestCase):
         checker.setColorTolerance(2)
         result = checker.compareImages(name, 20)
         self.report += checker.report()
-        print((self.report))
+        print(self.report)
         return result
 
 
@@ -1024,7 +1153,7 @@ class TestQgsLineSymbol(unittest.TestCase):
         self.report = "<h1>Python QgsLineSymbol Tests</h1>\n"
 
     def tearDown(self):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
+        report_file_path = f"{QDir.tempPath()}/qgistest.html"
         with open(report_file_path, 'a') as report_file:
             report_file.write(self.report)
 
@@ -1089,7 +1218,7 @@ class TestQgsFillSymbol(unittest.TestCase):
         self.report = "<h1>Python QgsFillSymbol Tests</h1>\n"
 
     def tearDown(self):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
+        report_file_path = f"{QDir.tempPath()}/qgistest.html"
         with open(report_file_path, 'a') as report_file:
             report_file.write(self.report)
 
@@ -1171,7 +1300,7 @@ class TestQgsFillSymbol(unittest.TestCase):
         return image
 
     def imageCheck(self, name, reference_image, image):
-        self.report += "<h2>Render {}</h2>\n".format(name)
+        self.report += f"<h2>Render {name}</h2>\n"
         temp_dir = QDir.tempPath() + '/'
         file_name = temp_dir + 'symbol_' + name + ".png"
         image.save(file_name, "PNG")
@@ -1182,7 +1311,7 @@ class TestQgsFillSymbol(unittest.TestCase):
         checker.setColorTolerance(2)
         result = checker.compareImages(name, 20)
         self.report += checker.report()
-        print((self.report))
+        print(self.report)
         return result
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsMapLayerUtils.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -12,21 +11,19 @@ __copyright__ = 'Copyright 2021, The QGIS Project'
 
 
 import qgis  # NOQA
-
-from qgis.testing import unittest
 from qgis.core import (
-    QgsMapLayerUtils,
+    QgsAnnotationLayer,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransformContext,
-    QgsVectorLayer,
-    QgsRasterLayer,
-    QgsAnnotationLayer,
     QgsGroupLayer,
-    QgsRectangle,
+    QgsMapLayerType,
+    QgsMapLayerUtils,
     QgsProject,
-    QgsMapLayerType
+    QgsRasterLayer,
+    QgsVectorLayer,
 )
 from qgis.testing import start_app, unittest
+
 from utilities import unitTestDataPath
 
 start_app()
@@ -158,6 +155,9 @@ class TestQgsMapLayerUtils(unittest.TestCase):
                          [gp1, vl1, vl2, rl1])
         self.assertEqual(QgsMapLayerUtils.sortLayersByType([vl1, rl1, gp1, vl2], [QgsMapLayerType.AnnotationLayer]),
                          [vl1, rl1, gp1, vl2])
+
+    def test_launder_layer_name(self):
+        self.assertEqual(QgsMapLayerUtils.launderLayerName('abc Def4_a.h%'), 'abc_def4_ah')
 
 
 if __name__ == '__main__':

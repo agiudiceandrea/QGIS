@@ -29,6 +29,9 @@
 #include "qgspointcloudproviderguimetadata.h"
 #include "qgsmaplayerconfigwidgetfactory.h"
 
+#include "qgsmbtilesvectortileguiprovider.h"
+#include "qgsvtpkvectortileguiprovider.h"
+
 #ifdef HAVE_EPT
 #include "qgseptproviderguimetadata.h"
 #endif
@@ -91,6 +94,12 @@ void QgsProviderGuiRegistry::loadStaticProviders( )
   QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
   mProviders[ vt->key() ] = vt;
 
+  QgsProviderGuiMetadata *mbtilesVectorTiles = new QgsMbtilesVectorTileGuiProviderMetadata();
+  mProviders[ mbtilesVectorTiles->key() ] = mbtilesVectorTiles;
+
+  QgsProviderGuiMetadata *vtpkVectorTiles = new QgsVtpkVectorTileGuiProviderMetadata();
+  mProviders[ vtpkVectorTiles->key() ] = vtpkVectorTiles;
+
 #ifdef HAVE_EPT
   QgsProviderGuiMetadata *ept = new QgsEptProviderGuiMetadata();
   mProviders[ ept->key() ] = ept;
@@ -98,7 +107,7 @@ void QgsProviderGuiRegistry::loadStaticProviders( )
 
 #ifdef HAVE_COPC
   QgsProviderGuiMetadata *copc = new QgsCopcProviderGuiMetadata();
-  mProviders[ ept->key() ] = copc;
+  mProviders[ copc->key() ] = copc;
 #endif
 
   // only show point cloud option if we have at least one point cloud provider available!
@@ -219,11 +228,9 @@ QgsProviderGuiRegistry::~QgsProviderGuiRegistry()
 
 void QgsProviderGuiRegistry::registerGuis( QMainWindow *parent )
 {
-  GuiProviders::const_iterator it = mProviders.begin();
-  while ( it != mProviders.end() )
+  for ( auto it = mProviders.begin(); it != mProviders.end(); ++it )
   {
     it->second->registerGui( parent );
-    ++it;
   }
 }
 

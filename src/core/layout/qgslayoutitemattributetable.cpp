@@ -29,11 +29,14 @@
 #include "qgsfieldformatterregistry.h"
 #include "qgsgeometry.h"
 #include "qgsexception.h"
-#include "qgsmapsettings.h"
+#include "qgslayoutreportcontext.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgsexpressionnodeimpl.h"
 #include "qgsgeometryengine.h"
 #include "qgsconditionalstyle.h"
+#include "qgsfontutils.h"
+#include "qgsvariantutils.h"
+#include "qgslayoutrendercontext.h"
 
 //
 // QgsLayoutItemAttributeTable
@@ -565,13 +568,10 @@ bool QgsLayoutItemAttributeTable::getTableContents( QgsLayoutTableContents &cont
 
     for ( const QgsLayoutTableColumn &column : std::as_const( mColumns ) )
     {
-      int idx = layer->fields().lookupField( column.attribute() );
-
       QgsConditionalStyle style;
-
+      int idx = layer->fields().lookupField( column.attribute() );
       if ( idx != -1 )
       {
-
         QVariant val = f.attributes().at( idx );
 
         if ( mUseConditionalStyling )
@@ -596,14 +596,14 @@ bool QgsLayoutItemAttributeTable::getTableContents( QgsLayoutTableContents &cont
           }
           else
           {
-            cache = fieldFormatter->createCache( mVectorLayer.get(), idx, setup.config() );
+            cache = fieldFormatter->createCache( layer, idx, setup.config() );
             mLayerCache.insert( column.attribute(), cache );
           }
 
-          val = fieldFormatter->representValue( mVectorLayer.get(), idx, setup.config(), cache, val );
+          val = fieldFormatter->representValue( layer, idx, setup.config(), cache, val );
         }
 
-        QVariant v = val.isNull() ? QString() : replaceWrapChar( val );
+        QVariant v = QgsVariantUtils::isNull( val ) ? QString() : replaceWrapChar( val );
         currentRow << Cell( v, style, f );
         rowContents << v;
       }
@@ -683,11 +683,23 @@ QgsTextFormat QgsLayoutItemAttributeTable::textFormatForCell( int row, int colum
       // warning -- there's a potential trap here! We can't just read QFont::styleName(), as that may be blank even when
       // the font has the bold or italic attributes set! Reading the style name via QFontInfo avoids this and always returns
       // a correct style name
-      newFont.setStyleName( QFontInfo( styleFont ).styleName() );
+      const QString styleName = QgsFontUtils::resolveFontStyleName( styleFont );
+      if ( !styleName.isEmpty() )
+        newFont.setStyleName( styleName );
 
       newFont.setStrikeOut( styleFont.strikeOut() );
       newFont.setUnderline( styleFont.underline() );
       format.setFont( newFont );
+      if ( styleName.isEmpty() )
+      {
+        // we couldn't find a direct match for the conditional font's bold/italic settings as a font style name.
+        // This means the conditional style is using Qt's "faux bold/italic" mode. Even though it causes reduced quality font
+        // rendering, we'll apply it here anyway just to ensure that the rendered font styling matches the conditional style.
+        if ( styleFont.bold() )
+          format.setForcedBold( true );
+        if ( styleFont.italic() )
+          format.setForcedItalic( true );
+      }
     }
   }
 
@@ -798,11 +810,7 @@ QgsLayoutTableColumns QgsLayoutItemAttributeTable::filteredColumns()
     }
 
     const QStringList filteredAttributes { layout()->renderContext().featureFilterProvider()->layerAttributes( source, allowedAttributes.values() ) };
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     const QSet<QString> filteredAttributesSet( filteredAttributes.constBegin(), filteredAttributes.constEnd() );
-#else
-    const QSet<QString> filteredAttributesSet { filteredAttributes.toSet() };
-#endif
     if ( filteredAttributesSet != allowedAttributes )
     {
       const auto forbidden { allowedAttributes.subtract( filteredAttributesSet ) };

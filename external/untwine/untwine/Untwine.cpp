@@ -127,7 +127,11 @@ void createDirs(const Options& options)
 } // namespace untwine
 
 
+#ifdef _WIN32
+int wmain( int argc, wchar_t *argv[ ], wchar_t *envp[ ] )
+#else
 int main(int argc, char *argv[])
+#endif
 {
     std::vector<std::string> arglist;
 
@@ -135,7 +139,7 @@ int main(int argc, char *argv[])
     argv++;
     argc--;
     while (argc--)
-        arglist.push_back(*argv++);
+        arglist.push_back(untwine::fromNative(*argv++));
 
     using namespace untwine;
 
@@ -168,6 +172,7 @@ int main(int argc, char *argv[])
     }
     catch (const untwine::FatalError& err)
     {
+        std::cerr << "FATAL ERROR: " << err.what() << "!\n";
         progress.writeErrorMessage(err.what());
         return -1;
     }

@@ -139,6 +139,7 @@ QgsDataSourceUri::QgsDataSourceUri( const QString &u )
       }
       else if ( pname == QLatin1String( "selectatid" ) )
       {
+        mSelectAtIdDisabledSet = true;
         mSelectAtIdDisabled = pval == QLatin1String( "false" );
       }
       else if ( pname == QLatin1String( "service" ) )
@@ -207,6 +208,10 @@ QgsDataSourceUri::QgsDataSourceUri( const QString &u )
       else if ( pname == QLatin1String( "gsslib" ) )
       {
         QgsDebugMsg( QStringLiteral( "gsslib ignored" ) );
+      }
+      else if ( pname.startsWith( QgsHttpHeaders::PARAM_PREFIX ) )
+      {
+        mHttpHeaders.insert( pname, pval );
       }
       else
       {
@@ -356,6 +361,7 @@ bool QgsDataSourceUri::useEstimatedMetadata() const
 
 void QgsDataSourceUri::disableSelectAtId( bool flag )
 {
+  mSelectAtIdDisabledSet = true;
   mSelectAtIdDisabled = flag;
 }
 
@@ -554,7 +560,7 @@ QString QgsDataSourceUri::uri( bool expandAuthConfig ) const
     uri += QStringLiteral( " srid=%1" ).arg( mSrid );
   }
 
-  if ( mWkbType != QgsWkbTypes::Unknown && mWkbType != QgsWkbTypes::NoGeometry )
+  if ( mWkbType != Qgis::WkbType::Unknown && mWkbType != Qgis::WkbType::NoGeometry )
   {
     uri += QLatin1String( " type=" );
     uri += QgsWkbTypes::displayString( mWkbType );
@@ -575,6 +581,8 @@ QString QgsDataSourceUri::uri( bool expandAuthConfig ) const
 
     uri += ' ' + it.key() + "='" + escape( it.value() ) + '\'';
   }
+
+  uri += mHttpHeaders.toSpacedString();
 
   QString columnName( mGeometryColumn );
   columnName.replace( '\\', QLatin1String( "\\\\" ) );
@@ -624,6 +632,8 @@ QByteArray QgsDataSourceUri::encodedUri() const
   if ( !mAuthConfigId.isEmpty() )
     url.addQueryItem( QStringLiteral( "authcfg" ), mAuthConfigId );
 
+  mHttpHeaders.updateUrlQuery( url );
+
   return toLatin1_helper( url.toString( QUrl::FullyEncoded ) );
 }
 
@@ -638,17 +648,22 @@ void QgsDataSourceUri::setEncodedUri( const QByteArray &uri )
   url.setQuery( QString::fromLatin1( uri ) );
   const QUrlQuery query( url );
 
+  mHttpHeaders.setFromUrlQuery( query );
+
   const auto constQueryItems = query.queryItems( QUrl::ComponentFormattingOption::FullyDecoded );
   for ( const QPair<QString, QString> &item : constQueryItems )
   {
-    if ( item.first == QLatin1String( "username" ) )
-      mUsername = item.second;
-    else if ( item.first == QLatin1String( "password" ) )
-      mPassword = item.second;
-    else if ( item.first == QLatin1String( "authcfg" ) )
-      mAuthConfigId = item.second;
-    else
-      mParams.insert( item.first, item.second );
+    if ( !item.first.startsWith( QgsHttpHeaders::PARAM_PREFIX ) )
+    {
+      if ( item.first == QLatin1String( "username" ) )
+        mUsername = item.second;
+      else if ( item.first == QLatin1String( "password" ) )
+        mPassword = item.second;
+      else if ( item.first == QLatin1String( "authcfg" ) )
+        mAuthConfigId = item.second;
+      else
+        mParams.insert( item.first, item.second );
+    }
   }
 }
 
@@ -723,12 +738,12 @@ void QgsDataSourceUri::setDatabase( const QString &database )
   mDatabase = database;
 }
 
-QgsWkbTypes::Type QgsDataSourceUri::wkbType() const
+Qgis::WkbType QgsDataSourceUri::wkbType() const
 {
   return mWkbType;
 }
 
-void QgsDataSourceUri::setWkbType( QgsWkbTypes::Type wkbType )
+void QgsDataSourceUri::setWkbType( Qgis::WkbType wkbType )
 {
   mWkbType = wkbType;
 }
@@ -857,4 +872,48 @@ bool QgsDataSourceUri::hasParam( const QString &key ) const
     return true;
 
   return mParams.contains( key );
+}
+
+QSet<QString> QgsDataSourceUri::parameterKeys() const
+{
+  QSet<QString> paramKeys;
+  for ( auto it = mParams.constBegin(); it != mParams.constEnd(); it++ )
+    paramKeys.insert( it.key() );
+
+  if ( !mHost.isEmpty() )
+    paramKeys.insert( QLatin1String( "host" ) );
+  if ( !mPort.isEmpty() )
+    paramKeys.insert( QLatin1String( "port" ) );
+  if ( !mDriver.isEmpty() )
+    paramKeys.insert( QLatin1String( "driver" ) );
+  if ( !mService.isEmpty() )
+    paramKeys.insert( QLatin1String( "service" ) );
+  if ( !mDatabase.isEmpty() )
+    paramKeys.insert( QLatin1String( "dbname" ) );
+  if ( !mSchema.isEmpty() )
+    paramKeys.insert( QLatin1String( "schema" ) );
+  if ( !mTable.isEmpty() )
+    paramKeys.insert( QLatin1String( "table" ) );
+  // Ignore mGeometryColumn: not a key ==> embedded in table value
+  if ( !mSql.isEmpty() )
+    paramKeys.insert( QLatin1String( "sql" ) );
+  if ( !mAuthConfigId.isEmpty() )
+    paramKeys.insert( QLatin1String( "authcfg" ) );
+  if ( !mUsername.isEmpty() )
+    paramKeys.insert( QLatin1String( "username" ) );
+  if ( !mPassword.isEmpty() )
+    paramKeys.insert( QLatin1String( "password" ) );
+  if ( mSSLmode != SslPrefer )
+    paramKeys.insert( QLatin1String( "sslmode" ) );
+  if ( !mKeyColumn.isEmpty() )
+    paramKeys.insert( QLatin1String( "key" ) );
+  if ( mUseEstimatedMetadata )
+    paramKeys.insert( QLatin1String( "estimatedmetadata" ) );
+  if ( mSelectAtIdDisabledSet )
+    paramKeys.insert( QLatin1String( "selectatid" ) );
+  if ( mWkbType != Qgis::WkbType::Unknown )
+    paramKeys.insert( QLatin1String( "type" ) );
+  if ( !mSrid.isEmpty() )
+    paramKeys.insert( QLatin1String( "srid" ) );
+  return paramKeys;
 }

@@ -14,6 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 //#include <signal.h>
+#include "qgis.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <qmath.h>
@@ -603,6 +604,7 @@ int QgsGrassGisLib::G_open_raster_new( const char *name, RASTER_MAP_TYPE wr_type
   raster.band = 1;
   raster.noDataValue = noDataValueForGrassType( wr_type );
   QgsDebugMsg( QString( "noDataValue = %1" ).arg( static_cast<int>( raster.noDataValue ) ) );
+  // cppcheck-suppress deallocuse
   raster.provider->setNoDataValue( raster.band, raster.noDataValue );
 
   raster.fd = mRasters.size();
@@ -898,7 +900,7 @@ int GRASS_LIB_EXPORT G_get_map_row_nomask( int fd, CELL *buf, int row )
   return G_get_map_row( fd, buf, row );
 }
 
-int QgsGrassGisLib::G_get_null_value_row( int fd, char *flags, int row )
+int QgsGrassGisLib::G_get_null_value_row( int fd, char *flags, int row ) const
 {
   FCELL *buf = G_allocate_f_raster_buf();
   QgsGrassGisLib::instance()->readRasterRow( fd, buf, row, FCELL_TYPE, false );
@@ -1049,7 +1051,7 @@ int GRASS_LIB_EXPORT G_get_cellhd( const char *name, const char *mapset, struct 
 
 double QgsGrassGisLib::G_database_units_to_meters_factor( void )
 {
-  return QgsUnitTypes::fromUnitToUnitFactor( mCrs.mapUnits(), QgsUnitTypes::DistanceMeters );
+  return QgsUnitTypes::fromUnitToUnitFactor( mCrs.mapUnits(), Qgis::DistanceUnit::Meters );
 }
 
 double QgsGrassGisLib::G_area_of_cell_at_row( int row )
@@ -1320,9 +1322,9 @@ int GRASS_LIB_EXPORT G__temp_element( char *element )
 char GRASS_LIB_EXPORT *G_tempfile( void )
 {
   QTemporaryFile file( "qgis-grass-temp.XXXXXX" );
-  QString name = file.fileName();
+  const QString name = file.fileName();
   file.open();
-  return name.toLatin1().data();
+  return name.toLatin1().constData();
 }
 
 char GRASS_LIB_EXPORT *G_mapset( void )

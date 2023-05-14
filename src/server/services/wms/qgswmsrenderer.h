@@ -147,7 +147,7 @@ namespace QgsWms
       void configureLayers( QList<QgsMapLayer *> &layers, QgsMapSettings *settings = nullptr );
 
     private:
-      QgsLegendSettings legendSettings() const;
+      QgsLegendSettings legendSettings();
 
       // Build and returns highlight layers
       QList<QgsMapLayer *> highlightLayers( QList<QgsWmsParametersHighlightLayer> params );
@@ -193,7 +193,15 @@ namespace QgsWms
        * \param mandatoryCrsParam does the CRS parameter has to be considered mandatory
        * may throw an exception
        */
-      void configureMapSettings( const QPaintDevice *paintDevice, QgsMapSettings &mapSettings, bool mandatoryCrsParam = true ) const;
+      void configureMapSettings( const QPaintDevice *paintDevice, QgsMapSettings &mapSettings, bool mandatoryCrsParam = true );
+
+      /**
+       * Configures QgsRenderContext according to the WMS parameters and default settings as well as the passed painter.
+       * Used, for example, when no mapSettings are available.
+       * \param painter to create the context from
+       * \returns the renderer context with default parameters and settings of the passed painter
+       */
+      QgsRenderContext configureDefaultRenderContext( QPainter *painter = nullptr );
 
       QDomDocument featureInfoDocument( QList<QgsMapLayer *> &layers, const QgsMapSettings &mapSettings,
                                         const QImage *outputImage, const QString &version ) const;
@@ -336,6 +344,9 @@ namespace QgsWms
       const QgsProject *mProject = nullptr;
       QList<QgsMapLayer *> mTemporaryLayers;
       const QgsWmsRenderContext &mContext;
+
+      //! True when temporal capabilities are activated and TIME was parsed successfully
+      bool mIsTemporal = false;
   };
 
 } // namespace QgsWms

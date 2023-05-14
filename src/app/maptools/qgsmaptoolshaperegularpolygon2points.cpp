@@ -16,7 +16,6 @@
 
 #include "qgsmaptoolshaperegularpolygon2points.h"
 #include "qgsgeometryrubberband.h"
-#include "qgsmapcanvas.h"
 #include "qgspoint.h"
 #include "qgsmapmouseevent.h"
 #include "qgsmaptoolcapture.h"
@@ -41,7 +40,7 @@ QIcon QgsMapToolShapeRegularPolygon2PointsMetadata::icon() const
 
 QgsMapToolShapeAbstract::ShapeCategory QgsMapToolShapeRegularPolygon2PointsMetadata::category() const
 {
-  return QgsMapToolShapeAbstract::ShapeCategory::Circle;
+  return QgsMapToolShapeAbstract::ShapeCategory::RegularPolygon;
 }
 
 QgsMapToolShapeAbstract *QgsMapToolShapeRegularPolygon2PointsMetadata::factory( QgsMapToolCapture *parentTool ) const
@@ -69,7 +68,7 @@ bool QgsMapToolShapeRegularPolygon2Points::cadCanvasReleaseEvent( QgsMapMouseEve
 
     if ( !mTempRubberBand )
     {
-      QgsWkbTypes::GeometryType type = mode == QgsMapToolCapture::CapturePolygon ? QgsWkbTypes::PolygonGeometry : QgsWkbTypes::LineGeometry;
+      Qgis::GeometryType type = mode == QgsMapToolCapture::CapturePolygon ? Qgis::GeometryType::Polygon : Qgis::GeometryType::Line;
       mTempRubberBand = mParentTool->createGeometryRubberBand( type, true );
       mTempRubberBand->show();
 

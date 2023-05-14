@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     self.py
@@ -29,14 +27,13 @@ from qgis.core import (QgsRasterFileWriter,
                        QgsProcessingParameterDefinition,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterCrs,
-                       QgsProcessingParameterString,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterEnum,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterExtent,
                        QgsProcessingParameterString,
                        QgsProcessingParameterRasterDestination,
-                       QgsProcessingUtils)
+                       )
 from processing.algs.gdal.GdalAlgorithm import GdalAlgorithm
 from processing.algs.gdal.GdalUtils import GdalUtils
 
@@ -183,7 +180,7 @@ class warp(GdalAlgorithm):
             nodata = None
         resolution = self.parameterAsDouble(parameters, self.TARGET_RESOLUTION, context)
 
-        arguments = []
+        arguments = ['-overwrite']
         if sourceCrs.isValid():
             arguments.append('-s_srs')
             arguments.append(GdalUtils.gdal_crs_string(sourceCrs))

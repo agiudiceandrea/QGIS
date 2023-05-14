@@ -11,6 +11,8 @@
  ****************************************************************************/
 
 #include <string>
+#include <cstdint>
+#include <algorithm>
 
 #pragma once
 

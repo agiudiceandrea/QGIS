@@ -15,22 +15,13 @@
 #include "qgsgeopackagedataitems.h"
 ///@cond PRIVATE
 
-#include "qgssqliteutils.h"
 #include "qgsgeopackagedataitems.h"
 #include "qgsprojectitem.h"
 #include "qgsfieldsitem.h"
 #include "qgsogrdbconnection.h"
 #include "qgslogger.h"
-#include "qgssettings.h"
 #include "qgsproject.h"
-#include "qgsvectorlayer.h"
-#include "qgsrasterlayer.h"
-#include "qgsogrprovider.h"
 #include "qgsapplication.h"
-#include "qgsmessageoutput.h"
-#include "qgsvectorlayerexporter.h"
-#include "qgsgeopackagerasterwritertask.h"
-#include "qgstaskmanager.h"
 #include "qgsproviderregistry.h"
 #include "qgsproxyprogresstask.h"
 #include "qgsprojectstorageregistry.h"
@@ -39,6 +30,8 @@
 #include "qgsprovidermetadata.h"
 #include "qgsprovidersublayerdetails.h"
 #include "qgsfielddomainsitem.h"
+#include "qgsrelationshipsitem.h"
+#include "qgsogrproviderutils.h"
 
 QString QgsGeoPackageDataItemProvider::name()
 {
@@ -118,29 +111,29 @@ QVector<QgsDataItem *> QgsGeoPackageCollectionItem::createChildren()
   {
     switch ( sublayer.type() )
     {
-      case QgsMapLayerType::VectorLayer:
+      case Qgis::LayerType::Vector:
       {
         Qgis::BrowserLayerType layerType = Qgis::BrowserLayerType::Vector;
 
         switch ( QgsWkbTypes::geometryType( sublayer.wkbType() ) )
         {
-          case QgsWkbTypes::PointGeometry:
+          case Qgis::GeometryType::Point:
             layerType = Qgis::BrowserLayerType::Point;
             break;
 
-          case QgsWkbTypes::LineGeometry:
+          case Qgis::GeometryType::Line:
             layerType = Qgis::BrowserLayerType::Line;
             break;
 
-          case QgsWkbTypes::PolygonGeometry:
+          case Qgis::GeometryType::Polygon:
             layerType = Qgis::BrowserLayerType::Polygon;
             break;
 
-          case QgsWkbTypes::NullGeometry:
+          case Qgis::GeometryType::Null:
             layerType = Qgis::BrowserLayerType::TableLayer;
             break;
 
-          case QgsWkbTypes::UnknownGeometry:
+          case Qgis::GeometryType::Unknown:
             layerType = Qgis::BrowserLayerType::Vector;
             break;
         }
@@ -149,16 +142,16 @@ QVector<QgsDataItem *> QgsGeoPackageCollectionItem::createChildren()
         break;
       }
 
-      case QgsMapLayerType::RasterLayer:
+      case Qgis::LayerType::Raster:
         children.append( new QgsGeoPackageRasterLayerItem( this, sublayer.name(), path, sublayer.uri() ) );
         break;
 
-      case QgsMapLayerType::PluginLayer:
-      case QgsMapLayerType::MeshLayer:
-      case QgsMapLayerType::VectorTileLayer:
-      case QgsMapLayerType::AnnotationLayer:
-      case QgsMapLayerType::PointCloudLayer:
-      case QgsMapLayerType::GroupLayer:
+      case Qgis::LayerType::Plugin:
+      case Qgis::LayerType::Mesh:
+      case Qgis::LayerType::VectorTile:
+      case Qgis::LayerType::Annotation:
+      case Qgis::LayerType::PointCloud:
+      case Qgis::LayerType::Group:
         break;
     }
   }
@@ -197,19 +190,46 @@ QVector<QgsDataItem *> QgsGeoPackageCollectionItem::createChildren()
       children.append( domainsItem.release() );
     }
   }
+  if ( conn && ( conn->capabilities() & QgsAbstractDatabaseProviderConnection::Capability::RetrieveRelationships ) )
+  {
+    QString relationError;
+    QList< QgsWeakRelation > relations;
+    try
+    {
+      relations = conn->relationships();
+    }
+    catch ( QgsProviderConnectionException &ex )
+    {
+      relationError = ex.what();
+    }
+
+    if ( !relations.empty() || !relationError.isEmpty() )
+    {
+      std::unique_ptr< QgsRelationshipsItem > relationsItem = std::make_unique< QgsRelationshipsItem >( this, mPath + "/relations", conn->uri(), QStringLiteral( "ogr" ) );
+      // force this item to appear last by setting a maximum string value for the sort key
+      relationsItem->setSortKey( QString( QChar( 0x11FFFF ) ) );
+      children.append( relationsItem.release() );
+    }
+  }
 
   if ( children.empty() )
   {
-    QString errorMessage;
-    if ( QFile::exists( path ) )
+    // sniff database to see if it's just empty, or if something went wrong
+    // note that we HAVE to use update here, or GDAL won't open an empty database
+    gdal::dataset_unique_ptr hDS( GDALOpenEx( path.toUtf8().constData(), GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr, nullptr, nullptr ) );
+    if ( !hDS )
     {
-      errorMessage = tr( "The file does not contain any layer or there was an error opening the file.\nCheck file and directory permissions on\n%1" ).arg( QDir::toNativeSeparators( path ) );
+      QString errorMessage;
+      if ( !QFile::exists( path ) )
+      {
+        errorMessage = tr( "The database does not contain any layers or there was an error opening the file.\nCheck file and directory permissions on\n%1" ).arg( QDir::toNativeSeparators( path ) );
+      }
+      else
+      {
+        errorMessage = tr( "Layer is not valid (%1)" ).arg( path );
+      }
+      children.append( new QgsErrorItem( this, errorMessage, mPath + "/error" ) );
     }
-    else
-    {
-      errorMessage = tr( "Layer is not valid (%1)" ).arg( path );
-    }
-    children.append( new QgsErrorItem( this, errorMessage, mPath + "/error" ) );
   }
 
   return children;

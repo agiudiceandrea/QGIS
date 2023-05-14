@@ -16,11 +16,7 @@
  ***************************************************************************/
 
 #include "qgsapplication.h"
-#include "qgslayout.h"
-#include "qgsmultirenderchecker.h"
-#include "qgslayoutitemmap.h"
 #include "qgsvectorlayer.h"
-#include "qgsproject.h"
 #include "qgsabstractgeopdfexporter.h"
 #include <QObject>
 #include "qgstest.h"
@@ -42,18 +38,16 @@ class TestGeoPdfExporter : public QgsAbstractGeoPdfExporter
 
 };
 
-class TestQgsGeoPdfExport : public QObject
+class TestQgsGeoPdfExport : public QgsTest
 {
     Q_OBJECT
 
   public:
-    TestQgsGeoPdfExport() = default;
+    TestQgsGeoPdfExport() : QgsTest( QStringLiteral( "GeoPDF Export Testss" ) ) {}
 
   private slots:
     void initTestCase();// will be called before the first testfunction is executed.
     void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init();// will be called before each testfunction is executed.
-    void cleanup();// will be called after every testfunction.
     void testCollectingFeatures();
     void testComposition();
     void testMetadata();
@@ -62,40 +56,17 @@ class TestQgsGeoPdfExport : public QObject
     void testGroups();
     void testCustomGroups();
     void compositionMode();
-
-  private:
-
-    QString mReport;
 };
 
 void TestQgsGeoPdfExport::initTestCase()
 {
   QgsApplication::init();
   QgsApplication::initQgis();
-
-  mReport = QStringLiteral( "<h1>GeoPDF Export Tests</h1>\n" );
 }
 
 void TestQgsGeoPdfExport::cleanupTestCase()
 {
-  QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
-
   QgsApplication::exitQgis();
-}
-
-void TestQgsGeoPdfExport::init()
-{
-}
-
-void TestQgsGeoPdfExport::cleanup()
-{
 }
 
 void TestQgsGeoPdfExport::testCollectingFeatures()
@@ -145,7 +116,7 @@ void TestQgsGeoPdfExport::testCollectingFeatures()
   std::unique_ptr< QgsVectorLayer > layer = std::make_unique< QgsVectorLayer >( QStringLiteral( "%1|layerName=%2" ).arg( component.sourceVectorPath, component.sourceVectorLayer ), QStringLiteral( "layer" ), QStringLiteral( "ogr" ) );
   QVERIFY( layer->isValid() );
   QCOMPARE( layer->featureCount(), 2L );
-  QCOMPARE( layer->wkbType(), QgsWkbTypes::Polygon );
+  QCOMPARE( layer->wkbType(), Qgis::WkbType::Polygon );
   QCOMPARE( layer->fields().at( 1 ).name(), QStringLiteral( "a1" ) );
   QCOMPARE( layer->fields().at( 2 ).name(), QStringLiteral( "a2" ) );
   QgsFeatureIterator it = layer->getFeatures();
@@ -171,7 +142,7 @@ void TestQgsGeoPdfExport::testCollectingFeatures()
   layer = std::make_unique< QgsVectorLayer >( QStringLiteral( "%1|layerName=%2" ).arg( component.sourceVectorPath, component.sourceVectorLayer ), QStringLiteral( "layer" ), QStringLiteral( "ogr" ) );
   QVERIFY( layer->isValid() );
   QCOMPARE( layer->featureCount(), 1L );
-  QCOMPARE( layer->wkbType(), QgsWkbTypes::LineString );
+  QCOMPARE( layer->wkbType(), Qgis::WkbType::LineString );
   QCOMPARE( layer->fields().at( 1 ).name(), QStringLiteral( "a1" ) );
   QCOMPARE( layer->fields().at( 2 ).name(), QStringLiteral( "a2" ) );
   it = layer->getFeatures();

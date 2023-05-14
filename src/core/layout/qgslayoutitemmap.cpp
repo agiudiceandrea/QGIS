@@ -38,6 +38,7 @@
 #include "qgsprojoperation.h"
 #include "qgslabelingresults.h"
 #include "qgsvectortileutils.h"
+#include "qgsunittypes.h"
 
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
@@ -177,7 +178,7 @@ double QgsLayoutItemMap::scale() const
   QgsScaleCalculator calculator;
   calculator.setMapUnits( crs().mapUnits() );
   calculator.setDpi( 25.4 );  //Using mm
-  double widthInMm = mLayout->convertFromLayoutUnits( rect().width(), QgsUnitTypes::LayoutMillimeters ).length();
+  double widthInMm = mLayout->convertFromLayoutUnits( rect().width(), Qgis::LayoutUnit::Millimeters ).length();
   return calculator.calculate( extent(), widthInMm );
 }
 
@@ -907,6 +908,8 @@ void QgsLayoutItemMap::paint( QPainter *painter, const QStyleOptionGraphicsItem 
 
   if ( mLayout->renderContext().isPreviewRender() )
   {
+    bool renderInProgress = false;
+
     QgsScopedQPainterState painterState( painter );
     painter->setClipRect( thisPaintRect );
     if ( !mCacheFinalImage || mCacheFinalImage->isNull() )
@@ -932,6 +935,7 @@ void QgsLayoutItemMap::paint( QPainter *painter, const QStyleOptionGraphicsItem 
         mPreviewScaleFactor = QgsLayoutUtils::scaleFactorFromItemStyle( style, painter );
         mBackgroundUpdateTimer->start( 1 );
       }
+      renderInProgress = true;
     }
     else
     {
@@ -940,6 +944,7 @@ void QgsLayoutItemMap::paint( QPainter *painter, const QStyleOptionGraphicsItem 
         // cache was invalidated - trigger a background update
         mPreviewScaleFactor = QgsLayoutUtils::scaleFactorFromItemStyle( style, painter );
         mBackgroundUpdateTimer->start( 1 );
+        renderInProgress = true;
       }
 
       //Background color is already included in cached image, so no need to draw
@@ -962,6 +967,11 @@ void QgsLayoutItemMap::paint( QPainter *painter, const QStyleOptionGraphicsItem 
     mGridStack->drawItems( painter );
     drawAnnotations( painter );
     drawMapFrame( painter );
+
+    if ( renderInProgress )
+    {
+      drawRefreshingOverlay( painter, style );
+    }
   }
   else
   {
@@ -976,16 +986,14 @@ void QgsLayoutItemMap::paint( QPainter *painter, const QStyleOptionGraphicsItem 
     QgsRectangle cExtent = extent();
     QSizeF size( cExtent.width() * mapUnitsToLayoutUnits(), cExtent.height() * mapUnitsToLayoutUnits() );
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
     if ( mLayout && mLayout->renderContext().flags() & QgsLayoutRenderContext::FlagLosslessImageRendering )
       painter->setRenderHint( QPainter::LosslessImageRendering, true );
-#endif
 
     if ( containsAdvancedEffects() && ( !mLayout || !( mLayout->renderContext().flags() & QgsLayoutRenderContext::FlagForceVectorOutput ) ) )
     {
       // rasterize
       double destinationDpi = QgsLayoutUtils::scaleFactorFromItemStyle( style, painter ) * 25.4;
-      double layoutUnitsInInches = mLayout ? mLayout->convertFromLayoutUnits( 1, QgsUnitTypes::LayoutInches ).length() : 1;
+      double layoutUnitsInInches = mLayout ? mLayout->convertFromLayoutUnits( 1, Qgis::LayoutUnit::Inches ).length() : 1;
       int widthInPixels = static_cast< int >( std::round( boundingRect().width() * layoutUnitsInInches * destinationDpi ) );
       int heightInPixels = static_cast< int >( std::round( boundingRect().height() * layoutUnitsInInches * destinationDpi ) );
       QImage image = QImage( widthInPixels, heightInPixels, QImage::Format_ARGB32 );
@@ -1498,7 +1506,10 @@ QgsMapSettings QgsLayoutItemMap::mapSettings( const QgsRectangle &extent, QSizeF
   jobMapSettings.setBackgroundColor( Qt::transparent );
   jobMapSettings.setRotation( mEvaluatedMapRotation );
   if ( mLayout )
+  {
     jobMapSettings.setEllipsoid( mLayout->project()->ellipsoid() );
+    jobMapSettings.setElevationShadingRenderer( mLayout->project()->elevationShadingRenderer() );
+  }
 
   if ( includeLayerSettings )
   {
@@ -1526,6 +1537,8 @@ QgsMapSettings QgsLayoutItemMap::mapSettings( const QgsRectangle &extent, QSizeF
   {
     // preview render - always use optimization
     jobMapSettings.setFlag( Qgis::MapSettingsFlag::UseRenderingOptimization, true );
+    // in a preview render we disable vector masking, as that is considerably slower vs raster masking
+    jobMapSettings.setFlag( Qgis::MapSettingsFlag::ForceRasterMasks, true );
     jobMapSettings.setRendererUsage( Qgis::RendererUsage::View );
   }
 
@@ -1547,9 +1560,9 @@ QgsMapSettings QgsLayoutItemMap::mapSettings( const QgsRectangle &extent, QSizeF
   QgsLabelingEngineSettings labelSettings = mLayout->project()->labelingEngineSettings();
 
   // override project "show partial labels" setting with this map's setting
-  labelSettings.setFlag( QgsLabelingEngineSettings::UsePartialCandidates, mMapFlags & ShowPartialLabels );
-  labelSettings.setFlag( QgsLabelingEngineSettings::DrawUnplacedLabels, mMapFlags & ShowUnplacedLabels );
-  labelSettings.setFlag( QgsLabelingEngineSettings::CollectUnplacedLabels, true );
+  labelSettings.setFlag( Qgis::LabelingFlag::UsePartialCandidates, mMapFlags & ShowPartialLabels );
+  labelSettings.setFlag( Qgis::LabelingFlag::DrawUnplacedLabels, mMapFlags & ShowUnplacedLabels );
+  labelSettings.setFlag( Qgis::LabelingFlag::CollectUnplacedLabels, true );
   jobMapSettings.setLabelingEngineSettings( labelSettings );
 
   // override the default text render format inherited from the labeling engine settings using the layout's render context setting
@@ -1724,7 +1737,7 @@ QgsExpressionContext QgsLayoutItemMap::createExpressionContext() const
 
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_start_time" ), isTemporal() ? temporalRange().begin() : QVariant(), true ) );
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_end_time" ), isTemporal() ? temporalRange().end() : QVariant(), true ) );
-  scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_interval" ), isTemporal() ? ( temporalRange().end() - temporalRange().begin() ) : QVariant(), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_interval" ), isTemporal() ? QgsInterval( temporalRange().end() - temporalRange().begin() ) : QVariant(), true ) );
 
 #if 0 // not relevant here! (but left so as to respect all the dangerous warnings in QgsExpressionContextUtils::mapSettingsScope)
   if ( mapSettings.frameRate() >= 0 )
@@ -2640,7 +2653,7 @@ void QgsLayoutItemMap::updateAtlasFeature()
   QgsRectangle originalExtent = mExtent;
 
   //sanity check - only allow fixed scale mode for point layers
-  bool isPointLayer = QgsWkbTypes::geometryType( mLayout->reportContext().layer()->wkbType() ) == QgsWkbTypes::PointGeometry;
+  bool isPointLayer = QgsWkbTypes::geometryType( mLayout->reportContext().layer()->wkbType() ) == Qgis::GeometryType::Point;
 
   if ( mAtlasScalingMode == Fixed || mAtlasScalingMode == Predefined || isPointLayer )
   {

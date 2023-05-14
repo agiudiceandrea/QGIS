@@ -20,7 +20,7 @@
 #include "qgstiledownloadmanager.h"
 #include "qgslazdecoder.h"
 #include "qgsapplication.h"
-#include "qgsremotecopcpointcloudindex.h"
+#include "qgsnetworkaccessmanager.h"
 
 //
 // QgsCopcPointCloudBlockRequest
@@ -30,14 +30,16 @@
 
 QgsCopcPointCloudBlockRequest::QgsCopcPointCloudBlockRequest( const IndexedPointCloudNode &node, const QString &uri,
     const QgsPointCloudAttributeCollection &attributes, const QgsPointCloudAttributeCollection &requestedAttributes,
-    const QgsVector3D &scale, const QgsVector3D &offset, const QgsPointCloudExpression &filterExpression,
+    const QgsVector3D &scale, const QgsVector3D &offset, const QgsPointCloudExpression &filterExpression, const QgsRectangle &filterRect,
     uint64_t blockOffset, int32_t blockSize, int pointCount, const QgsLazInfo &lazInfo )
-  : QgsPointCloudBlockRequest( node, uri, attributes, requestedAttributes, scale, offset, filterExpression ),
+  : QgsPointCloudBlockRequest( node, uri, attributes, requestedAttributes, scale, offset, filterExpression, filterRect ),
     mBlockOffset( blockOffset ), mBlockSize( blockSize ), mPointCount( pointCount ), mLazInfo( lazInfo )
 {
   QNetworkRequest nr( mUri );
-  nr.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork );
-  nr.setAttribute( QNetworkRequest::CacheSaveControlAttribute, false );
+  QgsSetRequestInitiatorClass( nr, QStringLiteral( "QgsCopcPointCloudBlockRequest" ) );
+  QgsSetRequestInitiatorId( nr, node.toString() );
+  nr.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
+  nr.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
 
   QByteArray queryRange = QStringLiteral( "bytes=%1-%2" ).arg( mBlockOffset ).arg( ( int64_t ) mBlockOffset + mBlockSize - 1 ).toLocal8Bit();
   nr.setRawHeader( "Range", queryRange );
@@ -60,7 +62,7 @@ void QgsCopcPointCloudBlockRequest::blockFinishedLoading()
     {
       try
       {
-        mBlock = QgsLazDecoder::decompressCopc( mTileDownloadManagerReply->data(), mLazInfo, mPointCount, mRequestedAttributes, mFilterExpression );
+        mBlock = QgsLazDecoder::decompressCopc( mTileDownloadManagerReply->data(), mLazInfo, mPointCount, mRequestedAttributes, mFilterExpression, mFilterRect );
       }
       catch ( std::exception &e )
       {
@@ -74,7 +76,7 @@ void QgsCopcPointCloudBlockRequest::blockFinishedLoading()
   }
   if ( !error.isEmpty() )
   {
-    mErrorStr = QStringLiteral( "Error loading point tile %1: \"%2\"" ).arg( mNode.toString() ).arg( error );
+    mErrorStr = QStringLiteral( "Error loading point tile %1: \"%2\"" ).arg( mNode.toString(), error );
   }
   emit finished();
 }

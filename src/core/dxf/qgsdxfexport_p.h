@@ -23,6 +23,9 @@
 #include "qgsrenderer.h"
 #include "qgsvectorlayerlabeling.h"
 #include "qgslabelsink.h"
+#include "qgsmaplayerstyle.h"
+#include "qgsrendercontext.h"
+#include "qgsdxfexport.h"
 
 /**
  * Holds information about each layer in a DXF job.
@@ -412,6 +415,7 @@ static const char *DXF_ENCODINGS[][2] =
   { "ANSI_932", "Shift_JIS" },
   { "ANSI_936", "CP936" },
   { "ANSI_949", "CP949" },
+  { "ANSI_949", "ms949" },
   { "ANSI_950", "CP950" },
 //  { "ANSI_1361", "" },
 //  { "ANSI_1200", "" },

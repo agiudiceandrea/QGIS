@@ -24,13 +24,10 @@
 #include "qgsmultipolygon.h"
 #include "qgsogcutils.h"
 #include "qgswfsfeatureiterator.h"
-#include "qgswfsprovider.h"
 #include "qgswfsshareddata.h"
 #include "qgswfsutils.h"
 #include "qgslogger.h"
 #include "qgssettings.h"
-#include "qgsexception.h"
-#include "qgsfeedback.h"
 
 #include <algorithm>
 #include <QDir>
@@ -174,19 +171,15 @@ QUrl QgsWFSFeatureDownloaderImpl::buildURL( qint64 startIndex, long long maxFeat
     query.addQueryItem( QStringLiteral( "SRSNAME" ), srsName );
   }
 
-  const QgsRectangle &rect = mShared->currentRect();
-
   // In case we must issue a BBOX and we have a filter, we must combine
   // both as a single filter, as both BBOX and FILTER aren't supported together
-  if ( !rect.isNull() && !mShared->mWFSFilter.isEmpty() )
+  std::vector<QString> filters;
+  if ( !mShared->mServerExpression.isEmpty() )
+    filters.push_back( mShared->mServerExpression );
+
+  const QgsRectangle &rect = mShared->currentRect();
+  if ( !rect.isNull() && ( !mShared->mWFSFilter.isEmpty() || !mShared->mServerExpression.isEmpty() || !mShared->mWFSGeometryTypeFilter.isEmpty() ) )
   {
-    double minx = rect.xMinimum();
-    double miny = rect.yMinimum();
-    double maxx = rect.xMaximum();
-    double maxy = rect.yMaximum();
-    QString filterBbox( QStringLiteral( "intersects_bbox($geometry, geomFromWKT('LINESTRING(%1 %2,%3 %4)'))" ).
-                        arg( minx ).arg( miny ).arg( maxx ).arg( maxy ) );
-    QgsExpression bboxExp( filterBbox );
     QgsOgcUtils::GMLVersion gmlVersion;
     QgsOgcUtils::FilterVersion filterVersion;
     bool honourAxisOrientation = false;
@@ -207,43 +200,37 @@ QUrl QgsWFSFeatureDownloaderImpl::buildURL( qint64 startIndex, long long maxFeat
       gmlVersion = QgsOgcUtils::GML_3_2_1;
       filterVersion = QgsOgcUtils::FILTER_FES_2_0;
     }
-    QDomDocument doc;
     QString geometryAttribute( mShared->mGeometryAttribute );
     if ( mShared->mLayerPropertiesList.size() > 1 )
       geometryAttribute = mShared->mURI.typeName() + "/" + geometryAttribute;
-    else if ( mShared->mLayerPropertiesList.size() == 1 && !mShared->mLayerPropertiesList[0].mNamespacePrefix.isEmpty() )
-      geometryAttribute = mShared->mLayerPropertiesList[0].mNamespacePrefix + QStringLiteral( ":" ) + geometryAttribute;
-    QDomElement bboxElem = QgsOgcUtils::expressionToOgcFilter( bboxExp, doc,
-                           gmlVersion, filterVersion, geometryAttribute, mShared->srsName(),
+
+
+    double minx = rect.xMinimum();
+    double miny = rect.yMinimum();
+    double maxx = rect.xMaximum();
+    double maxy = rect.yMaximum();
+    QString filterBbox( QStringLiteral( "intersects_bbox($geometry, geomFromWKT('LINESTRING(%1 %2,%3 %4)'))" ).
+                        arg( minx ).arg( miny ).arg( maxx ).arg( maxy ) );
+    QgsExpression bboxExp( filterBbox );
+    QDomDocument bboxDoc;
+    QDomElement bboxElem = QgsOgcUtils::expressionToOgcFilter( bboxExp, bboxDoc,
+                           gmlVersion, filterVersion,
+                           mShared->mLayerPropertiesList.size() == 1 ? mShared->mLayerPropertiesList[0].mNamespacePrefix : QString(),
+                           mShared->mLayerPropertiesList.size() == 1 ? mShared->mLayerPropertiesList[0].mNamespaceURI : QString(),
+                           geometryAttribute, mShared->srsName(),
                            honourAxisOrientation, mShared->mURI.invertAxisOrientation() );
-    doc.appendChild( bboxElem );
-    QDomNode bboxNode = bboxElem.firstChildElement();
-    bboxNode = bboxElem.removeChild( bboxNode );
+    bboxDoc.appendChild( bboxElem );
 
-    QDomDocument filterDoc;
-    ( void )filterDoc.setContent( mShared->mWFSFilter, true );
-    QDomNode filterNode = filterDoc.firstChildElement().firstChildElement();
-    filterNode = filterDoc.firstChildElement().removeChild( filterNode );
+    filters.push_back( bboxDoc.toString() );
+  }
+  if ( !mShared->mWFSFilter.isEmpty() )
+    filters.push_back( mShared->mWFSFilter );
+  if ( !mShared->mWFSGeometryTypeFilter.isEmpty() )
+    filters.push_back( mShared->mWFSGeometryTypeFilter );
 
-    QDomElement andElem = doc.createElement( ( filterVersion == QgsOgcUtils::FILTER_FES_2_0 ) ? "fes:And" : "ogc:And" );
-    andElem.appendChild( bboxNode );
-    andElem.appendChild( filterNode );
-    doc.firstChildElement().appendChild( andElem );
-
-    QSet<QString> setNamespaceURI;
-    for ( const QgsOgcUtils::LayerProperties &props : std::as_const( mShared->mLayerPropertiesList ) )
-    {
-      if ( !props.mNamespacePrefix.isEmpty() && !props.mNamespaceURI.isEmpty() &&
-           !setNamespaceURI.contains( props.mNamespaceURI ) )
-      {
-        setNamespaceURI.insert( props.mNamespaceURI );
-        QDomAttr attr = doc.createAttribute( QStringLiteral( "xmlns:" ) + props.mNamespacePrefix );
-        attr.setValue( props.mNamespaceURI );
-        doc.firstChildElement().setAttributeNode( attr );
-      }
-    }
-
-    query.addQueryItem( QStringLiteral( "FILTER" ), sanitizeFilter( doc.toString() ) );
+  if ( filters.size() >= 2 )
+  {
+    query.addQueryItem( QStringLiteral( "FILTER" ), sanitizeFilter( mShared->combineWFSFilters( filters ) ) );
   }
   else if ( !rect.isNull() )
   {
@@ -286,6 +273,15 @@ QUrl QgsWFSFeatureDownloaderImpl::buildURL( qint64 startIndex, long long maxFeat
   {
     query.addQueryItem( QStringLiteral( "FILTER" ), sanitizeFilter( mShared->mWFSFilter ) );
   }
+  else if ( !mShared->mServerExpression.isEmpty() )
+  {
+    query.addQueryItem( QStringLiteral( "FILTER" ), sanitizeFilter( mShared->mServerExpression ) );
+  }
+  else if ( !mShared->mWFSGeometryTypeFilter.isEmpty() )
+  {
+    query.addQueryItem( QStringLiteral( "FILTER" ), sanitizeFilter( mShared->mWFSGeometryTypeFilter ) );
+  }
+
 
   if ( !mShared->mSortBy.isEmpty() && !forHits )
   {
@@ -650,12 +646,12 @@ void QgsWFSFeatureDownloaderImpl::run( bool serializeFeatures, long long maxFeat
           // If receiving a geometry collection, but expecting a multipoint/...,
           // then try to convert it
           if ( f.hasGeometry() &&
-               f.geometry().wkbType() == QgsWkbTypes::GeometryCollection &&
-               ( mShared->mWKBType == QgsWkbTypes::MultiPoint ||
-                 mShared->mWKBType == QgsWkbTypes::MultiLineString ||
-                 mShared->mWKBType == QgsWkbTypes::MultiPolygon ) )
+               f.geometry().wkbType() == Qgis::WkbType::GeometryCollection &&
+               ( mShared->mWKBType == Qgis::WkbType::MultiPoint ||
+                 mShared->mWKBType == Qgis::WkbType::MultiLineString ||
+                 mShared->mWKBType == Qgis::WkbType::MultiPolygon ) )
           {
-            QgsWkbTypes::Type singleType = QgsWkbTypes::singleType( mShared->mWKBType );
+            Qgis::WkbType singleType = QgsWkbTypes::singleType( mShared->mWKBType );
             auto g = f.geometry().constGet();
             auto gc = qgsgeometry_cast<QgsGeometryCollection *>( g );
             bool allExpectedType = true;
@@ -670,11 +666,11 @@ void QgsWFSFeatureDownloaderImpl::run( bool serializeFeatures, long long maxFeat
             if ( allExpectedType )
             {
               QgsGeometryCollection *newGC;
-              if ( mShared->mWKBType == QgsWkbTypes::MultiPoint )
+              if ( mShared->mWKBType == Qgis::WkbType::MultiPoint )
               {
                 newGC =  new QgsMultiPoint();
               }
-              else if ( mShared->mWKBType == QgsWkbTypes::MultiLineString )
+              else if ( mShared->mWKBType == Qgis::WkbType::MultiLineString )
               {
                 newGC = new QgsMultiLineString();
               }
@@ -689,6 +685,13 @@ void QgsWFSFeatureDownloaderImpl::run( bool serializeFeatures, long long maxFeat
               }
               f.setGeometry( QgsGeometry( newGC ) );
             }
+          }
+          else if ( f.hasGeometry() && !mShared->mWFSGeometryTypeFilter.isEmpty() &&
+                    QgsWkbTypes::flatType( f.geometry().wkbType() ) != mShared->mWKBType )
+          {
+            QgsGeometry g = f.geometry();
+            g.convertToCurvedMultiType();
+            f.setGeometry( g );
           }
 
           featureList.push_back( QgsFeatureUniqueIdPair( f, gmlId ) );

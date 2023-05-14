@@ -252,7 +252,7 @@ Creates a clone of the FieldValueConverter.
         QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
         double symbologyScale = 1.0,
         const QgsRectangle *filterExtent = 0,
-        QgsWkbTypes::Type overrideGeometryType = QgsWkbTypes::Unknown,
+        Qgis::WkbType overrideGeometryType = Qgis::WkbType::Unknown,
         bool forceMulti = false,
         bool includeZ = false,
         const QgsAttributeList &attributes = QgsAttributeList(),
@@ -301,7 +301,7 @@ Write contents of vector layer to an (OGR supported) vector format
         QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
         double symbologyScale = 1.0,
         const QgsRectangle *filterExtent = 0,
-        QgsWkbTypes::Type overrideGeometryType = QgsWkbTypes::Unknown,
+        Qgis::WkbType overrideGeometryType = Qgis::WkbType::Unknown,
         bool forceMulti = false,
         bool includeZ = false,
         const QgsAttributeList &attributes = QgsAttributeList(),
@@ -385,7 +385,7 @@ Constructor
 
         QgsRectangle filterExtent;
 
-        QgsWkbTypes::Type overrideGeometryType;
+        Qgis::WkbType overrideGeometryType;
 
         bool forceMulti;
 
@@ -427,7 +427,7 @@ Writes a layer out to a vector file.
  QgsVectorFileWriter( const QString &vectorFileName,
                                            const QString &fileEncoding,
                                            const QgsFields &fields,
-                                           QgsWkbTypes::Type geometryType,
+                                           Qgis::WkbType geometryType,
                                            const QgsCoordinateReferenceSystem &srs = QgsCoordinateReferenceSystem(),
                                            const QString &driverName = "GPKG",
                                            const QStringList &datasourceOptions = QStringList(),
@@ -441,7 +441,7 @@ Writes a layer out to a vector file.
 
     static QgsVectorFileWriter *create( const QString &fileName,
                                         const QgsFields &fields,
-                                        QgsWkbTypes::Type geometryType,
+                                        Qgis::WkbType geometryType,
                                         const QgsCoordinateReferenceSystem &srs,
                                         const QgsCoordinateTransformContext &transformContext,
                                         const QgsVectorFileWriter::SaveVectorOptions &options,
@@ -598,14 +598,39 @@ Creates a filter for an OGR driver key
 Converts codec name to string passed to ENCODING layer creation option of OGR Shapefile
 %End
 
-    QgsVectorFileWriter::WriterError hasError();
+    QgsVectorFileWriter::WriterError hasError() const;
 %Docstring
 Checks whether there were any errors in constructor
 %End
 
-    QString errorMessage();
+    QString errorMessage() const;
 %Docstring
 Retrieves error message
+%End
+
+    QString driver() const;
+%Docstring
+Returns the GDAL (short) driver name associated with the output file.
+
+.. seealso:: :py:func:`driverLongName`
+
+.. versionadded:: 3.32
+%End
+
+    QString driverLongName() const;
+%Docstring
+Returns the GDAL long driver name associated with the output file.
+
+.. seealso:: :py:func:`driver`
+
+.. versionadded:: 3.32
+%End
+
+    Qgis::VectorFileWriterCapabilities capabilities() const;
+%Docstring
+Returns the capabilities supported by the writer.
+
+.. versionadded:: 3.32
 %End
 
     virtual bool addFeature( QgsFeature &feature, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() );
@@ -615,7 +640,7 @@ Retrieves error message
     virtual QString lastError() const;
 
 
-    bool addFeatureWithStyle( QgsFeature &feature, QgsFeatureRenderer *renderer, QgsUnitTypes::DistanceUnit outputUnit = QgsUnitTypes::DistanceMeters );
+    bool addFeatureWithStyle( QgsFeature &feature, QgsFeatureRenderer *renderer, Qgis::DistanceUnit outputUnit = Qgis::DistanceUnit::Meters );
 %Docstring
 Adds a ``feature`` to the currently opened data source, using the style from a specified ``renderer``.
 

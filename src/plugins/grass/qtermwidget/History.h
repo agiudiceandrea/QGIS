@@ -60,7 +60,7 @@ public:
   //un-mmaps the file
   void unmap();
   //returns true if the file is mmap'ed
-  bool isMapped();
+  bool isMapped() const;
 
 
 private:
@@ -122,7 +122,7 @@ public:
   // is very unsafe, because those references will no longer
   // be valid if the history scroll is deleted.
   //
-  const HistoryType& getType() { return *m_histType; }
+  const HistoryType& getType() const { return *m_histType; }
 
 protected:
   HistoryType* m_histType;
@@ -180,11 +180,11 @@ public:
   void addLine(bool previousWrapped=false) override;
 
   void setMaxNbLines(unsigned int nbLines);
-  unsigned int maxNbLines() { return _maxLineCount; }
+  unsigned int maxNbLines() const { return _maxLineCount; }
 
 
 private:
-  int bufferIndex(int lineNumber);
+  int bufferIndex(int lineNumber) const;
 
   HistoryLine* _historyBuffer;
   QBitArray _wrappedLine;
@@ -293,7 +293,7 @@ public:
 
   CompactHistoryBlock(){
     blockLength = 4096*64; // 256kb
-    head = (quint8*) mmap(0, blockLength, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+    head = (quint8*) mmap(nullptr, blockLength, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
     //head = (quint8*) malloc(blockLength);
     Q_ASSERT(head != MAP_FAILED);
     tail = blockStart = head;

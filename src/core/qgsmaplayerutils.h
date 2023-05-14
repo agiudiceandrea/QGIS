@@ -78,8 +78,21 @@ class CORE_EXPORT QgsMapLayerUtils
      *
      * \since QGIS 3.26
      */
-    static QList< QgsMapLayer * > sortLayersByType( const QList< QgsMapLayer * > &layers, const QList< QgsMapLayerType > &order );
+    static QList< QgsMapLayer * > sortLayersByType( const QList< QgsMapLayer * > &layers, const QList< Qgis::LayerType > &order );
 
+    /**
+     * Launders a layer's name, converting it into a format which is general suitable for
+     * file names or database layer names.
+     *
+     * Specifically this method:
+     *
+     * - Converts the name to lowercase
+     * - Replaces spaces by underscore characters
+     * - Removes any characters which are not alphanumeric or '_'.
+     *
+     * \since QGIS 3.28
+     */
+    static QString launderLayerName( const QString &name );
 
 };
 

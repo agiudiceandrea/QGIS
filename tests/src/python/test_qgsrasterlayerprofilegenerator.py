@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsRasterLayer profile generation
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -13,22 +12,17 @@ __copyright__ = 'Copyright 2022, The QGIS Project'
 import os
 
 import qgis  # NOQA
-
-from qgis.PyQt.QtCore import QTemporaryDir
-
 from qgis.core import (
-    QgsRasterLayer,
-    QgsLineString,
-    QgsProfileRequest,
     QgsCoordinateReferenceSystem,
-    QgsCoordinateTransformContext,
-    QgsFlatTerrainProvider,
-    QgsMeshTerrainProvider
+    QgsLineString,
+    QgsProfileIdentifyContext,
+    QgsProfilePoint,
+    QgsProfileRequest,
+    QgsProfileSnapContext,
+    QgsRasterLayer,
 )
-
-from qgis.PyQt.QtXml import QDomDocument
-
 from qgis.testing import start_app, unittest
+
 from utilities import unitTestDataPath
 
 start_app()
@@ -106,6 +100,134 @@ class TestQgsRasterLayerProfileGenerator(unittest.TestCase):
 
         self.assertEqual(r.zRange().lower(), 74)
         self.assertEqual(r.zRange().upper(), 154)
+
+    def testGenerationWithVerticalLine(self):
+        rl = QgsRasterLayer(os.path.join(unitTestDataPath(), '3d', 'dtm.tif'), 'DTM')
+        self.assertTrue(rl.isValid())
+
+        curve = QgsLineString()
+        curve.fromWkt('LineString (321878.13400000002002344 130592.75222520538954996, 321878.13400000002002344 129982.02943174661777448)')
+        req = QgsProfileRequest(curve)
+        req.setStepDistance(10)
+
+        rl.elevationProperties().setEnabled(True)
+
+        req.setCrs(QgsCoordinateReferenceSystem('EPSG:27700'))
+        generator = rl.createProfileGenerator(req)
+        self.assertTrue(generator.generateProfile())
+
+        r = generator.takeResults()
+        results = r.distanceToHeightMap()
+        self.assertEqual(len(results), 63)
+        first_point = min(results.keys())
+        last_point = max(results.keys())
+        self.assertEqual(results[first_point], 120)
+        self.assertEqual(results[last_point], 86)
+
+        self.assertEqual(r.zRange().lower(), 74)
+        self.assertEqual(r.zRange().upper(), 120)
+
+    def testGenerationWithHorizontallLine(self):
+        rl = QgsRasterLayer(os.path.join(unitTestDataPath(), '3d', 'dtm.tif'), 'DTM')
+        self.assertTrue(rl.isValid())
+
+        curve = QgsLineString()
+        curve.fromWkt('LineString (321471.82703730149660259 130317.67500000000291038, 322294.53625493601430207 130317.67500000000291038)')
+        req = QgsProfileRequest(curve)
+        req.setStepDistance(10)
+
+        rl.elevationProperties().setEnabled(True)
+
+        req.setCrs(QgsCoordinateReferenceSystem('EPSG:27700'))
+        generator = rl.createProfileGenerator(req)
+        self.assertTrue(generator.generateProfile())
+
+        r = generator.takeResults()
+        results = r.distanceToHeightMap()
+        self.assertEqual(len(results), 84)
+        first_point = min(results.keys())
+        last_point = max(results.keys())
+        self.assertEqual(results[first_point], 122)
+        self.assertEqual(results[last_point], 122)
+
+        self.assertEqual(r.zRange().lower(), 76)
+        self.assertEqual(r.zRange().upper(), 130)
+
+    def testSnapping(self):
+        rl = QgsRasterLayer(os.path.join(unitTestDataPath(), '3d', 'dtm.tif'), 'DTM')
+        self.assertTrue(rl.isValid())
+        rl.elevationProperties().setEnabled(True)
+
+        curve = QgsLineString()
+        curve.fromWkt('LineString (321621.3770066662109457 129734.87810317709227093, 321894.21278918092139065 129858.49142702402605209)')
+        req = QgsProfileRequest(curve)
+
+        generator = rl.createProfileGenerator(req)
+        self.assertTrue(generator.generateProfile())
+
+        r = generator.takeResults()
+
+        # try snapping some points
+        context = QgsProfileSnapContext()
+        res = r.snapPoint(QgsProfilePoint(-10, -10), context)
+        self.assertFalse(res.isValid())
+
+        context.maximumSurfaceDistanceDelta = 0
+        context.maximumSurfaceElevationDelta = 3
+        context.maximumPointDistanceDelta = 0
+        context.maximumPointElevationDelta = 0
+        res = r.snapPoint(QgsProfilePoint(0, 70), context)
+        self.assertTrue(res.isValid())
+        self.assertEqual(res.snappedPoint.distance(), 0)
+        self.assertEqual(res.snappedPoint.elevation(), 72)
+
+        context.maximumSurfaceDistanceDelta = 0
+        context.maximumSurfaceElevationDelta = 5
+        res = r.snapPoint(QgsProfilePoint(200, 79), context)
+        self.assertTrue(res.isValid())
+        self.assertEqual(res.snappedPoint.distance(), 200)
+        self.assertEqual(res.snappedPoint.elevation(), 75)
+
+        res = r.snapPoint(QgsProfilePoint(200, 85), context)
+        self.assertFalse(res.isValid())
+
+    def testIdentify(self):
+        rl = QgsRasterLayer(os.path.join(unitTestDataPath(), '3d', 'dtm.tif'), 'DTM')
+        self.assertTrue(rl.isValid())
+        rl.elevationProperties().setEnabled(True)
+
+        curve = QgsLineString()
+        curve.fromWkt('LineString (321621.3770066662109457 129734.87810317709227093, 321894.21278918092139065 129858.49142702402605209)')
+        req = QgsProfileRequest(curve)
+
+        generator = rl.createProfileGenerator(req)
+        self.assertTrue(generator.generateProfile())
+
+        r = generator.takeResults()
+
+        # try identifying
+        context = QgsProfileIdentifyContext()
+        res = r.identify(QgsProfilePoint(-10, -10), context)
+        self.assertFalse(res)
+
+        context.maximumSurfaceDistanceDelta = 0
+        context.maximumSurfaceElevationDelta = 3
+        context.maximumPointDistanceDelta = 0
+        context.maximumPointElevationDelta = 0
+        res = r.identify(QgsProfilePoint(0, 70), context)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].layer(), rl)
+        self.assertEqual(res[0].results(), [{'distance': 0.0, 'elevation': 72.0}])
+
+        context.maximumSurfaceDistanceDelta = 0
+        context.maximumSurfaceElevationDelta = 5
+        res = r.identify(QgsProfilePoint(200, 79), context)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].layer(), rl)
+        self.assertEqual(res[0].results(), [{'distance': 200.0, 'elevation': 75.0}])
+
+        res = r.identify(QgsProfilePoint(200, 85), context)
+        self.assertFalse(res)
 
 
 if __name__ == '__main__':

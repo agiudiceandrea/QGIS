@@ -26,32 +26,8 @@
 #include "qgsproject.h"
 #include "qgssnappingconfig.h"
 #include "qgsvectorlayer.h"
-#include "qgsapplication.h"
+#include "qgsunittypes.h"
 #include "qgsscalewidget.h"
-
-class SnapTypeMenu: public QMenu
-{
-  public:
-    SnapTypeMenu( const QString &title, QWidget *parent = nullptr )
-      : QMenu( title, parent ) {}
-
-    void mouseReleaseEvent( QMouseEvent *e )
-    {
-      QAction *action = activeAction();
-      if ( action )
-        action->trigger();
-      else
-        QMenu::mouseReleaseEvent( e );
-    }
-
-    // set focus to parent so that mTypeButton is not displayed
-    void hideEvent( QHideEvent *e )
-    {
-      qobject_cast<QWidget *>( parent() )->setFocus();
-      QMenu::hideEvent( e );
-    }
-};
-
 
 QgsSnappingLayerDelegate::QgsSnappingLayerDelegate( QgsMapCanvas *canvas, QObject *parent )
   : QItemDelegate( parent )
@@ -70,7 +46,7 @@ QWidget *QgsSnappingLayerDelegate::createEditor( QWidget *parent, const QStyleOp
     QToolButton *mTypeButton = new QToolButton( parent );
     mTypeButton->setToolTip( tr( "Snapping Type" ) );
     mTypeButton->setPopupMode( QToolButton::InstantPopup );
-    SnapTypeMenu *typeMenu = new SnapTypeMenu( tr( "Set Snapping Mode" ), parent );
+    SnappingLayerDelegateTypeMenu *typeMenu = new SnappingLayerDelegateTypeMenu( tr( "Set Snapping Mode" ), parent );
 
     for ( Qgis::SnappingType type : qgsEnumList<Qgis::SnappingType>() )
     {
@@ -101,8 +77,8 @@ QWidget *QgsSnappingLayerDelegate::createEditor( QWidget *parent, const QStyleOp
       }
       else
       {
-        const QgsUnitTypes::DistanceUnitType type = QgsUnitTypes::unitType( mCanvas->mapUnits() );
-        w->setDecimals( type == QgsUnitTypes::Standard ? 2 : 5 );
+        const Qgis::DistanceUnitType type = QgsUnitTypes::unitType( mCanvas->mapUnits() );
+        w->setDecimals( type == Qgis::DistanceUnitType::Standard ? 2 : 5 );
       }
     }
     else
@@ -293,7 +269,7 @@ Qt::ItemFlags QgsSnappingLayerTreeModel::flags( const QModelIndex &idx ) const
     {
       if ( idx.column() == AvoidIntersectionColumn )
       {
-        if ( vl->geometryType() == QgsWkbTypes::PolygonGeometry )
+        if ( vl->geometryType() == Qgis::GeometryType::Polygon )
         {
           return Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsUserCheckable;
         }
@@ -653,7 +629,7 @@ QVariant QgsSnappingLayerTreeModel::data( const QModelIndex &idx, int role ) con
     // avoid intersection(Overlap)
     if ( idx.column() == AvoidIntersectionColumn )
     {
-      if ( role == Qt::CheckStateRole && vl->geometryType() == QgsWkbTypes::PolygonGeometry )
+      if ( role == Qt::CheckStateRole && vl->geometryType() == Qgis::GeometryType::Polygon )
       {
         if ( mProject->avoidIntersectionsLayers().contains( vl ) )
         {

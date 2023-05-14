@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     GrassUtils.py
@@ -32,7 +30,8 @@ from qgis.core import (Qgis,
                        QgsApplication,
                        QgsProcessingUtils,
                        QgsMessageLog,
-                       QgsCoordinateReferenceSystem)
+                       QgsCoordinateReferenceSystem,
+                       QgsProcessingContext)
 from qgis.PyQt.QtCore import QCoreApplication
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.tools.system import userFolder, isWindows, isMac, mkdir
@@ -84,14 +83,14 @@ class Grass7Utils:
         return batchFile
 
     @staticmethod
-    def exportCrsWktToFile(crs):
+    def exportCrsWktToFile(crs, context: QgsProcessingContext):
         """
         Exports a crs as a WKT definition to a text file, and returns the path
         to this file
         """
         wkt = crs.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED)
-        wkt_file = QgsProcessingUtils.generateTempFilename('crs.prj')
-        with open(wkt_file, 'wt', encoding='utf-8') as f:
+        wkt_file = QgsProcessingUtils.generateTempFilename('crs.prj', context)
+        with open(wkt_file, 'w', encoding='utf-8') as f:
             f.write(wkt)
         return wkt_file
 
@@ -162,7 +161,7 @@ class Grass7Utils:
 
         vn = os.path.join(path, "etc", "VERSIONNUMBER")
         if os.path.isfile(vn):
-            with open(vn, "r") as f:
+            with open(vn) as f:
                 major, minor, patch = f.readlines()[0].split(' ')[0].split('.')
                 if patch != 'svn':
                     patch = ''
@@ -384,6 +383,20 @@ class Grass7Utils:
             if sys.version_info >= (3, 6):
                 kw['encoding'] = "cp{}".format(Grass7Utils.getWindowsCodePage())
 
+        def readline_with_recover(stdout):
+            """A method wrapping stdout.readline() with try-except recovering.
+            detailed in https://github.com/qgis/QGIS/pull/49226
+            Args:
+                stdout: io.TextIOWrapper - proc.stdout
+
+            Returns:
+                str: read line or replaced text when recovered
+            """
+            try:
+                return stdout.readline()
+            except UnicodeDecodeError:
+                return ''  # replaced-text
+
         with subprocess.Popen(
                 command,
                 shell=False,
@@ -394,7 +407,7 @@ class Grass7Utils:
                 env=grassenv,
                 **kw
         ) as proc:
-            for line in iter(proc.stdout.readline, ''):
+            for line in iter(lambda: readline_with_recover(proc.stdout), ''):
                 if 'GRASS_INFO_PERCENT' in line:
                     try:
                         feedback.setProgress(int(line[len('GRASS_INFO_PERCENT') + 2:]))
@@ -444,7 +457,7 @@ class Grass7Utils:
                 env=grassenv,
                 **kw
             ) as proc:
-                for line in iter(proc.stdout.readline, ''):
+                for line in iter(lambda: readline_with_recover(proc.stdout), ''):
                     if 'GRASS_INFO_PERCENT' in line:
                         try:
                             feedback.setProgress(int(
@@ -521,8 +534,8 @@ class Grass7Utils:
                         'running GRASS algorithms.')
                 if Grass7Utils.command is None:
                     return Grass7Utils.tr(
-                        'GRASS GIS 7 binary {0} can\'t be found on this system from a shell. '
-                        'Please install it or configure your PATH {1} environment variable.'.format(
+                        'GRASS GIS 7 binary {} can\'t be found on this system from a shell. '
+                        'Please install it or configure your PATH {} environment variable.'.format(
                             '(grass.bat)' if isWindows() else '(grass.sh)',
                             'or OSGEO4W_ROOT' if isWindows() else ''))
             # GNU/Linux

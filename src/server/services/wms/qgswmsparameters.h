@@ -181,12 +181,14 @@ namespace QgsWms
         GRID_INTERVAL_Y,
         WITH_GEOMETRY,
         WITH_MAPTIP,
+        WITH_DISPLAY_NAME,
         WMTVER,
         ATLAS_PK,
         FORMAT_OPTIONS,
         SRCWIDTH,
         SRCHEIGHT,
-        TILED
+        TILED,
+        ADDLAYERGROUPS
       };
       Q_ENUM( Name )
 
@@ -319,7 +321,9 @@ namespace QgsWms
       static QgsWmsParameter::Name name( const QString &name );
 
       QgsWmsParameter::Name mName;
-      int mId = -1;
+
+      //! Map id for prefixed parameters (e.g. "0" for "map0:LAYERS" in GetPrint requests)
+      int mMapId = -1;
   };
 
   /**
@@ -652,6 +656,11 @@ namespace QgsWms
        * \since QGIS 3.10
        */
       bool tiledAsBool() const;
+
+      /**
+       * Returns true if layer groups shall be added to GetLegendGraphic results
+       */
+      bool addLayerGroups() const;
 
       /**
        * Returns infoFormat. If the INFO_FORMAT parameter is not used, then the
@@ -1280,6 +1289,13 @@ namespace QgsWms
       bool withMapTip() const;
 
       /**
+       * \brief withDisplayName
+       * \returns TRUE if the display name is requested for feature info response
+       * \since QGIS 3.32
+       */
+      bool withDisplayName() const;
+
+      /**
        * Returns WMTVER parameter or an empty string if not defined.
        * \since QGIS 3.4
        */
@@ -1380,7 +1396,7 @@ namespace QgsWms
       QMultiMap<QString, QgsWmsParametersFilter> layerFilters( const QStringList &layers ) const;
 
 
-      QMap<QgsWmsParameter::Name, QgsWmsParameter> mWmsParameters;
+      QMultiMap<QgsWmsParameter::Name, QgsWmsParameter> mWmsParameters;
       QMap<QString, QMap<QString, QString> > mExternalWMSParameters;
       QList<QgsProjectVersion> mVersions;
   };

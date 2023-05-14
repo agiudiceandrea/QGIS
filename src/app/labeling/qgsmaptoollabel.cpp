@@ -17,32 +17,29 @@
 
 #include "qgsmaptoollabel.h"
 #include "qgsfeatureiterator.h"
-#include "qgslogger.h"
 #include "qgsmapcanvas.h"
-#include "qgsproject.h"
 #include "qgsrubberband.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectorlayerlabeling.h"
 #include "qgsdiagramrenderer.h"
 #include "qgssettingsregistrycore.h"
-#include "qgsvectorlayerjoininfo.h"
-#include "qgsvectorlayerjoinbuffer.h"
 #include "qgsauxiliarystorage.h"
-#include "qgsgui.h"
 #include "qgstextrenderer.h"
 #include "qgisapp.h"
 #include "qgsmapmouseevent.h"
-#include "qgsadvanceddigitizingdockwidget.h"
 #include "qgsstatusbar.h"
 #include "qgslabelingresults.h"
 #include "qgsexpressionnodeimpl.h"
 #include "qgsreferencedgeometry.h"
+#include "qgsnewauxiliarylayerdialog.h"
+#include "qgsadvanceddigitizingdockwidget.h"
+#include "qgssettingsentryimpl.h"
+
 
 #include <QMouseEvent>
 
 QgsMapToolLabel::QgsMapToolLabel( QgsMapCanvas *canvas, QgsAdvancedDigitizingDockWidget *cadDock )
   : QgsMapToolAdvancedDigitizing( canvas, cadDock )
-
 {
 }
 
@@ -81,16 +78,16 @@ bool QgsMapToolLabel::labelAtPosition( QMouseEvent *e, QgsLabelPosition &p )
       // are supported by the map tools.
       switch ( layer->type() )
       {
-        case QgsMapLayerType::VectorLayer:
+        case Qgis::LayerType::Vector:
           return false;
 
-        case QgsMapLayerType::RasterLayer:
-        case QgsMapLayerType::PluginLayer:
-        case QgsMapLayerType::MeshLayer:
-        case QgsMapLayerType::VectorTileLayer:
-        case QgsMapLayerType::AnnotationLayer:
-        case QgsMapLayerType::PointCloudLayer:
-        case QgsMapLayerType::GroupLayer:
+        case Qgis::LayerType::Raster:
+        case Qgis::LayerType::Plugin:
+        case Qgis::LayerType::Mesh:
+        case Qgis::LayerType::VectorTile:
+        case Qgis::LayerType::Annotation:
+        case Qgis::LayerType::PointCloud:
+        case Qgis::LayerType::Group:
           return true;
       }
     }
@@ -172,16 +169,16 @@ bool QgsMapToolLabel::calloutAtPosition( QMouseEvent *e, QgsCalloutPosition &p, 
       // are supported by the map tools.
       switch ( layer->type() )
       {
-        case QgsMapLayerType::VectorLayer:
+        case Qgis::LayerType::Vector:
           return false;
 
-        case QgsMapLayerType::RasterLayer:
-        case QgsMapLayerType::PluginLayer:
-        case QgsMapLayerType::MeshLayer:
-        case QgsMapLayerType::VectorTileLayer:
-        case QgsMapLayerType::AnnotationLayer:
-        case QgsMapLayerType::PointCloudLayer:
-        case QgsMapLayerType::GroupLayer:
+        case Qgis::LayerType::Raster:
+        case Qgis::LayerType::Plugin:
+        case Qgis::LayerType::Mesh:
+        case Qgis::LayerType::VectorTile:
+        case Qgis::LayerType::Annotation:
+        case Qgis::LayerType::PointCloud:
+        case Qgis::LayerType::Group:
           return true;
       }
     }
@@ -220,7 +217,7 @@ void QgsMapToolLabel::createRubberBands()
   delete mOffsetFromLineStartRubberBand;
 
   //label rubber band
-  mLabelRubberBand = new QgsRubberBand( mCanvas, QgsWkbTypes::LineGeometry );
+  mLabelRubberBand = new QgsRubberBand( mCanvas, Qgis::GeometryType::Line );
   mLabelRubberBand->addPoint( mCurrentLabel.pos.cornerPoints.at( 0 ) );
   mLabelRubberBand->addPoint( mCurrentLabel.pos.cornerPoints.at( 1 ) );
   mLabelRubberBand->addPoint( mCurrentLabel.pos.cornerPoints.at( 2 ) );
@@ -240,13 +237,9 @@ void QgsMapToolLabel::createRubberBands()
       QgsGeometry geom = f.geometry();
       if ( !geom.isNull() )
       {
+        const QColor lineColor = QgsSettingsRegistryCore::settingsDigitizingLineColor->value();
 
-        const int r = QgsSettingsRegistryCore::settingsDigitizingLineColorRed.value();
-        const int g = QgsSettingsRegistryCore::settingsDigitizingLineColorGreen.value();
-        const int b = QgsSettingsRegistryCore::settingsDigitizingLineColorBlue.value();
-        const int a = QgsSettingsRegistryCore::settingsDigitizingLineColorAlpha.value();
-
-        if ( geom.type() == QgsWkbTypes::PolygonGeometry )
+        if ( geom.type() == Qgis::GeometryType::Polygon )
         {
           // for polygons, we don't want to fill the whole polygon itself with the rubber band
           // as that obscures too much of the map and prevents users from getting a good view of
@@ -254,15 +247,15 @@ void QgsMapToolLabel::createRubberBands()
           // instead, just use the boundary of the polygon for the rubber band
           geom = QgsGeometry( geom.constGet()->boundary() );
         }
-        else if ( geom.type() == QgsWkbTypes::LineGeometry )
+        else if ( geom.type() == Qgis::GeometryType::Line )
         {
-          mOffsetFromLineStartRubberBand = new QgsRubberBand( mCanvas, QgsWkbTypes::PointGeometry );
-          mOffsetFromLineStartRubberBand->setColor( QColor( r, g, b, a ) );
+          mOffsetFromLineStartRubberBand = new QgsRubberBand( mCanvas, Qgis::GeometryType::Point );
+          mOffsetFromLineStartRubberBand->setColor( lineColor );
           mOffsetFromLineStartRubberBand->hide();
         }
 
         mFeatureRubberBand = new QgsRubberBand( mCanvas, geom.type() );
-        mFeatureRubberBand->setColor( QColor( r, g, b, a ) );
+        mFeatureRubberBand->setColor( lineColor );
         mFeatureRubberBand->setToGeometry( geom, vlayer );
         mFeatureRubberBand->show();
       }
@@ -279,7 +272,7 @@ void QgsMapToolLabel::createRubberBands()
       }
 
       QgsGeometry pointGeom = QgsGeometry::fromPointXY( fixPoint );
-      mFixPointRubberBand = new QgsRubberBand( mCanvas, QgsWkbTypes::LineGeometry );
+      mFixPointRubberBand = new QgsRubberBand( mCanvas, Qgis::GeometryType::Line );
       mFixPointRubberBand->setColor( QColor( 0, 0, 255, 65 ) );
       mFixPointRubberBand->setToGeometry( pointGeom, vlayer );
       mFixPointRubberBand->show();
@@ -365,57 +358,57 @@ QgsMapToolLabel::LabelAlignment QgsMapToolLabel::currentAlignment()
   }
 
   // data defined quadrant offset
-  if ( mCurrentLabel.settings.placement == QgsPalLayerSettings::Placement::AroundPoint ||
-       mCurrentLabel.settings.placement == QgsPalLayerSettings::Placement::OverPoint )
+  if ( mCurrentLabel.settings.placement == Qgis::LabelPlacement::AroundPoint ||
+       mCurrentLabel.settings.placement == Qgis::LabelPlacement::OverPoint )
   {
-    QgsPalLayerSettings::QuadrantPosition quadrantOffset = QgsPalLayerSettings::QuadrantAboveRight;
+    Qgis::LabelQuadrantPosition quadrantOffset = Qgis::LabelQuadrantPosition::AboveRight;
 
     // quadrant offest defined via buttons
-    if ( mCurrentLabel.settings.placement == QgsPalLayerSettings::Placement::OverPoint )
+    if ( mCurrentLabel.settings.placement == Qgis::LabelPlacement::OverPoint )
       quadrantOffset = mCurrentLabel.settings.quadOffset;
 
     // quadrant offest DD defined
     if ( mCurrentLabel.settings.dataDefinedProperties().isActive( QgsPalLayerSettings::OffsetQuad ) )
     {
-      QVariant exprVal = evaluateDataDefinedProperty( QgsPalLayerSettings::OffsetQuad, mCurrentLabel.settings, f, quadrantOffset );
-      if ( !exprVal.isNull() )
+      QVariant exprVal = evaluateDataDefinedProperty( QgsPalLayerSettings::OffsetQuad, mCurrentLabel.settings, f, static_cast< int >( quadrantOffset ) );
+      if ( !QgsVariantUtils::isNull( exprVal ) )
       {
         bool ok;
         int quadInt = exprVal.toInt( &ok );
         if ( ok && 0 <= quadInt && quadInt <= 8 )
         {
-          quadrantOffset = static_cast< QgsPalLayerSettings::QuadrantPosition >( quadInt );
+          quadrantOffset = static_cast< Qgis::LabelQuadrantPosition >( quadInt );
         }
       }
     }
 
     switch ( quadrantOffset )
     {
-      case QgsPalLayerSettings::QuadrantAboveLeft:
+      case Qgis::LabelQuadrantPosition::AboveLeft:
         labelAlignment = LabelAlignment::BottomRight;
         break;
-      case QgsPalLayerSettings::QuadrantAbove:
+      case Qgis::LabelQuadrantPosition::Above:
         labelAlignment = LabelAlignment::BottomCenter;
         break;
-      case QgsPalLayerSettings::QuadrantAboveRight:
+      case Qgis::LabelQuadrantPosition::AboveRight:
         labelAlignment = LabelAlignment::BottomLeft;
         break;
-      case QgsPalLayerSettings::QuadrantLeft:
+      case Qgis::LabelQuadrantPosition::Left:
         labelAlignment = LabelAlignment::HalfRight;
         break;
-      case QgsPalLayerSettings::QuadrantOver:
+      case Qgis::LabelQuadrantPosition::Over:
         labelAlignment = LabelAlignment::HalfCenter;
         break;
-      case QgsPalLayerSettings::QuadrantRight:
+      case Qgis::LabelQuadrantPosition::Right:
         labelAlignment = LabelAlignment::HalfLeft;
         break;
-      case QgsPalLayerSettings::QuadrantBelowLeft:
+      case Qgis::LabelQuadrantPosition::BelowLeft:
         labelAlignment = LabelAlignment::TopRight;
         break;
-      case QgsPalLayerSettings::QuadrantBelow:
+      case Qgis::LabelQuadrantPosition::Below:
         labelAlignment = LabelAlignment::TopCenter;
         break;
-      case QgsPalLayerSettings::QuadrantBelowRight:
+      case Qgis::LabelQuadrantPosition::BelowRight:
         labelAlignment = LabelAlignment::TopLeft;
         break;
     }
@@ -829,10 +822,10 @@ bool QgsMapToolLabel::currentLabelDataDefinedPosition( double &x, bool &xSuccess
     if ( mCurrentLabel.settings.dataDefinedProperties().isActive( QgsPalLayerSettings::PositionPoint ) )
     {
       if ( pointCol >= 0
-           && !attributes.at( pointCol ).isNull() )
+           && !QgsVariantUtils::isNull( attributes.at( pointCol ) ) )
       {
         QVariant pointAsVariant = attributes.at( pointCol );
-        if ( pointAsVariant.canConvert<QgsGeometry>() )
+        if ( pointAsVariant.userType() == QMetaType::type( "QgsGeometry" ) )
         {
           const  QgsGeometry geometry = pointAsVariant.value<QgsGeometry>();
           if ( const QgsPoint *point  = ( geometry.constGet() ? qgsgeometry_cast<const QgsPoint *>( geometry.constGet()->simplifiedTypeRef() ) : nullptr ) )
@@ -848,9 +841,9 @@ bool QgsMapToolLabel::currentLabelDataDefinedPosition( double &x, bool &xSuccess
     }
     else
     {
-      if ( !attributes.at( xCol ).isNull() )
+      if ( !QgsVariantUtils::isNull( attributes.at( xCol ) ) )
         x = attributes.at( xCol ).toDouble( &xSuccess );
-      if ( !attributes.at( yCol ).isNull() )
+      if ( !QgsVariantUtils::isNull( attributes.at( yCol ) ) )
         y = attributes.at( yCol ).toDouble( &ySuccess );
     }
   }
@@ -891,7 +884,7 @@ bool QgsMapToolLabel::currentLabelDataDefinedLineAnchorPercent( double &lineAnch
 
   if ( mCurrentLabel.settings.dataDefinedProperties().isActive( QgsPalLayerSettings::LineAnchorPercent ) )
   {
-    if ( !attributes.at( lineAnchorPercentCol ).isNull() )
+    if ( !QgsVariantUtils::isNull( attributes.at( lineAnchorPercentCol ) ) )
     {
       lineAnchorPercent = attributes.at( lineAnchorPercentCol ).toDouble( &lineAnchorPercentSuccess );
     }
@@ -899,7 +892,7 @@ bool QgsMapToolLabel::currentLabelDataDefinedLineAnchorPercent( double &lineAnch
 
   if ( mCurrentLabel.settings.dataDefinedProperties().isActive( QgsPalLayerSettings::LineAnchorClipping ) )
   {
-    if ( !attributes.at( lineAnchorClippingCol ).isNull() )
+    if ( !QgsVariantUtils::isNull( attributes.at( lineAnchorClippingCol ) ) )
     {
       lineAnchorClipping = attributes.at( lineAnchorClippingCol ).toString();
     }
@@ -911,7 +904,7 @@ bool QgsMapToolLabel::currentLabelDataDefinedLineAnchorPercent( double &lineAnch
 
   if ( mCurrentLabel.settings.dataDefinedProperties().isActive( QgsPalLayerSettings::LineAnchorType ) )
   {
-    if ( !attributes.at( lineAnchorTypeCol ).isNull() )
+    if ( !QgsVariantUtils::isNull( attributes.at( lineAnchorTypeCol ) ) )
     {
       lineAnchorType = attributes.at( lineAnchorTypeCol ).toString();
     }
@@ -923,7 +916,7 @@ bool QgsMapToolLabel::currentLabelDataDefinedLineAnchorPercent( double &lineAnch
 
   if ( mCurrentLabel.settings.dataDefinedProperties().isActive( QgsPalLayerSettings::LineAnchorTextPoint ) )
   {
-    if ( !attributes.at( lineAnchorTextPointCol ).isNull() )
+    if ( !QgsVariantUtils::isNull( attributes.at( lineAnchorTextPointCol ) ) )
     {
       lineAnchorTextPoint = attributes.at( lineAnchorTextPointCol ).toString();
     }
@@ -1142,7 +1135,30 @@ bool QgsMapToolLabel::isPinned()
 
   if ( ! mCurrentLabel.pos.isDiagram )
   {
-    rc = mCurrentLabel.pos.isPinned;
+    if ( mCurrentLabel.pos.isPinned )
+    {
+      rc = true;
+    }
+    else
+    {
+      double lineAnchor;
+      bool lineAnchorSuccess;
+      int lineAnchorCol;
+      QString lineAnchorClipping;
+      bool lineAnchorClippingSuccess;
+      int lineAnchorClippingCol;
+      QString lineAnchorType;
+      bool lineAnchorTypeSuccess;
+      int lineAnchorTypeCol;
+      QString lineAnchorTextPoint;
+      bool lineAnchorTextSuccess;
+      int lineAnchorTextCol;
+      if ( currentLabelDataDefinedLineAnchorPercent( lineAnchor, lineAnchorSuccess, lineAnchorCol, lineAnchorClipping, lineAnchorClippingSuccess, lineAnchorClippingCol,
+           lineAnchorType, lineAnchorTypeSuccess, lineAnchorTypeCol, lineAnchorTextPoint, lineAnchorTextSuccess, lineAnchorTextCol ) )
+      {
+        rc = lineAnchorSuccess;
+      }
+    }
   }
   else
   {
@@ -1305,7 +1321,7 @@ bool QgsMapToolLabel::createAuxiliaryFields( LabelDetails &details, QgsPalIndexe
   }
 
   // Anchor properties are for linestrings only:
-  if ( vlayer->geometryType() == QgsWkbTypes::GeometryType::LineGeometry )
+  if ( vlayer->geometryType() == Qgis::GeometryType::Line )
   {
     for ( const QgsPalLayerSettings::Property &p : std::as_const( mPalAnchorProperties ) )
     {
@@ -1437,7 +1453,7 @@ void QgsMapToolLabel::updateHoveredLabel( QgsMapMouseEvent *e )
 {
   if ( !mHoverRubberBand )
   {
-    mHoverRubberBand = new QgsRubberBand( mCanvas, QgsWkbTypes::LineGeometry );
+    mHoverRubberBand = new QgsRubberBand( mCanvas, Qgis::GeometryType::Line );
     mHoverRubberBand->setWidth( 2 );
     mHoverRubberBand->setSecondaryStrokeColor( QColor( 255, 255, 255, 100 ) );
     mHoverRubberBand->setColor( QColor( 200, 0, 120, 255 ) );
@@ -1453,7 +1469,7 @@ void QgsMapToolLabel::updateHoveredLabel( QgsMapMouseEvent *e )
   {
     if ( !mCalloutOtherPointsRubberBand )
     {
-      mCalloutOtherPointsRubberBand = new QgsRubberBand( mCanvas, QgsWkbTypes::PointGeometry );
+      mCalloutOtherPointsRubberBand = new QgsRubberBand( mCanvas, Qgis::GeometryType::Point );
       mCalloutOtherPointsRubberBand->setWidth( 2 );
       mCalloutOtherPointsRubberBand->setSecondaryStrokeColor( QColor( 255, 255, 255, 100 ) );
       mCalloutOtherPointsRubberBand->setColor( QColor( 200, 0, 120, 255 ) );
@@ -1466,9 +1482,9 @@ void QgsMapToolLabel::updateHoveredLabel( QgsMapMouseEvent *e )
     mCurrentHoverLabel = LabelDetails();
 
     mHoverRubberBand->show();
-    mHoverRubberBand->reset( QgsWkbTypes::PointGeometry );
+    mHoverRubberBand->reset( Qgis::GeometryType::Point );
     mCalloutOtherPointsRubberBand->show();
-    mCalloutOtherPointsRubberBand->reset( QgsWkbTypes::PointGeometry );
+    mCalloutOtherPointsRubberBand->reset( Qgis::GeometryType::Point );
 
     if ( isOrigin )
     {
@@ -1513,7 +1529,7 @@ void QgsMapToolLabel::updateHoveredLabel( QgsMapMouseEvent *e )
   mCurrentHoverLabel = newHoverLabel;
 
   mHoverRubberBand->show();
-  mHoverRubberBand->reset( QgsWkbTypes::LineGeometry );
+  mHoverRubberBand->reset( Qgis::GeometryType::Line );
   if ( const QgsLabelingResults *labelingResults = mCanvas->labelingResults( false ) )
   {
     if ( labelPos.groupedLabelId != 0 )

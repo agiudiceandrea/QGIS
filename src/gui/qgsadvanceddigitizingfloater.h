@@ -24,6 +24,8 @@
 #include "qgis_gui.h"
 #include "qgis_sip.h"
 
+#include <QPointer>
+
 class QgsMapCanvas;
 class QgsAdvancedDigitizingDockWidget;
 
@@ -73,6 +75,7 @@ class GUI_EXPORT QgsAdvancedDigitizingFloater : public QWidget, private Ui::QgsA
     void changeY( const QString &text );
     void changeZ( const QString &text );
     void changeM( const QString &text );
+    void changeCommonAngleSnapping( double angle );
     void changeDistance( const QString &text );
     void changeAngle( const QString &text );
     void changeLockX( bool locked );
@@ -99,6 +102,7 @@ class GUI_EXPORT QgsAdvancedDigitizingFloater : public QWidget, private Ui::QgsA
     void enabledChangedM( bool enabled );
     void enabledChangedAngle( bool enabled );
     void enabledChangedDistance( bool enabled );
+    void enabledCommonAngleSnapping( bool enabled );
 
   private:
 
@@ -106,7 +110,7 @@ class GUI_EXPORT QgsAdvancedDigitizingFloater : public QWidget, private Ui::QgsA
     QgsMapCanvas *mMapCanvas = nullptr;
 
     //! pointer to map cad docker widget
-    QgsAdvancedDigitizingDockWidget *mCadDockWidget = nullptr;
+    QPointer< QgsAdvancedDigitizingDockWidget > mCadDockWidget;
 
     /**
     * event filter to track mouse position

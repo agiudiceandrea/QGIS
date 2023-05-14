@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsProfileRequest
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,25 +9,19 @@ __author__ = 'Nyall Dawson'
 __date__ = '18/03/2022'
 __copyright__ = 'Copyright 2022, The QGIS Project'
 
-import os
-
 import qgis  # NOQA
 
-from qgis.PyQt.QtCore import QTemporaryDir
-
 from qgis.core import (
-    QgsLineString,
-    QgsProfileRequest,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransformContext,
+    QgsExpressionContext,
+    QgsExpressionContextScope,
     QgsFlatTerrainProvider,
-    QgsMeshTerrainProvider
+    QgsLineString,
+    QgsMeshTerrainProvider,
+    QgsProfileRequest,
 )
-
-from qgis.PyQt.QtXml import QDomDocument
-
 from qgis.testing import start_app, unittest
-from utilities import unitTestDataPath
 
 start_app()
 
@@ -52,6 +45,14 @@ class TestQgsProfileRequest(unittest.TestCase):
         self.assertEqual(req.transformContext().calculateCoordinateOperation(QgsCoordinateReferenceSystem('EPSG:3111'),
                                                                              QgsCoordinateReferenceSystem('EPSG:4283')), proj_string)
 
+        exp_context = QgsExpressionContext()
+        context_scope = QgsExpressionContextScope()
+        context_scope.setVariable('test_var', 5, True)
+        exp_context.appendScope(context_scope)
+        req.setExpressionContext(exp_context)
+
+        self.assertEqual(req.expressionContext().variable('test_var'), 5)
+
         terrain = QgsFlatTerrainProvider()
         terrain.setOffset(5)
         req.setTerrainProvider(terrain)
@@ -66,6 +67,7 @@ class TestQgsProfileRequest(unittest.TestCase):
                                                                               QgsCoordinateReferenceSystem('EPSG:4283')), proj_string)
         self.assertIsInstance(copy.terrainProvider(), QgsFlatTerrainProvider)
         self.assertEqual(copy.terrainProvider().offset(), 5)
+        self.assertEqual(copy.expressionContext().variable('test_var'), 5)
 
     def testEquality(self):
         """

@@ -19,7 +19,7 @@
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
-#include "qgsabstractprofilegenerator.h"
+#include "qgsabstractprofilesurfacegenerator.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgscoordinatetransformcontext.h"
 #include "qgscoordinatetransform.h"
@@ -38,6 +38,7 @@ class QgsAbstractTerrainProvider;
 class QgsGeos;
 class QgsLineString;
 class QgsPolygon;
+class QgsProfileSnapContext;
 
 #define SIP_NO_FILE
 
@@ -49,12 +50,9 @@ class QgsPolygon;
  * \ingroup core
  * \since QGIS 3.26
  */
-class CORE_EXPORT QgsVectorLayerProfileResults : public QgsAbstractProfileResults
+class CORE_EXPORT QgsVectorLayerProfileResults : public QgsAbstractProfileSurfaceResults
 {
   public:
-
-    QgsPointSequence rawPoints;
-    QMap< double, double > mDistanceToHeightMap;
 
     struct Feature
     {
@@ -69,20 +67,28 @@ class CORE_EXPORT QgsVectorLayerProfileResults : public QgsAbstractProfileResult
     QHash< QgsFeatureId, QVector< Feature > > features;
     QPointer< QgsVectorLayer > mLayer;
 
-    double minZ = std::numeric_limits< double >::max();
-    double maxZ = std::numeric_limits< double >::lowest();
-
+    Qgis::VectorProfileType profileType = Qgis::VectorProfileType::IndividualFeatures;
     bool respectLayerSymbology = true;
-    std::unique_ptr< QgsLineSymbol > profileLineSymbol;
-    std::unique_ptr< QgsFillSymbol > profileFillSymbol;
-    std::unique_ptr< QgsMarkerSymbol > profileMarkerSymbol;
+    std::unique_ptr< QgsMarkerSymbol > mMarkerSymbol;
+    bool mShowMarkerSymbolInSurfacePlots = false;
 
     QString type() const override;
-    QMap< double, double > distanceToHeightMap() const override;
-    QgsDoubleRange zRange() const override;
-    QgsPointSequence sampledPoints() const override;
     QVector< QgsGeometry > asGeometries() const override;
+    QgsProfileSnapResult snapPoint( const QgsProfilePoint &point, const QgsProfileSnapContext &context ) override;
+    QVector<QgsProfileIdentifyResults> identify( const QgsProfilePoint &point, const QgsProfileIdentifyContext &context ) override;
+    QVector<QgsProfileIdentifyResults> identify( const QgsDoubleRange &distanceRange, const QgsDoubleRange &elevationRange, const QgsProfileIdentifyContext &context ) override;
     void renderResults( QgsProfileRenderContext &context ) override;
+    void copyPropertiesFromGenerator( const QgsAbstractProfileGenerator *generator ) override;
+
+  private:
+    void renderResultsAsIndividualFeatures( QgsProfileRenderContext &context );
+    void renderMarkersOverContinuousSurfacePlot( QgsProfileRenderContext &context );
+    QgsProfileSnapResult snapPointToIndividualFeatures( const QgsProfilePoint &point, const QgsProfileSnapContext &context );
+
+    void visitFeaturesAtPoint( const QgsProfilePoint &point, double maximumPointDistanceDelta, double maximumPointElevationDelta, double maximumSurfaceElevationDelta,
+                               const std::function< void( QgsFeatureId, double delta, double distance, double elevation ) > &visitor, bool visitWithin );
+    void visitFeaturesInRange( const QgsDoubleRange &distanceRange, const QgsDoubleRange &elevationRange,
+                               const std::function<void ( QgsFeatureId )> &visitor );
 };
 
 
@@ -93,7 +99,7 @@ class CORE_EXPORT QgsVectorLayerProfileResults : public QgsAbstractProfileResult
  * \ingroup core
  * \since QGIS 3.26
  */
-class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileGenerator
+class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileSurfaceGenerator
 {
 
   public:
@@ -105,7 +111,8 @@ class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileGene
 
     ~QgsVectorLayerProfileGenerator() override;
 
-    bool generateProfile() override;
+    QString sourceId() const override;
+    bool generateProfile( const QgsProfileGenerationContext &context = QgsProfileGenerationContext() ) override;
     QgsAbstractProfileResults *takeResults() override;
     QgsFeedback *feedback() const override;
 
@@ -116,11 +123,12 @@ class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileGene
     bool generateProfileForPolygons();
 
     double terrainHeight( double x, double y );
-    double featureZToHeight( double x, double y, double z );
+    double featureZToHeight( double x, double y, double z, double offset );
 
-    void clampAltitudes( QgsLineString *lineString, const QgsPoint &centroid );
-    bool clampAltitudes( QgsPolygon *polygon );
+    void clampAltitudes( QgsLineString *lineString, const QgsPoint &centroid, double offset );
+    bool clampAltitudes( QgsPolygon *polygon, double offset );
 
+    QString mId;
     std::unique_ptr<QgsFeedback> mFeedback = nullptr;
 
     std::unique_ptr< QgsCurve > mProfileCurve;
@@ -141,24 +149,30 @@ class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileGene
 
     double mOffset = 0;
     double mScale = 1;
+    Qgis::VectorProfileType mType = Qgis::VectorProfileType::IndividualFeatures;
     Qgis::AltitudeClamping mClamping = Qgis::AltitudeClamping::Terrain;
     Qgis::AltitudeBinding mBinding = Qgis::AltitudeBinding::Centroid;
     bool mExtrusionEnabled = false;
     double mExtrusionHeight = 0;
 
-    QgsWkbTypes::Type mWkbType = QgsWkbTypes::Unknown;
+    QgsExpressionContext mExpressionContext;
+    QgsFields mFields;
+    QgsPropertyCollection mDataDefinedProperties;
+
+    Qgis::WkbType mWkbType = Qgis::WkbType::Unknown;
     QgsCoordinateTransform mLayerToTargetTransform;
     QgsCoordinateTransform mTargetToTerrainProviderTransform;
 
     std::unique_ptr< QgsVectorLayerProfileResults > mResults;
 
     bool mRespectLayerSymbology = true;
-    std::unique_ptr< QgsLineSymbol > mProfileLineSymbol;
-    std::unique_ptr< QgsFillSymbol > mProfileFillSymbol;
     std::unique_ptr< QgsMarkerSymbol > mProfileMarkerSymbol;
+    bool mShowMarkerSymbolInSurfacePlots = false;
 
     // NOT for use in the background thread!
     QPointer< QgsVectorLayer > mLayer;
+
+    friend class QgsVectorLayerProfileResults;
 
 };
 

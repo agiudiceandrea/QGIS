@@ -23,7 +23,6 @@
 #include "qgis_sip.h"
 #include "qgsfields.h"
 #include "qgsfeedback.h"
-#include "qgstaskmanager.h"
 #include "qgsogrutils.h"
 #include "qgsrenderer.h"
 #include "qgsgeometryengine.h"
@@ -78,7 +77,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
       public:
         SetOption( const QString &docString, const QStringList &values, const QString &defaultValue, bool allowNone = false )
           : Option( docString, Set )
-          , values( qgis::listToSet( values ) )
+          , values( values.begin(), values.end() )
           , defaultValue( defaultValue )
           , allowNone( allowNone )
         {}
@@ -356,7 +355,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
         QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
         double symbologyScale = 1.0,
         const QgsRectangle *filterExtent = nullptr,
-        QgsWkbTypes::Type overrideGeometryType = QgsWkbTypes::Unknown,
+        Qgis::WkbType overrideGeometryType = Qgis::WkbType::Unknown,
         bool forceMulti = false,
         bool includeZ = false,
         const QgsAttributeList &attributes = QgsAttributeList(),
@@ -439,7 +438,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
         QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
         double symbologyScale = 1.0,
         const QgsRectangle *filterExtent = nullptr,
-        QgsWkbTypes::Type overrideGeometryType = QgsWkbTypes::Unknown,
+        Qgis::WkbType overrideGeometryType = Qgis::WkbType::Unknown,
         bool forceMulti = false,
         bool includeZ = false,
         const QgsAttributeList &attributes = QgsAttributeList(),
@@ -512,7 +511,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
          * Set to a valid geometry type to override the default geometry type for the layer. This parameter
          * allows for conversion of geometryless tables to null geometries, etc.
         */
-        QgsWkbTypes::Type overrideGeometryType = QgsWkbTypes::Unknown;
+        Qgis::WkbType overrideGeometryType = Qgis::WkbType::Unknown;
 
         //! Sets to TRUE to force creation of multi* geometries
         bool forceMulti = false;
@@ -599,7 +598,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     Q_DECL_DEPRECATED QgsVectorFileWriter( const QString &vectorFileName,
                                            const QString &fileEncoding,
                                            const QgsFields &fields,
-                                           QgsWkbTypes::Type geometryType,
+                                           Qgis::WkbType geometryType,
                                            const QgsCoordinateReferenceSystem &srs = QgsCoordinateReferenceSystem(),
                                            const QString &driverName = "GPKG",
                                            const QStringList &datasourceOptions = QStringList(),
@@ -639,7 +638,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     Q_DECL_DEPRECATED QgsVectorFileWriter( const QString &vectorFileName,
                                            const QString &fileEncoding,
                                            const QgsFields &fields,
-                                           QgsWkbTypes::Type geometryType,
+                                           Qgis::WkbType geometryType,
                                            const QgsCoordinateReferenceSystem &srs,
                                            const QString &driverName,
                                            const QStringList &datasourceOptions,
@@ -675,7 +674,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      */
     static QgsVectorFileWriter *create( const QString &fileName,
                                         const QgsFields &fields,
-                                        QgsWkbTypes::Type geometryType,
+                                        Qgis::WkbType geometryType,
                                         const QgsCoordinateReferenceSystem &srs,
                                         const QgsCoordinateTransformContext &transformContext,
                                         const QgsVectorFileWriter::SaveVectorOptions &options,
@@ -821,10 +820,33 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     static QString convertCodecNameForEncodingOption( const QString &codecName );
 
     //! Checks whether there were any errors in constructor
-    QgsVectorFileWriter::WriterError hasError();
+    QgsVectorFileWriter::WriterError hasError() const;
 
     //! Retrieves error message
-    QString errorMessage();
+    QString errorMessage() const;
+
+    /**
+     * Returns the GDAL (short) driver name associated with the output file.
+     *
+     * \see driverLongName()
+     * \since QGIS 3.32
+     */
+    QString driver() const;
+
+    /**
+     * Returns the GDAL long driver name associated with the output file.
+     *
+     * \see driver()
+     * \since QGIS 3.32
+     */
+    QString driverLongName() const;
+
+    /**
+     * Returns the capabilities supported by the writer.
+     *
+     * \since QGIS 3.32
+     */
+    Qgis::VectorFileWriterCapabilities capabilities() const;
 
     bool addFeature( QgsFeature &feature, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() ) override;
     bool addFeatures( QgsFeatureList &features, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() ) override;
@@ -834,10 +856,10 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      * Adds a \a feature to the currently opened data source, using the style from a specified \a renderer.
      * \since QGIS 3.0
      */
-    bool addFeatureWithStyle( QgsFeature &feature, QgsFeatureRenderer *renderer, QgsUnitTypes::DistanceUnit outputUnit = QgsUnitTypes::DistanceMeters );
+    bool addFeatureWithStyle( QgsFeature &feature, QgsFeatureRenderer *renderer, Qgis::DistanceUnit outputUnit = Qgis::DistanceUnit::Meters );
 
     //! \note not available in Python bindings
-    QMap<int, int> attrIdxToOgrIdx() { return mAttrIdxToOgrIdx; } SIP_SKIP
+    QMap<int, int> attrIdxToOgrIdx() const { return mAttrIdxToOgrIdx; } SIP_SKIP
 
     //! Close opened shapefile for writing
     ~QgsVectorFileWriter() override;
@@ -892,7 +914,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      * Will drop M values and convert Z to 2.5D where required.
      * \note not available in Python bindings
      */
-    static OGRwkbGeometryType ogrTypeFromWkbType( QgsWkbTypes::Type type ) SIP_SKIP;
+    static OGRwkbGeometryType ogrTypeFromWkbType( Qgis::WkbType type ) SIP_SKIP;
 
     /**
      * Returns edition capabilities for an existing dataset name.
@@ -918,7 +940,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
   protected:
     //! \note not available in Python bindings
-    OGRGeometryH createEmptyGeometry( QgsWkbTypes::Type wkbType ) SIP_SKIP;
+    OGRGeometryH createEmptyGeometry( Qgis::WkbType wkbType ) SIP_SKIP;
 
     gdal::ogr_datasource_unique_ptr mDS;
     OGRLayerH mLayer = nullptr;
@@ -933,7 +955,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     QTextCodec *mCodec = nullptr;
 
     //! Geometry type which is being used
-    QgsWkbTypes::Type mWkbType;
+    Qgis::WkbType mWkbType;
 
     //! Map attribute indizes to OGR field indexes
     QMap<int, int> mAttrIdxToOgrIdx;
@@ -946,6 +968,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     double mSymbologyScale;
 
     QString mOgrDriverName;
+    QString mOgrDriverLongName;
 
     //! Field value converter
     FieldValueConverter *mFieldValueConverter = nullptr;
@@ -959,7 +982,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     {
       std::unique_ptr< QgsFeatureRenderer > renderer;
       QgsCoordinateReferenceSystem sourceCrs;
-      QgsWkbTypes::Type sourceWkbType = QgsWkbTypes::Unknown;
+      Qgis::WkbType sourceWkbType = Qgis::WkbType::Unknown;
       QgsFields sourceFields;
       QString providerType;
       long long featureCount = 0;
@@ -972,7 +995,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
       QgsRenderContext renderContext;
       bool shallTransform = false;
       QgsCoordinateReferenceSystem outputCrs;
-      QgsWkbTypes::Type destWkbType = QgsWkbTypes::Unknown;
+      Qgis::WkbType destWkbType = Qgis::WkbType::Unknown;
       QgsAttributeList attributes;
       QgsFields outputFields;
       QgsFeatureIterator sourceFeatureIterator;
@@ -1023,7 +1046,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
         QString *newLayer = nullptr ) SIP_DEPRECATED;
 
     void init( QString vectorFileName, QString fileEncoding, const QgsFields &fields,
-               QgsWkbTypes::Type geometryType, QgsCoordinateReferenceSystem srs,
+               Qgis::WkbType geometryType, QgsCoordinateReferenceSystem srs,
                const QString &driverName, QStringList datasourceOptions,
                QStringList layerOptions, QString *newFilename,
                QgsVectorFileWriter::FieldValueConverter *fieldValueConverter,
@@ -1042,14 +1065,16 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     bool mUsingTransaction = false;
     QSet< QVariant::Type > mSupportedListSubTypes;
 
+    Qgis::VectorFileWriterCapabilities mCapabilities;
+
     void createSymbolLayerTable( QgsVectorLayer *vl, const QgsCoordinateTransform &ct, OGRDataSourceH ds );
     gdal::ogr_feature_unique_ptr createFeature( const QgsFeature &feature );
     bool writeFeature( OGRLayerH layer, OGRFeatureH feature );
 
     //! Writes features considering symbol level order
     QgsVectorFileWriter::WriterError exportFeaturesSymbolLevels( const PreparedWriterDetails &details, QgsFeatureIterator &fit, const QgsCoordinateTransform &ct, QString *errorMessage = nullptr );
-    double mmScaleFactor( double scale, QgsUnitTypes::RenderUnit symbolUnits, QgsUnitTypes::DistanceUnit mapUnits );
-    double mapUnitScaleFactor( double scale, QgsUnitTypes::RenderUnit symbolUnits, QgsUnitTypes::DistanceUnit mapUnits );
+    double mmScaleFactor( double scale, Qgis::RenderUnit symbolUnits, Qgis::DistanceUnit mapUnits );
+    double mapUnitScaleFactor( double scale, Qgis::RenderUnit symbolUnits, Qgis::DistanceUnit mapUnits );
 
     void startRender( QgsFeatureRenderer *sourceRenderer, const QgsFields &fields );
     void stopRender();

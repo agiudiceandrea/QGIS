@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for postgres transaction groups.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,18 +9,16 @@ __author__ = 'Nyall Dawson'
 __date__ = '11/06/2018'
 __copyright__ = 'Copyright 2018, The QGIS Project'
 
-import qgis  # NOQA
-
 import os
 
+import qgis  # NOQA
 from qgis.core import (
     Qgis,
-    QgsVectorLayer,
+    QgsDataSourceUri,
     QgsProject,
     QgsTransaction,
-    QgsDataSourceUri
+    QgsVectorLayer,
 )
-
 from qgis.testing import start_app, unittest
 
 start_app()
@@ -35,6 +32,7 @@ class TestQgsPostgresTransaction(unittest.TestCase):
         Setup the involved layers and relations for a n:m relation
         :return:
         """
+        super().setUpClass()
         cls.dbconn = 'service=qgis_test'
         if 'QGIS_PGTEST_DB' in os.environ:
             cls.dbconn = os.environ['QGIS_PGTEST_DB']

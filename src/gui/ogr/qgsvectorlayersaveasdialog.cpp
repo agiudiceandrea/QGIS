@@ -17,7 +17,6 @@
  ***************************************************************************/
 #include "qgslogger.h"
 #include "qgsvectorlayersaveasdialog.h"
-#include "qgsprojectionselectiondialog.h"
 #include "qgsvectordataprovider.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgseditorwidgetfactory.h"
@@ -25,12 +24,14 @@
 #include "qgssettings.h"
 #include "qgsmapcanvas.h"
 #include "qgsgui.h"
-#include "qgsapplication.h"
+#include "qgsmaplayerutils.h"
+#include "qgshelp.h"
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QTextCodec>
 #include <QSpinBox>
 #include <QRegularExpression>
+#include <limits>
 #include "gdal.h"
 #include "qgsdatums.h"
 #include "qgsiconutils.h"
@@ -57,6 +58,15 @@ QgsVectorLayerSaveAsDialog::QgsVectorLayerSaveAsDialog( QgsVectorLayer *layer, O
     mLayerExtent = layer->extent();
   }
   setup();
+
+  if ( layer )
+  {
+    mDefaultOutputLayerNameFromInputLayerName = QgsMapLayerUtils::launderLayerName( layer->name() );
+    leLayername->setDefaultValue( mDefaultOutputLayerNameFromInputLayerName );
+    leLayername->setClearMode( QgsFilterLineEdit::ClearToDefault );
+    if ( leLayername->isEnabled() )
+      leLayername->setText( mDefaultOutputLayerNameFromInputLayerName );
+  }
 
   if ( !( mOptions & Symbology ) )
   {
@@ -133,18 +143,18 @@ void QgsVectorLayerSaveAsDialog::setup()
   mFormatComboBox->setCurrentIndex( mFormatComboBox->findData( format ) );
   mFormatComboBox->blockSignals( false );
 
-  const auto addGeomItem = [this]( QgsWkbTypes::Type type )
+  const auto addGeomItem = [this]( Qgis::WkbType type )
   {
-    mGeometryTypeComboBox->addItem( QgsIconUtils::iconForWkbType( type ), QgsWkbTypes::translatedDisplayString( type ), type );
+    mGeometryTypeComboBox->addItem( QgsIconUtils::iconForWkbType( type ), QgsWkbTypes::translatedDisplayString( type ), static_cast< quint32>( type ) );
   };
 
   //add geometry types to combobox
   mGeometryTypeComboBox->addItem( tr( "Automatic" ), -1 );
-  addGeomItem( QgsWkbTypes::Point );
-  addGeomItem( QgsWkbTypes::LineString );
-  addGeomItem( QgsWkbTypes::Polygon );
-  mGeometryTypeComboBox->addItem( QgsWkbTypes::translatedDisplayString( QgsWkbTypes::GeometryCollection ), QgsWkbTypes::GeometryCollection );
-  addGeomItem( QgsWkbTypes::NoGeometry );
+  addGeomItem( Qgis::WkbType::Point );
+  addGeomItem( Qgis::WkbType::LineString );
+  addGeomItem( Qgis::WkbType::Polygon );
+  mGeometryTypeComboBox->addItem( QgsWkbTypes::translatedDisplayString( Qgis::WkbType::GeometryCollection ), static_cast< quint32>( Qgis::WkbType::GeometryCollection ) );
+  addGeomItem( Qgis::WkbType::NoGeometry );
   mGeometryTypeComboBox->setCurrentIndex( mGeometryTypeComboBox->findData( -1 ) );
 
   mEncodingComboBox->addItems( QgsVectorDataProvider::availableEncodings() );
@@ -188,10 +198,16 @@ void QgsVectorLayerSaveAsDialog::setup()
     QgsSettings settings;
     QFileInfo tmplFileInfo( filePath );
     settings.setValue( QStringLiteral( "UI/lastVectorFileFilterDir" ), tmplFileInfo.absolutePath() );
-    if ( !filePath.isEmpty() && leLayername->isEnabled() )
+
+    const QFileInfo fileInfo( filePath );
+    const QString suggestedLayerName = QgsMapLayerUtils::launderLayerName( fileInfo.completeBaseName() );
+    if ( mDefaultOutputLayerNameFromInputLayerName.isEmpty() )
+      leLayername->setDefaultValue( suggestedLayerName );
+
+    // if no layer name set, then automatically match the output layer name to the file name
+    if ( leLayername->text().isEmpty() && !filePath.isEmpty() && leLayername->isEnabled() )
     {
-      QFileInfo fileInfo( filePath );
-      leLayername->setText( fileInfo.completeBaseName() );
+      leLayername->setText( suggestedLayerName );
     }
     mButtonBox->button( QDialogButtonBox::Ok )->setEnabled( !filePath.isEmpty() );
   } );
@@ -230,6 +246,7 @@ QList<QPair<QLabel *, QWidget *> > QgsVectorLayerSaveAsDialog::createControls( c
         {
           QSpinBox *sb = new QSpinBox();
           sb->setObjectName( it.key() );
+          sb->setMaximum( std::numeric_limits<int>::max() ); // the default is 99
           sb->setValue( opt->defaultValue );
           control = sb;
         }
@@ -476,6 +493,7 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
                            sFormat == QLatin1String( "XLSX" ) ||
                            sFormat == QLatin1String( "ODS" ) ||
                            sFormat == QLatin1String( "FileGDB" ) ||
+                           sFormat == QLatin1String( "OpenFileGDB" ) ||
                            sFormat == QLatin1String( "SQLite" ) ||
                            sFormat == QLatin1String( "SpatiaLite" ) );
 
@@ -486,10 +504,16 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
 
   if ( !leLayername->isEnabled() )
     leLayername->setText( QString() );
-  else if ( leLayername->text().isEmpty() &&
-            !mFilename->filePath().isEmpty() )
+  else if ( leLayername->text().isEmpty() )
   {
-    QString layerName = QFileInfo( mFilename->filePath() ).baseName();
+    QString layerName = mDefaultOutputLayerNameFromInputLayerName;
+    if ( layerName.isEmpty() && !mFilename->filePath().isEmpty() )
+    {
+      layerName = QFileInfo( mFilename->filePath() ).baseName();
+      leLayername->setDefaultValue( layerName );
+    }
+    if ( layerName.isEmpty() )
+      layerName = tr( "new_layer" );
     leLayername->setText( layerName );
   }
 
@@ -1097,16 +1121,16 @@ bool QgsVectorLayerSaveAsDialog::persistMetadata() const
   return mCheckPersistMetadata->isChecked();
 }
 
-QgsWkbTypes::Type QgsVectorLayerSaveAsDialog::geometryType() const
+Qgis::WkbType QgsVectorLayerSaveAsDialog::geometryType() const
 {
   int currentIndexData = mGeometryTypeComboBox->currentData().toInt();
   if ( currentIndexData == -1 )
   {
     //automatic
-    return QgsWkbTypes::Unknown;
+    return Qgis::WkbType::Unknown;
   }
 
-  return static_cast< QgsWkbTypes::Type >( currentIndexData );
+  return static_cast< Qgis::WkbType >( currentIndexData );
 }
 
 bool QgsVectorLayerSaveAsDialog::automaticGeometryType() const
@@ -1151,11 +1175,11 @@ void QgsVectorLayerSaveAsDialog::mSymbologyExportComboBox_currentIndexChanged( c
   mScaleLabel->setEnabled( scaleEnabled );
 }
 
-void QgsVectorLayerSaveAsDialog::mGeometryTypeComboBox_currentIndexChanged( int index )
+void QgsVectorLayerSaveAsDialog::mGeometryTypeComboBox_currentIndexChanged( int )
 {
-  int currentIndexData = mGeometryTypeComboBox->itemData( index ).toInt();
+  Qgis::WkbType currentIndexData = static_cast< Qgis::WkbType >( mGeometryTypeComboBox->currentData().toInt() );
 
-  if ( currentIndexData != -1 && currentIndexData != QgsWkbTypes::NoGeometry )
+  if ( mGeometryTypeComboBox->currentIndex() != -1 && currentIndexData != Qgis::WkbType::NoGeometry )
   {
     mForceMultiCheckBox->setEnabled( true );
     mIncludeZCheckBox->setEnabled( true );

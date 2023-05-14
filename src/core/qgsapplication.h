@@ -39,6 +39,7 @@ class QgsPaintEffectRegistry;
 class QgsProjectStorageRegistry;
 class QgsExternalStorageRegistry;
 class QgsLocalizedDataPathRegistry;
+class QgsLayerMetadataProviderRegistry;
 class QgsRendererRegistry;
 class QgsSvgCache;
 class QgsImageCache;
@@ -72,6 +73,9 @@ class QgsPointCloudRendererRegistry;
 class QgsTileDownloadManager;
 class QgsCoordinateReferenceSystemRegistry;
 class QgsRecentStyleHandler;
+class QgsDatabaseQueryLog;
+class QgsFontManager;
+class QgsSensorRegistry;
 
 /**
  * \ingroup core
@@ -471,6 +475,20 @@ class CORE_EXPORT QgsApplication : public QApplication
      */
     static QString platform();
 
+
+    /**
+     * Returns the QGIS application full name.
+     *
+     * It can be defined by the environment variable QGIS_APPLICATION_FULL_NAME or the /qgis/application_full_name
+     * in the QGIS config file.
+     *
+     * By default it is equal to applicationName()+' '+platform()
+     *
+     * \see platform()
+     * \since QGIS 3.30
+     */
+    static QString applicationFullName();
+
     /**
      * Returns the QGIS locale.
      * \since QGIS 3.0
@@ -653,7 +671,7 @@ class CORE_EXPORT QgsApplication : public QApplication
 
     /**
      * Set maximum concurrent thread count
-     * \note must be between 1 and \#cores, -1 means use all available cores
+     * \note must be between 2 and \#cores, -1 means use all available cores
      * \since QGIS 2.4
     */
     static void setMaxThreads( int maxThreads );
@@ -668,8 +686,9 @@ class CORE_EXPORT QgsApplication : public QApplication
     /**
      * Returns the application's settings registry, used for managing application settings.
      * \since QGIS 3.20
+     * \deprecated since QGIS 3.30 use QgsSettings::treeRoot() instead
      */
-    static QgsSettingsRegistryCore *settingsRegistryCore() SIP_KEEPREFERENCE;
+    Q_DECL_DEPRECATED static QgsSettingsRegistryCore *settingsRegistryCore() SIP_KEEPREFERENCE SIP_DEPRECATED;
 
     /**
      * Returns the application's color scheme registry, used for managing color schemes.
@@ -821,6 +840,13 @@ class CORE_EXPORT QgsApplication : public QApplication
     static QgsRecentStyleHandler *recentStyleHandler() SIP_KEEPREFERENCE;
 
     /**
+     * Returns the database query log.
+     *
+     * \since QGIS 3.24
+     */
+    static QgsDatabaseQueryLog *databaseQueryLog() SIP_KEEPREFERENCE;
+
+    /**
      * Returns a shared QgsStyleModel containing the default style library (see QgsStyle::defaultStyle()).
      *
      * Using this shared model instead of creating a new QgsStyleModel improves performance.
@@ -828,6 +854,19 @@ class CORE_EXPORT QgsApplication : public QApplication
      * \since QGIS 3.10
      */
     static QgsStyleModel *defaultStyleModel();
+
+    /**
+     * Returns the application font manager, which manages available fonts and font installation for the QGIS instance.
+     *
+     * \since QGIS 3.28
+     */
+    static QgsFontManager *fontManager() SIP_KEEPREFERENCE;
+
+    /**
+     * Returns the application's sensor registry, used for sensor types.
+     * \since QGIS 3.32
+     */
+    static QgsSensorRegistry *sensorRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Returns the application's message log.
@@ -918,6 +957,12 @@ class CORE_EXPORT QgsApplication : public QApplication
      * \since QGIS 3.2
      */
     static QgsProjectStorageRegistry *projectStorageRegistry() SIP_KEEPREFERENCE;
+
+    /**
+     * Returns registry of available layer metadata provider implementations.
+     * \since QGIS 3.28
+     */
+    static QgsLayerMetadataProviderRegistry *layerMetadataProviderRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Returns registry of available external storage implementations.
@@ -1016,17 +1061,18 @@ class CORE_EXPORT QgsApplication : public QApplication
      */
     void collectTranslatableObjects( QgsTranslationContext *translationContext );
 
+
 #ifndef SIP_RUN
     //! Settings entry locale user locale
-    static const inline QgsSettingsEntryString settingsLocaleUserLocale = QgsSettingsEntryString( QStringLiteral( "userLocale" ), QgsSettings::Prefix::LOCALE, QString() );
+    static const QgsSettingsEntryString *settingsLocaleUserLocale;
     //! Settings entry locale override flag
-    static const inline QgsSettingsEntryBool settingsLocaleOverrideFlag = QgsSettingsEntryBool( QStringLiteral( "overrideFlag" ), QgsSettings::Prefix::LOCALE, false );
+    static const QgsSettingsEntryBool *settingsLocaleOverrideFlag;
     //! Settings entry locale global locale
-    static const inline QgsSettingsEntryString settingsLocaleGlobalLocale = QgsSettingsEntryString( QStringLiteral( "globalLocale" ), QgsSettings::Prefix::LOCALE, QString() );
+    static const QgsSettingsEntryString *settingsLocaleGlobalLocale;
     //! Settings entry locale show group separator
-    static const inline QgsSettingsEntryBool settingsLocaleShowGroupSeparator = QgsSettingsEntryBool( QStringLiteral( "showGroupSeparator" ), QgsSettings::Prefix::LOCALE, false );
+    static const QgsSettingsEntryBool *settingsLocaleShowGroupSeparator;
     //! Settings entry search path for SVG
-    static const inline QgsSettingsEntryStringList settingsSearchPathsForSVG = QgsSettingsEntryStringList( QStringLiteral( "searchPathsForSVG" ), QgsSettings::Prefix::SVG, QStringList() );
+    static const QgsSettingsEntryStringList *settingsSearchPathsForSVG;
 #endif
 
 #ifdef SIP_RUN
@@ -1117,7 +1163,8 @@ class CORE_EXPORT QgsApplication : public QApplication
       QgsClassificationMethodRegistry *mClassificationMethodRegistry = nullptr;
       QgsProcessingRegistry *mProcessingRegistry = nullptr;
       QgsConnectionRegistry *mConnectionRegistry = nullptr;
-      std::unique_ptr<QgsProjectStorageRegistry> mProjectStorageRegistry;
+      QgsProjectStorageRegistry *mProjectStorageRegistry = nullptr;
+      QgsLayerMetadataProviderRegistry *mLayerMetadataProviderRegistry = nullptr;
       QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
       QgsPageSizeRegistry *mPageSizeRegistry = nullptr;
       QgsRasterRendererRegistry *mRasterRendererRegistry = nullptr;
@@ -1131,11 +1178,14 @@ class CORE_EXPORT QgsApplication : public QApplication
       QgsTaskManager *mTaskManager = nullptr;
       QgsLayoutItemRegistry *mLayoutItemRegistry = nullptr;
       QgsAnnotationItemRegistry *mAnnotationItemRegistry = nullptr;
+      QgsSensorRegistry *mSensorRegistry = nullptr;
       QgsUserProfileManager *mUserConfigManager = nullptr;
       QgsBookmarkManager *mBookmarkManager = nullptr;
       QgsTileDownloadManager *mTileDownloadManager = nullptr;
       QgsStyleModel *mStyleModel = nullptr;
       QgsRecentStyleHandler *mRecentStyleHandler = nullptr;
+      QgsDatabaseQueryLog *mQueryLogger = nullptr;
+      QgsFontManager *mFontManager;
       QString mNullRepresentation;
       QStringList mSvgPathCache;
       bool mSvgPathCacheValid = false;
@@ -1154,6 +1204,12 @@ class CORE_EXPORT QgsApplication : public QApplication
     static ApplicationMembers *members();
 
     static void invalidateCaches();
+
+    /**
+     * Installs the translators (qgis, qt and qt_base) for the current locale.
+     * \since QGIS 3.22
+    */
+    void installTranslators() SIP_SKIP;
 
     friend class TestQgsApplication;
 };

@@ -27,12 +27,15 @@
 #include <set>
 #include "qgis_sip.h"
 
+
 ///@cond PRIVATE
 #define SIP_NO_FILE
 
 class QgsOgrFeatureIterator;
 class QgsOgrProvider;
 class QgsOgrDataset;
+class QgsCPLHTTPFetchOverrider;
+
 using QgsOgrDatasetSharedPtr = std::shared_ptr< QgsOgrDataset>;
 
 class QgsOgrFeatureSource final: public QgsAbstractFeatureSource
@@ -57,9 +60,10 @@ class QgsOgrFeatureSource final: public QgsAbstractFeatureSource
     OGRwkbGeometryType mOgrGeometryTypeFilter;
     QString mDriverName;
     QgsCoordinateReferenceSystem mCrs;
-    QgsWkbTypes::Type mWkbType = QgsWkbTypes::Unknown;
+    Qgis::WkbType mWkbType = Qgis::WkbType::Unknown;
     QgsOgrDatasetSharedPtr mSharedDS = nullptr;
     QgsTransaction *mTransaction = nullptr;
+    bool mCanDriverShareSameDatasetAmongLayers = true;
 
     friend class QgsOgrFeatureIterator;
     friend class QgsOgrExpressionCompiler;
@@ -87,7 +91,7 @@ class QgsOgrFeatureIterator final: public QgsAbstractFeatureIteratorFromSource<Q
     bool readFeature( const gdal::ogr_feature_unique_ptr &fet, QgsFeature &feature ) const;
 
     //! Gets an attribute associated with a feature
-    void getFeatureAttribute( OGRFeatureH ogrFet, QgsFeature &f, int attindex ) const;
+    QVariant getFeatureAttribute( OGRFeatureH ogrFet, int attindex ) const;
 
     QgsOgrConn *mConn = nullptr;
     OGRLayerH mOgrLayer = nullptr; // when mOgrLayerUnfiltered != null and mOgrLayer != mOgrLayerUnfiltered, this is a SQL layer
@@ -121,9 +125,14 @@ class QgsOgrFeatureIterator final: public QgsAbstractFeatureIteratorFromSource<Q
     QgsGeometry mDistanceWithinGeom;
     std::unique_ptr< QgsGeometryEngine > mDistanceWithinEngine;
 
+    std::unique_ptr< QgsCPLHTTPFetchOverrider > mCplHttpFetchOverrider;
+
+    QVector< int > mRequestAttributes;
+
     bool fetchFeatureWithId( QgsFeatureId id, QgsFeature &feature ) const;
 
     void resetReading();
+
 };
 
 ///@endcond

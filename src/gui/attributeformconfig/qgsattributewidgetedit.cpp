@@ -15,8 +15,8 @@
 
 #include "qgsattributewidgetedit.h"
 #include "qgsattributesformproperties.h"
+#include "qgsgui.h"
 #include "qgsrelationwidgetregistry.h"
-
 
 QgsAttributeWidgetEdit::QgsAttributeWidgetEdit( QTreeWidgetItem *item, QWidget *parent )
   : QgsCollapsibleGroupBox( parent )
@@ -29,6 +29,8 @@ QgsAttributeWidgetEdit::QgsAttributeWidgetEdit( QTreeWidgetItem *item, QWidget *
 
   // common configs
   mShowLabelCheckBox->setChecked( itemData.showLabel() );
+
+  mFormLabelFormatWidget->setLabelStyle( itemData.labelStyle() );
 
   switch ( itemData.type() )
   {
@@ -50,10 +52,13 @@ QgsAttributeWidgetEdit::QgsAttributeWidgetEdit( QTreeWidgetItem *item, QWidget *
     case QgsAttributesFormProperties::DnDTreeItemData::Container:
     case QgsAttributesFormProperties::DnDTreeItemData::QmlWidget:
     case QgsAttributesFormProperties::DnDTreeItemData::HtmlWidget:
+    case QgsAttributesFormProperties::DnDTreeItemData::TextWidget:
+    case QgsAttributesFormProperties::DnDTreeItemData::SpacerWidget:
     case QgsAttributesFormProperties::DnDTreeItemData::WidgetType:
       mWidgetSpecificConfigGroupBox->hide();
       break;
   }
+
 }
 
 void QgsAttributeWidgetEdit::updateItemData()
@@ -62,6 +67,7 @@ void QgsAttributeWidgetEdit::updateItemData()
 
   // common configs
   itemData.setShowLabel( mShowLabelCheckBox->isChecked() );
+  itemData.setLabelStyle( mFormLabelFormatWidget->labelStyle() );
 
   // specific configs
   switch ( itemData.type() )
@@ -81,6 +87,8 @@ void QgsAttributeWidgetEdit::updateItemData()
     case QgsAttributesFormProperties::DnDTreeItemData::Container:
     case QgsAttributesFormProperties::DnDTreeItemData::QmlWidget:
     case QgsAttributesFormProperties::DnDTreeItemData::HtmlWidget:
+    case QgsAttributesFormProperties::DnDTreeItemData::TextWidget:
+    case QgsAttributesFormProperties::DnDTreeItemData::SpacerWidget:
     case QgsAttributesFormProperties::DnDTreeItemData::WidgetType:
       break;
   }

@@ -41,6 +41,8 @@ QgsPlotCanvas::QgsPlotCanvas( QWidget *parent )
 
   setFocusPolicy( Qt::StrongFocus );
 
+  setRenderHints( QPainter::Antialiasing );
+
   mSpacePanTool = new QgsPlotToolTemporaryKeyPan( this );
   mMidMouseButtonPanTool = new QgsPlotToolTemporaryMousePan( this );
   mSpaceZoomTool = new QgsPlotToolTemporaryKeyZoom( this );
@@ -95,7 +97,8 @@ void QgsPlotCanvas::showContextMenu( QgsPlotMouseEvent *event )
 
   emit contextMenuAboutToShow( &menu, event );
 
-  menu.exec( event->globalPos() );
+  if ( !menu.isEmpty() )
+    menu.exec( event->globalPos() );
 }
 
 void QgsPlotCanvas::keyPressEvent( QKeyEvent *event )
@@ -168,6 +171,7 @@ void QgsPlotCanvas::mousePressEvent( QMouseEvent *event )
     {
       std::unique_ptr<QgsPlotMouseEvent> me( new QgsPlotMouseEvent( this, event ) );
       showContextMenu( me.get() );
+      event->accept();
       return;
     }
     else
@@ -285,9 +289,14 @@ void QgsPlotCanvas::scalePlot( double )
 
 }
 
-void QgsPlotCanvas::zoomToRect( const QRectF )
+void QgsPlotCanvas::zoomToRect( const QRectF & )
 {
 
+}
+
+QgsPointXY QgsPlotCanvas::snapToPlot( QPoint )
+{
+  return QgsPointXY();
 }
 
 bool QgsPlotCanvas::viewportEvent( QEvent *event )
@@ -306,15 +315,12 @@ void QgsPlotCanvas::wheelZoom( QWheelEvent * )
 
 bool QgsPlotCanvas::event( QEvent *e )
 {
-  if ( !QTouchDevice::devices().empty() )
+  if ( e->type() == QEvent::Gesture )
   {
-    if ( e->type() == QEvent::Gesture )
+    // call handler of current map tool
+    if ( mTool )
     {
-      // call handler of current map tool
-      if ( mTool )
-      {
-        return mTool->gestureEvent( static_cast<QGestureEvent *>( e ) );
-      }
+      return mTool->gestureEvent( static_cast<QGestureEvent *>( e ) );
     }
   }
 

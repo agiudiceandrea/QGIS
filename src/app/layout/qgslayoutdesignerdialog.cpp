@@ -41,7 +41,6 @@
 #include "qgslayoututils.h"
 #include "qgsprintlayout.h"
 #include "qgsmapcanvas.h"
-#include "qgsrendercontext.h"
 #include "qgsmessagebar.h"
 #include "qgsmessageviewer.h"
 #include "qgshelp.h"
@@ -57,7 +56,6 @@
 #include "qgslayoutpagepropertieswidget.h"
 #include "qgslayoutguidewidget.h"
 #include "qgslayoutmousehandles.h"
-#include "qgslayoutmodel.h"
 #include "qgslayoutitemslistview.h"
 #include "qgsproject.h"
 #include "qgsbusyindicatordialog.h"
@@ -68,20 +66,20 @@
 #include "qgsreportorganizerwidget.h"
 #include "qgsreadwritecontext.h"
 #include "ui_qgssvgexportoptions.h"
-#include "ui_qgspdfexportoptions.h"
 #include "qgsproxyprogresstask.h"
 #include "qgsvaliditycheckresultswidget.h"
 #include "qgsabstractvaliditycheck.h"
 #include "qgsvaliditycheckcontext.h"
-#include "qgsprojectviewsettings.h"
 #include "qgslayoutlabelwidget.h"
 #include "qgslabelingresults.h"
+#include "qgsscreenhelper.h"
+#include "qgsshortcutsmanager.h"
+#include "qgsconfigureshortcutsdialog.h"
 #include "ui_defaults.h"
 
 #include <QShortcut>
 #include <QComboBox>
 #include <QLineEdit>
-#include <QDesktopWidget>
 #include <QSlider>
 #include <QLabel>
 #include <QUndoView>
@@ -99,6 +97,7 @@
 #include <QUrl>
 #include <QWindow>
 #include <QScreen>
+#include <QActionGroup>
 
 #ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
@@ -323,6 +322,12 @@ QgsLayoutDesignerDialog::QgsLayoutDesignerDialog( QWidget *parent, Qt::WindowFla
   setDockOptions( dockOptions() | QMainWindow::GroupedDragging );
 
   QgsGui::enableAutoGeometryRestore( this );
+
+  mScreenHelper = new QgsScreenHelper( this );
+  connect( mScreenHelper, &QgsScreenHelper::screenDpiChanged, this, [ = ]( double )
+  {
+    updateStatusZoom();
+  } );
 
   //create layout view
   QGridLayout *viewLayout = new QGridLayout();
@@ -990,6 +995,12 @@ QgsLayoutDesignerDialog::QgsLayoutDesignerDialog( QWidget *parent, Qt::WindowFla
   std::sort( actions.begin(), actions.end(), cmpByText_ );
   mToolbarMenu->insertActions( nullptr, actions );
 
+  // Create the shortcuts manager
+  mShortcutsManager = new QgsShortcutsManager( this, "LayoutDesigner/shortcuts/" );
+  mShortcutsManager->registerAllChildren( this );
+  mShortcutsDialog = new QgsConfigureShortcutsDialog( this, mShortcutsManager ) ;
+  connect( mActionKeyboardShortcuts, &QAction::triggered, mShortcutsDialog, &QDialog::show );
+
   restoreWindowState();
 
   //listen out to status bar updates from the view
@@ -1121,6 +1132,13 @@ std::unique_ptr<QgsLayoutDesignerInterface::ExportResults> QgsLayoutDesignerDial
 {
   return mLastExportResults ? std::make_unique< QgsLayoutDesignerInterface::ExportResults>( *mLastExportResults ) : nullptr;
 }
+
+
+QgsShortcutsManager *QgsLayoutDesignerDialog::shortcutsManager()
+{
+  return mShortcutsManager;
+}
+
 
 QgsLayout *QgsLayoutDesignerDialog::currentLayout()
 {
@@ -1620,25 +1638,6 @@ void QgsLayoutDesignerDialog::dragEnterEvent( QDragEnterEvent *event )
   }
 }
 
-void QgsLayoutDesignerDialog::showEvent( QShowEvent *event )
-{
-  QMainWindow::showEvent( event );
-
-  updateDevicePixelFromScreen();
-  // keep device pixel ratio up to date on screen or resolution change
-  if ( window()->windowHandle() )
-  {
-    connect( window()->windowHandle(), &QWindow::screenChanged, this, [ = ]( QScreen * )
-    {
-      disconnect( mScreenDpiChangedConnection );
-      mScreenDpiChangedConnection = connect( window()->windowHandle()->screen(), &QScreen::physicalDotsPerInchChanged, this, &QgsLayoutDesignerDialog::updateDevicePixelFromScreen );
-      updateDevicePixelFromScreen();
-    } );
-
-    mScreenDpiChangedConnection = connect( window()->windowHandle()->screen(), &QScreen::physicalDotsPerInchChanged, this, &QgsLayoutDesignerDialog::updateDevicePixelFromScreen );
-  }
-}
-
 void QgsLayoutDesignerDialog::setTitle( const QString &title )
 {
   mTitle = title;
@@ -1817,20 +1816,20 @@ void QgsLayoutDesignerDialog::updateStatusZoom()
     return;
 
   double zoomLevel = 0;
-  if ( currentLayout()->units() == QgsUnitTypes::LayoutPixels )
+  if ( currentLayout()->units() == Qgis::LayoutUnit::Pixels )
   {
     zoomLevel = mView->transform().m11() * 100;
   }
   else
   {
-    double dpi = mScreenDpi;
+    double dpi = mScreenHelper->screenDpi();
     //monitor dpi is not always correct - so make sure the value is sane
     if ( ( dpi < 60 ) || ( dpi > 1200 ) )
       dpi = 72;
 
     //pixel width for 1mm on screen
     double scale100 = dpi / 25.4;
-    scale100 = currentLayout()->convertFromLayoutUnits( scale100, QgsUnitTypes::LayoutMillimeters ).length();
+    scale100 = currentLayout()->convertFromLayoutUnits( scale100, Qgis::LayoutUnit::Millimeters ).length();
     //current zoomLevel
     zoomLevel = mView->transform().m11() * 100 / scale100;
   }
@@ -2885,7 +2884,6 @@ void QgsLayoutDesignerDialog::exportAtlasToRaster()
 
   QFileDialog dlg( this, tr( "Export Atlas to Directory" ) );
   dlg.setFileMode( QFileDialog::Directory );
-  dlg.setOption( QFileDialog::ShowDirsOnly, true );
   dlg.setDirectory( lastUsedDir );
   if ( !dlg.exec() )
   {
@@ -3060,7 +3058,6 @@ void QgsLayoutDesignerDialog::exportAtlasToSvg()
 
   QFileDialog dlg( this, tr( "Export Atlas to Directory" ) );
   dlg.setFileMode( QFileDialog::Directory );
-  dlg.setOption( QFileDialog::ShowDirsOnly, true );
   dlg.setDirectory( lastUsedDir );
   if ( !dlg.exec() )
   {
@@ -3279,7 +3276,6 @@ void QgsLayoutDesignerDialog::exportAtlasToPdf()
 
     QFileDialog dlg( this, tr( "Export Atlas to Directory" ) );
     dlg.setFileMode( QFileDialog::Directory );
-    dlg.setOption( QFileDialog::ShowDirsOnly, true );
     dlg.setDirectory( lastUsedDir );
     if ( !dlg.exec() )
     {
@@ -4050,8 +4046,8 @@ void QgsLayoutDesignerDialog::restoreWindowState()
   {
     QgsDebugMsg( QStringLiteral( "restore of layout UI geometry failed" ) );
     // default to 80% of screen size, at 10% from top left corner
-    resize( QDesktopWidget().availableGeometry( this ).size() * 0.8 );
-    QSize pos = QDesktopWidget().availableGeometry( this ).size() * 0.1;
+    resize( mScreenHelper->availableGeometry().size() * 0.8 );
+    QSize pos = mScreenHelper->availableGeometry().size() * 0.1;
     move( pos.width(), pos.height() );
   }
 }
@@ -4080,10 +4076,8 @@ void QgsLayoutDesignerDialog::createLayoutPropertiesWidget()
   }
 
   // update layout based widgets
-  QgsLayoutPropertiesWidget *oldLayoutWidget = qobject_cast<QgsLayoutPropertiesWidget *>( mGeneralPropertiesStack->takeMainPanel() );
-  delete oldLayoutWidget;
-  QgsLayoutGuideWidget *oldGuideWidget = qobject_cast<QgsLayoutGuideWidget *>( mGuideStack->takeMainPanel() );
-  delete oldGuideWidget;
+  delete qobject_cast<QgsLayoutPropertiesWidget *>( mGeneralPropertiesStack->takeMainPanel() );
+  delete qobject_cast<QgsLayoutGuideWidget *>( mGuideStack->takeMainPanel() );
 
   mLayoutPropertiesWidget = new QgsLayoutPropertiesWidget( mGeneralDock, mLayout );
   mLayoutPropertiesWidget->setDockMode( true );
@@ -4241,19 +4235,19 @@ void QgsLayoutDesignerDialog::showForceVectorWarning()
 bool QgsLayoutDesignerDialog::showFileSizeWarning()
 {
   // Image size
-  double oneInchInLayoutUnits = mLayout->convertToLayoutUnits( QgsLayoutMeasurement( 1, QgsUnitTypes::LayoutInches ) );
+  double oneInchInLayoutUnits = mLayout->convertToLayoutUnits( QgsLayoutMeasurement( 1, Qgis::LayoutUnit::Inches ) );
   QSizeF maxPageSize = mLayout->pageCollection()->maximumPageSize();
-  int width = static_cast< int >( mLayout->renderContext().dpi() * maxPageSize.width() / oneInchInLayoutUnits );
-  int height = static_cast< int >( mLayout->renderContext().dpi() * maxPageSize.height() / oneInchInLayoutUnits );
-  int memuse = width * height * 3 / 1000000;  // pixmap + image
-  QgsDebugMsg( QStringLiteral( "Image %1x%2" ).arg( width ).arg( height ) );
-  QgsDebugMsg( QStringLiteral( "memuse = %1" ).arg( memuse ) );
+  const int width = static_cast< int >( mLayout->renderContext().dpi() * maxPageSize.width() / oneInchInLayoutUnits );
+  const int height = static_cast< int >( mLayout->renderContext().dpi() * maxPageSize.height() / oneInchInLayoutUnits );
+  const std::size_t memuse = static_cast< std::size_t >( width ) * height * 3;  // pixmap + image
+  QgsDebugMsgLevel( QStringLiteral( "Image %1x%2" ).arg( width ).arg( height ), 2 );
+  QgsDebugMsgLevel( QStringLiteral( "memuse = %1" ).arg( memuse ), 2 );
 
-  if ( memuse > 400 )   // about 4500x4500
+  if ( memuse > 400000000 )   // about 4500x4500
   {
     int answer = QMessageBox::warning( this, tr( "Export Layout" ),
-                                       tr( "To create an image of %1x%2 requires about %3 MB of memory. Proceed?" )
-                                       .arg( width ).arg( height ).arg( memuse ),
+                                       tr( "To create an image of %1x%2 requires about %3 of memory. Proceed?" )
+                                       .arg( width ).arg( height ).arg( QgsFileUtils::representFileSize( static_cast< qint64 >( memuse ) ) ),
                                        QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Ok );
 
     raise();
@@ -4783,11 +4777,11 @@ void QgsLayoutDesignerDialog::setPrinterPageOrientation( QgsLayoutItemPage::Orie
     switch ( orientation )
     {
       case QgsLayoutItemPage::Landscape:
-        printer()->setOrientation( QPrinter::Landscape );
+        printer()->setPageOrientation( QPageLayout::Landscape );
         break;
 
       case QgsLayoutItemPage::Portrait:
-        printer()->setOrientation( QPrinter::Portrait );
+        printer()->setPageOrientation( QPageLayout::Portrait );
         break;
     }
 
@@ -4944,13 +4938,6 @@ void QgsLayoutDesignerDialog::onItemAdded( QgsLayoutItem *item )
   {
     connect( map, &QgsLayoutItemMap::previewRefreshed, this, &QgsLayoutDesignerDialog::onMapPreviewRefreshed );
   }
-}
-
-void QgsLayoutDesignerDialog::updateDevicePixelFromScreen()
-{
-  if ( window()->windowHandle() )
-    mScreenDpi = window()->windowHandle()->screen()->physicalDotsPerInch();
-  updateStatusZoom();
 }
 
 void QgsLayoutDesignerDialog::storeExportResults( QgsLayoutExporter::ExportResult result, QgsLayoutExporter *exporter )

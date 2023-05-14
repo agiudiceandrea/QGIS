@@ -17,7 +17,6 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "qgswmsutils.h"
 #include "qgsjsonutils.h"
 #include "qgswmsrenderer.h"
 #include "qgsfilterrestorer.h"
@@ -27,12 +26,11 @@
 #include "qgsfieldformatterregistry.h"
 #include "qgsfeatureiterator.h"
 #include "qgsgeometry.h"
-#include "qgsmapserviceexception.h"
 #include "qgslayertree.h"
+#include "qgslayoututils.h"
 #include "qgslayertreemodel.h"
 #include "qgslegendrenderer.h"
 #include "qgsmaplayer.h"
-#include "qgsmaplayerlegend.h"
 #include "qgsmapthemecollection.h"
 #include "qgsmaptopixel.h"
 #include "qgsproject.h"
@@ -40,9 +38,11 @@
 #include "qgsrasterlayer.h"
 #include "qgsrasterrenderer.h"
 #include "qgsscalecalculator.h"
+#include "qgsmaplayertemporalproperties.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
+#include "qgsvectortilelayer.h"
 #include "qgsmessagelog.h"
 #include "qgsrenderer.h"
 #include "qgsfeature.h"
@@ -57,12 +57,12 @@
 #include "qgsannotationmanager.h"
 #include "qgsannotation.h"
 #include "qgsvectorlayerlabeling.h"
-#include "qgsvectorlayerfeaturecounter.h"
 #include "qgspallabeling.h"
 #include "qgswmsrestorer.h"
 #include "qgsdxfexport.h"
 #include "qgssymbollayerutils.h"
 #include "qgsserverexception.h"
+#include "qgsserverapiutils.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgsfeaturestore.h"
 #include "qgsattributeeditorcontainer.h"
@@ -96,7 +96,6 @@
 #include "qgslayoutitemhtml.h"
 #include "qgsfeaturefilterprovidergroup.h"
 #include "qgsogcutils.h"
-#include "qgsunittypes.h"
 
 namespace QgsWms
 {
@@ -128,10 +127,26 @@ namespace QgsWms
     QgsLegendSettings settings = legendSettings();
     QgsLegendRenderer renderer( &model, settings );
 
-    // create image
+    // create context
+    QgsRenderContext context;
+    if ( !mWmsParameters.bbox().isEmpty() )
+    {
+      QgsMapSettings mapSettings;
+      mapSettings.setFlag( Qgis::MapSettingsFlag::RenderBlocking );
+      std::unique_ptr<QImage> tmp( createImage( mContext.mapSize( false ) ) );
+      configureMapSettings( tmp.get(), mapSettings );
+      context = QgsRenderContext::fromMapSettings( mapSettings );
+    }
+    else
+    {
+      //use default scale settings
+      context = configureDefaultRenderContext();
+    }
+
+    // create image according to context
     std::unique_ptr<QImage> image;
     const qreal dpmm = mContext.dotsPerMm();
-    const QSizeF minSize = renderer.minimumSize();
+    const QSizeF minSize = renderer.minimumSize( &context );
     const QSize size( static_cast<int>( minSize.width() * dpmm ), static_cast<int>( minSize.height() * dpmm ) );
     if ( !mContext.isValidWidthHeight( size.width(), size.height() ) )
     {
@@ -139,16 +154,17 @@ namespace QgsWms
     }
     image.reset( createImage( size ) );
 
-    // configure painter
+    // configure painter and addapt to the context
     QPainter painter( image.get() );
-    QgsRenderContext context = QgsRenderContext::fromQPainter( &painter );
+
+    context.setPainter( &painter );
+    if ( painter.renderHints() & QPainter::SmoothPixmapTransform )
+      context.setFlag( Qgis::RenderContextFlag::HighQualityImageTransforms, true );
+    if ( painter.renderHints() & QPainter::LosslessImageRendering )
+      context.setFlag( Qgis::RenderContextFlag::LosslessImageRendering, true );
+
     context.setFlag( Qgis::RenderContextFlag::Antialiasing, true );
     QgsScopedRenderContextScaleToMm scaleContext( context );
-    // QGIS 4.0 -- take from real render context instead
-    Q_NOWARN_DEPRECATED_PUSH
-    context.setRendererScale( settings.mapScale() );
-    context.setMapToPixel( QgsMapToPixel( 1 / ( settings.mmPerMapUnit() * context.scaleFactor() ) ) );
-    Q_NOWARN_DEPRECATED_POP
 
     // rendering
     renderer.drawLegend( context );
@@ -187,6 +203,11 @@ namespace QgsWms
     QgsLegendSettings settings = legendSettings();
     QgsLayerTreeModelLegendNode::ItemContext ctx;
     ctx.painter = painter.get();
+
+    // create context
+    QgsRenderContext context = configureDefaultRenderContext( painter.get() );
+    ctx.context = &context;
+
     nodeModel.drawSymbol( settings, &ctx, size.height() / dpmm );
     painter->end();
 
@@ -373,7 +394,7 @@ namespace QgsWms
         }
 
         // Handles the pk-less case
-        const int pkIndexesSize {std::max( pkIndexes.size(), 1 )};
+        const int pkIndexesSize {std::max< int >( pkIndexes.size(), 1 )};
 
         QStringList pkAttributeNames;
         for ( int pkIndex : std::as_const( pkIndexes ) )
@@ -465,7 +486,7 @@ namespace QgsWms
     filters.addProvider( mContext.accessControl() );
 #endif
 
-    QMap<const QgsVectorLayer *, QStringList> fltrs;
+    QHash<const QgsVectorLayer *, QStringList> fltrs;
     for ( QgsMapLayer *l : lyrs )
     {
       if ( QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( l ) )
@@ -501,6 +522,8 @@ namespace QgsWms
         if ( ok )
           exportSettings.dpi = dpi;
       }
+      // Set scales
+      exportSettings.predefinedMapScales = QgsLayoutUtils::predefinedScales( layout.get( ) );
       // Draw selections
       exportSettings.flags |= QgsLayoutRenderContext::FlagDrawSelection;
       if ( atlas )
@@ -534,13 +557,15 @@ namespace QgsWms
           dpi = _dpi;
       }
       exportSettings.dpi = dpi;
+      // Set scales
+      exportSettings.predefinedMapScales = QgsLayoutUtils::predefinedScales( layout.get( ) );
       // Draw selections
       exportSettings.flags |= QgsLayoutRenderContext::FlagDrawSelection;
       // Destination image size in px
       QgsLayoutSize layoutSize( layout->pageCollection()->page( 0 )->sizeWithUnits() );
 
-      QgsLayoutMeasurement width( layout->convertFromLayoutUnits( layoutSize.width(), QgsUnitTypes::LayoutUnit::LayoutMillimeters ) );
-      QgsLayoutMeasurement height( layout->convertFromLayoutUnits( layoutSize.height(), QgsUnitTypes::LayoutUnit::LayoutMillimeters ) );
+      QgsLayoutMeasurement width( layout->convertFromLayoutUnits( layoutSize.width(), Qgis::LayoutUnit::Millimeters ) );
+      QgsLayoutMeasurement height( layout->convertFromLayoutUnits( layoutSize.height(), Qgis::LayoutUnit::Millimeters ) );
 
       const QSize imageSize = QSize( static_cast<int>( width.length() * dpi / 25.4 ), static_cast<int>( height.length() * dpi / 25.4 ) );
 
@@ -605,6 +630,8 @@ namespace QgsWms
       exportSettings.flags |= QgsLayoutRenderContext::FlagDrawSelection;
       // Print as raster
       exportSettings.rasterizeWholeImage = layout->customProperty( QStringLiteral( "rasterize" ), false ).toBool();
+      // Set scales
+      exportSettings.predefinedMapScales = QgsLayoutUtils::predefinedScales( layout.get( ) );
 
       // Export all pages
       if ( atlas )
@@ -651,6 +678,12 @@ namespace QgsWms
       QgsWmsParametersComposerMap cMapParams = mWmsParameters.composerMapParameters( mapId );
       mapId++;
 
+      // If there are no configured layers, we take layers from unprefixed LAYER(S) if any
+      if ( cMapParams.mLayers.isEmpty() )
+      {
+        cMapParams.mLayers = mWmsParameters.composerMapParameters( -1 ).mLayers;
+      }
+
       if ( !atlasPrint || !map->atlasDriven() ) //No need to extent, scal, rotation set with atlas feature
       {
         //map extent is mandatory
@@ -690,50 +723,45 @@ namespace QgsWms
       if ( !map->keepLayerSet() )
       {
         QList<QgsMapLayer *> layerSet;
-        if ( cMapParams.mLayers.isEmpty() )
+
+        for ( const auto &layer : std::as_const( cMapParams.mLayers ) )
         {
-          layerSet = mapSettings.layers();
-        }
-        else
-        {
-          for ( auto layer : cMapParams.mLayers )
+          if ( mContext.isValidGroup( layer.mNickname ) )
           {
-            if ( mContext.isValidGroup( layer.mNickname ) )
+            QList<QgsMapLayer *> layersFromGroup;
+
+            const QList<QgsMapLayer *> cLayersFromGroup = mContext.layersFromGroup( layer.mNickname );
+            for ( QgsMapLayer *layerFromGroup : cLayersFromGroup )
             {
-              QList<QgsMapLayer *> layersFromGroup;
 
-              const QList<QgsMapLayer *> cLayersFromGroup = mContext.layersFromGroup( layer.mNickname );
-              for ( QgsMapLayer *layerFromGroup : cLayersFromGroup )
-              {
-
-                if ( ! layerFromGroup )
-                {
-                  continue;
-                }
-
-                layersFromGroup.push_front( layerFromGroup );
-              }
-
-              if ( !layersFromGroup.isEmpty() )
-              {
-                layerSet.append( layersFromGroup );
-              }
-            }
-            else
-            {
-              QgsMapLayer *mlayer = mContext.layer( layer.mNickname );
-
-              if ( ! mlayer )
+              if ( ! layerFromGroup )
               {
                 continue;
               }
 
-              setLayerStyle( mlayer, layer.mStyle );
-              layerSet << mlayer;
+              layersFromGroup.push_front( layerFromGroup );
+            }
+
+            if ( !layersFromGroup.isEmpty() )
+            {
+              layerSet.append( layersFromGroup );
             }
           }
-          std::reverse( layerSet.begin(), layerSet.end() );
+          else
+          {
+            QgsMapLayer *mlayer = mContext.layer( layer.mNickname );
+
+            if ( ! mlayer )
+            {
+              continue;
+            }
+
+            setLayerStyle( mlayer, layer.mStyle );
+            layerSet << mlayer;
+          }
         }
+
+        std::reverse( layerSet.begin(), layerSet.end() );
 
         // If the map is set to follow preset we need to disable follow preset and manually
         // configure the layers here or the map item internal logic will override and get
@@ -984,7 +1012,7 @@ namespace QgsWms
     for ( QgsMapLayer *layer : layers )
     {
       layerIdx++;
-      if ( layer->type() != QgsMapLayerType::VectorLayer )
+      if ( layer->type() != Qgis::LayerType::Vector )
         continue;
 
       // cast for dxf layers
@@ -1210,7 +1238,7 @@ namespace QgsWms
     return image.release();
   }
 
-  void QgsRenderer::configureMapSettings( const QPaintDevice *paintDevice, QgsMapSettings &mapSettings, bool mandatoryCrsParam ) const
+  void QgsRenderer::configureMapSettings( const QPaintDevice *paintDevice, QgsMapSettings &mapSettings, bool mandatoryCrsParam )
   {
     if ( !paintDevice )
     {
@@ -1310,6 +1338,54 @@ namespace QgsWms
 
     // set selection color
     mapSettings.setSelectionColor( mProject->selectionColor() );
+
+    // Set WMS temporal properties
+    // Note that this cannot parse multiple time instants while the vector dimensions implementation can
+    const QString timeString { mWmsParameters.dimensionValues().value( QStringLiteral( "TIME" ), QString() ) };
+    if ( ! timeString.isEmpty() )
+    {
+      bool isValidTemporalRange { true };
+      QgsDateTimeRange range;
+      // First try with a simple date/datetime instant
+      const QDateTime dt { QDateTime::fromString( timeString, Qt::DateFormat::ISODateWithMs ) };
+      if ( dt.isValid() )
+      {
+        range = QgsDateTimeRange( dt, dt );
+      }
+      else  // parse as an interval
+      {
+        try
+        {
+          range = QgsServerApiUtils::parseTemporalDateTimeInterval( timeString );
+        }
+        catch ( const QgsServerApiBadRequestException &ex )
+        {
+          isValidTemporalRange = false;
+          QgsMessageLog::logMessage( QStringLiteral( "Could not parse TIME parameter into a temporal range" ), "Server", Qgis::MessageLevel::Warning );
+        }
+      }
+
+      if ( isValidTemporalRange )
+      {
+        mIsTemporal = true;
+        mapSettings.setIsTemporal( true );
+        mapSettings.setTemporalRange( range );
+      }
+
+    }
+  }
+
+  QgsRenderContext QgsRenderer::configureDefaultRenderContext( QPainter *painter )
+  {
+    QgsRenderContext context = QgsRenderContext::fromQPainter( painter );
+    context.setScaleFactor( mContext.dotsPerMm() );
+    const double mmPerMapUnit = 1 / QgsServerProjectUtils::wmsDefaultMapUnitsPerMm( *mProject );
+    context.setMapToPixel( QgsMapToPixel( 1 / ( mmPerMapUnit * context.scaleFactor() ) ) );
+    QgsDistanceArea distanceArea = QgsDistanceArea();
+    distanceArea.setSourceCrs( QgsCoordinateReferenceSystem( mWmsParameters.crs() ), mProject->transformContext() );
+    distanceArea.setEllipsoid( geoNone() );
+    context.setDistanceArea( distanceArea );
+    return context;
   }
 
   QDomDocument QgsRenderer::featureInfoDocument( QList<QgsMapLayer *> &layers, const QgsMapSettings &mapSettings,
@@ -1366,6 +1442,8 @@ namespace QgsWms
     }
 
     QDomDocument result;
+    const QDomNode header = result.createProcessingInstruction( QStringLiteral( "xml" ), QStringLiteral( "version=\"1.0\" encoding=\"UTF-8\"" ) );
+    result.appendChild( header );
 
     QDomElement getFeatureInfoElement;
     QgsWmsParameters::Format infoFormat = mWmsParameters.infoFormat();
@@ -1455,7 +1533,7 @@ namespace QgsWms
             }
           }
 
-          if ( layer->type() == QgsMapLayerType::VectorLayer )
+          if ( layer->type() == Qgis::LayerType::Vector )
           {
             QgsVectorLayer *vectorLayer = qobject_cast<QgsVectorLayer *>( layer );
             if ( vectorLayer )
@@ -1681,7 +1759,7 @@ namespace QgsWms
     bool featureBBoxInitialized = false;
     while ( fit.nextFeature( feature ) )
     {
-      if ( layer->wkbType() == QgsWkbTypes::NoGeometry && ! searchRect.isEmpty() )
+      if ( layer->wkbType() == Qgis::WkbType::NoGeometry && ! searchRect.isEmpty() )
       {
         break;
       }
@@ -1694,7 +1772,7 @@ namespace QgsWms
 
       renderContext.expressionContext().setFeature( feature );
 
-      if ( layer->wkbType() != QgsWkbTypes::NoGeometry && ! searchRect.isEmpty() )
+      if ( layer->wkbType() != Qgis::WkbType::NoGeometry && ! searchRect.isEmpty() )
       {
         if ( !r2 )
         {
@@ -1710,7 +1788,7 @@ namespace QgsWms
       }
 
       QgsRectangle box;
-      if ( layer->wkbType() != QgsWkbTypes::NoGeometry && hasGeometry )
+      if ( layer->wkbType() != Qgis::WkbType::NoGeometry && hasGeometry )
       {
         box = mapSettings.layerExtentToOutputExtent( layer, feature.geometry().boundingBox() );
         if ( featureBBox ) //extend feature info bounding box if requested
@@ -1735,7 +1813,7 @@ namespace QgsWms
 
       if ( mWmsParameters.infoFormat() == QgsWmsParameters::Format::GML )
       {
-        bool withGeom = layer->wkbType() != QgsWkbTypes::NoGeometry && addWktGeometry;
+        bool withGeom = layer->wkbType() != Qgis::WkbType::NoGeometry && addWktGeometry;
         int gmlVersion = mWmsParameters.infoFormatVersion();
         QString typeName = mContext.layerNickname( *layer );
         QDomElement elem = createFeatureGML(
@@ -1757,7 +1835,7 @@ namespace QgsWms
 
         featureAttributes = feature.attributes();
         QgsEditFormConfig editConfig = layer->editFormConfig();
-        if ( QgsServerProjectUtils::wmsFeatureInfoUseAttributeFormSettings( *mProject ) && editConfig.layout() == QgsEditFormConfig::TabLayout )
+        if ( QgsServerProjectUtils::wmsFeatureInfoUseAttributeFormSettings( *mProject ) && editConfig.layout() == Qgis::AttributeFormLayout::DragAndDrop )
         {
           writeAttributesTabLayout( editConfig, layer, fields, featureAttributes, infoDocument, featureElement, renderContext
 #ifdef HAVE_SERVER_PYTHON_PLUGINS
@@ -1783,13 +1861,27 @@ namespace QgsWms
         {
           QDomElement maptipElem = infoDocument.createElement( QStringLiteral( "Attribute" ) );
           maptipElem.setAttribute( QStringLiteral( "name" ), QStringLiteral( "maptip" ) );
-          maptipElem.setAttribute( QStringLiteral( "value" ),  QgsExpression::replaceExpressionText( mapTip, &renderContext.expressionContext() ) );
+          QgsExpressionContext context { renderContext.expressionContext() };
+          context.appendScope( QgsExpressionContextUtils::layerScope( layer ) );
+          maptipElem.setAttribute( QStringLiteral( "value" ),  QgsExpression::replaceExpressionText( mapTip, &context ) );
           featureElement.appendChild( maptipElem );
+        }
+
+        QgsExpression displayExpression = layer->displayExpression();
+        if ( displayExpression.isValid() && mWmsParameters.withDisplayName() )
+        {
+          QDomElement displayElem = infoDocument.createElement( QStringLiteral( "Attribute" ) );
+          displayElem.setAttribute( QStringLiteral( "name" ), QStringLiteral( "displayName" ) );
+          QgsExpressionContext context { renderContext.expressionContext() };
+          context.appendScope( QgsExpressionContextUtils::layerScope( layer ) );
+          displayExpression.prepare( &context );
+          displayElem.setAttribute( QStringLiteral( "value" ),  displayExpression.evaluate( &context ).toString() );
+          featureElement.appendChild( displayElem );
         }
 
         //append feature bounding box to feature info xml
         if ( QgsServerProjectUtils::wmsFeatureInfoAddWktGeometry( *mProject ) &&
-             layer->wkbType() != QgsWkbTypes::NoGeometry && hasGeometry )
+             layer->wkbType() != Qgis::WkbType::NoGeometry && hasGeometry )
         {
           QDomElement bBoxElem = infoDocument.createElement( QStringLiteral( "BoundingBox" ) );
           bBoxElem.setAttribute( version == QLatin1String( "1.1.1" ) ? "SRS" : "CRS", outputCrs.authid() );
@@ -1801,7 +1893,7 @@ namespace QgsWms
         }
 
         //also append the wkt geometry as an attribute
-        if ( layer->wkbType() != QgsWkbTypes::NoGeometry && addWktGeometry && hasGeometry )
+        if ( layer->wkbType() != Qgis::WkbType::NoGeometry && addWktGeometry && hasGeometry )
         {
           QgsGeometry geom = feature.geometry();
           if ( !geom.isNull() )
@@ -1859,11 +1951,11 @@ namespace QgsWms
       const QList<QgsAttributeEditorElement *> children =  container->children();
       for ( const QgsAttributeEditorElement *child : children )
       {
-        if ( child->type() == QgsAttributeEditorElement::AeTypeContainer )
+        if ( child->type() == Qgis::AttributeEditorType::Container )
         {
           writeAttributesTabGroup( child, layer, fields, featureAttributes, doc, nameElem.isNull() ? parentElem : nameElem, renderContext );
         }
-        else if ( child->type() == QgsAttributeEditorElement::AeTypeField )
+        else if ( child->type() == Qgis::AttributeEditorType::Field )
         {
           const QgsAttributeEditorField *editorField = dynamic_cast<const QgsAttributeEditorField *>( child );
           if ( editorField )
@@ -1950,10 +2042,10 @@ namespace QgsWms
       return false;
     }
 
-    const QgsRaster::IdentifyFormat identifyFormat(
+    const Qgis::RasterIdentifyFormat identifyFormat(
       static_cast<bool>( layer->dataProvider()->capabilities() & QgsRasterDataProvider::IdentifyFeature )
-      ? QgsRaster::IdentifyFormat::IdentifyFormatFeature
-      : QgsRaster::IdentifyFormat::IdentifyFormatValue );
+      ? Qgis::RasterIdentifyFormat::Feature
+      : Qgis::RasterIdentifyFormat::Value );
 
     QgsRasterIdentifyResult identifyResult;
     if ( layer->crs() != mapSettings.destinationCrs() )
@@ -1987,7 +2079,7 @@ namespace QgsWms
       int gmlVersion = mWmsParameters.infoFormatVersion();
       QString typeName = mContext.layerNickname( *layer );
 
-      if ( identifyFormat == QgsRaster::IdentifyFormatValue )
+      if ( identifyFormat == Qgis::RasterIdentifyFormat::Value )
       {
         feature.initAttributes( attributes.count() );
         int index = 0;
@@ -2036,7 +2128,7 @@ namespace QgsWms
     }
     else
     {
-      if ( identifyFormat == QgsRaster::IdentifyFormatValue )
+      if ( identifyFormat == Qgis::RasterIdentifyFormat::Value )
       {
         for ( auto it = attributes.constBegin(); it != attributes.constEnd(); ++it )
         {
@@ -2044,7 +2136,7 @@ namespace QgsWms
           attributeElement.setAttribute( QStringLiteral( "name" ), layer->bandName( it.key() ) );
 
           QString value;
-          if ( ! it.value().isNull() )
+          if ( ! QgsVariantUtils::isNull( it.value() ) )
           {
             value  = QString::number( it.value().toDouble() );
           }
@@ -2134,7 +2226,8 @@ namespace QgsWms
            || tokenIt->compare( QLatin1String( "LIKE" ), Qt::CaseInsensitive ) == 0
            || tokenIt->compare( QLatin1String( "ILIKE" ), Qt::CaseInsensitive ) == 0
            || tokenIt->compare( QLatin1String( "DMETAPHONE" ), Qt::CaseInsensitive ) == 0
-           || tokenIt->compare( QLatin1String( "SOUNDEX" ), Qt::CaseInsensitive ) == 0 )
+           || tokenIt->compare( QLatin1String( "SOUNDEX" ), Qt::CaseInsensitive ) == 0
+           || mContext.settings().allowedExtraSqlTokens().contains( *tokenIt, Qt::CaseSensitivity::CaseInsensitive ) )
       {
         continue;
       }
@@ -2504,7 +2597,7 @@ namespace QgsWms
       if ( !layer )
         continue;
 
-      if ( layer->type() == QgsMapLayerType::VectorLayer )
+      if ( layer->type() == Qgis::LayerType::Vector )
       {
         QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
 
@@ -2658,8 +2751,8 @@ namespace QgsWms
     // always add bounding box info if feature contains geometry and has been
     // explicitly configured in the project
     if ( QgsServerProjectUtils::wmsFeatureInfoAddWktGeometry( *mProject ) &&
-         !geom.isNull() && geom.type() != QgsWkbTypes::UnknownGeometry &&
-         geom.type() != QgsWkbTypes::NullGeometry )
+         !geom.isNull() && geom.type() != Qgis::GeometryType::Unknown &&
+         geom.type() != Qgis::GeometryType::Null )
     {
       QgsRectangle box = feat->geometry().boundingBox();
       if ( transform.isValid() )
@@ -2791,7 +2884,7 @@ namespace QgsWms
     }
 
     double mapUnitTolerance = 0.0;
-    if ( ml->geometryType() == QgsWkbTypes::PolygonGeometry )
+    if ( ml->geometryType() == Qgis::GeometryType::Polygon )
     {
       if ( ! mWmsParameters.polygonTolerance().isEmpty()
            && mWmsParameters.polygonToleranceAsInt() > 0 )
@@ -2803,7 +2896,7 @@ namespace QgsWms
         mapUnitTolerance = mapSettings.extent().width() / 400.0;
       }
     }
-    else if ( ml->geometryType() == QgsWkbTypes::LineGeometry )
+    else if ( ml->geometryType() == Qgis::GeometryType::Line )
     {
       if ( ! mWmsParameters.lineTolerance().isEmpty()
            && mWmsParameters.lineToleranceAsInt() > 0 )
@@ -2893,7 +2986,8 @@ namespace QgsWms
         QgsPalLayerSettings palSettings;
         palSettings.fieldName = "label"; // defined in url
         palSettings.priority = 10; // always drawn
-        palSettings.displayAll = true;
+        palSettings.placementSettings().setOverlapHandling( Qgis::LabelOverlapHandling::AllowOverlapIfRequired );
+        palSettings.placementSettings().setAllowDegradedPlacement( true );
         palSettings.dist = param.mLabelDistance;
 
         if ( !qgsDoubleNear( param.mLabelRotation, 0 ) )
@@ -2902,15 +2996,15 @@ namespace QgsWms
           palSettings.dataDefinedProperties().setProperty( pR, param.mLabelRotation );
         }
 
-        QgsPalLayerSettings::Placement placement = QgsPalLayerSettings::AroundPoint;
+        Qgis::LabelPlacement placement = Qgis::LabelPlacement::AroundPoint;
         switch ( param.mGeom.type() )
         {
-          case QgsWkbTypes::PointGeometry:
+          case Qgis::GeometryType::Point:
           {
-            if ( param.mHali.isEmpty() || param.mVali.isEmpty() || QgsWkbTypes::flatType( param.mGeom.wkbType() ) != QgsWkbTypes::Point )
+            if ( param.mHali.isEmpty() || param.mVali.isEmpty() || QgsWkbTypes::flatType( param.mGeom.wkbType() ) != Qgis::WkbType::Point )
             {
-              placement = QgsPalLayerSettings::AroundPoint;
-              palSettings.lineSettings().setPlacementFlags( QgsLabeling::LinePlacementFlags() );
+              placement = Qgis::LabelPlacement::AroundPoint;
+              palSettings.lineSettings().setPlacementFlags( Qgis::LabelLinePlacementFlags() );
             }
             else //set label directly on point if there is hali/vali
             {
@@ -2929,11 +3023,11 @@ namespace QgsWms
 
             break;
           }
-          case QgsWkbTypes::PolygonGeometry:
+          case Qgis::GeometryType::Polygon:
           {
             QgsGeometry point = param.mGeom.pointOnSurface();
             QgsPointXY pt = point.asPoint();
-            placement = QgsPalLayerSettings::AroundPoint;
+            placement = Qgis::LabelPlacement::AroundPoint;
 
             QgsPalLayerSettings::Property pX = QgsPalLayerSettings::PositionX;
             QVariant x( pt.x() );
@@ -2954,8 +3048,8 @@ namespace QgsWms
           }
           default:
           {
-            placement = QgsPalLayerSettings::Line;
-            palSettings.lineSettings().setPlacementFlags( QgsLabeling::LinePlacementFlag::AboveLine | QgsLabeling::LinePlacementFlag::MapOrientation );
+            placement = Qgis::LabelPlacement::Line;
+            palSettings.lineSettings().setPlacementFlags( Qgis::LabelLinePlacementFlag::AboveLine | Qgis::LabelLinePlacementFlag::MapOrientation );
             break;
           }
         }
@@ -3040,15 +3134,21 @@ namespace QgsWms
 
     if ( !renderJob.errors().isEmpty() )
     {
+      const QgsMapRendererJob::Error e = renderJob.errors().at( 0 );
+
       QString layerWMSName;
-      QString firstErrorLayerId = renderJob.errors().at( 0 ).layerID;
-      QgsMapLayer *errorLayer = mProject->mapLayer( firstErrorLayerId );
+      QgsMapLayer *errorLayer = mProject->mapLayer( e.layerID );
       if ( errorLayer )
       {
         layerWMSName = mContext.layerNickname( *errorLayer );
       }
 
-      throw QgsException( QStringLiteral( "Map rendering error in layer '%1'" ).arg( layerWMSName ) );
+      QString errorMessage = QStringLiteral( "Rendering error : '%1'" ).arg( e.message );
+      if ( ! layerWMSName.isEmpty() )
+      {
+        errorMessage = QStringLiteral( "Rendering error : '%1' in layer '%2'" ).arg( e.message, layerWMSName );
+      }
+      throw QgsException( errorMessage );
     }
 
     return painter;
@@ -3060,14 +3160,14 @@ namespace QgsWms
     {
       switch ( layer->type() )
       {
-        case QgsMapLayerType::VectorLayer:
+        case Qgis::LayerType::Vector:
         {
           QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
           vl->setOpacity( opacity / 255. );
           break;
         }
 
-        case QgsMapLayerType::RasterLayer:
+        case Qgis::LayerType::Raster:
         {
           QgsRasterLayer *rl = qobject_cast<QgsRasterLayer *>( layer );
           QgsRasterRenderer *rasterRenderer = rl->renderer();
@@ -3075,12 +3175,18 @@ namespace QgsWms
           break;
         }
 
-        case QgsMapLayerType::MeshLayer:
-        case QgsMapLayerType::VectorTileLayer:
-        case QgsMapLayerType::PluginLayer:
-        case QgsMapLayerType::AnnotationLayer:
-        case QgsMapLayerType::PointCloudLayer:
-        case QgsMapLayerType::GroupLayer:
+        case Qgis::LayerType::VectorTile:
+        {
+          QgsVectorTileLayer *vl = qobject_cast<QgsVectorTileLayer *>( layer );
+          vl->setOpacity( opacity / 255. );
+          break;
+        }
+
+        case Qgis::LayerType::Mesh:
+        case Qgis::LayerType::Plugin:
+        case Qgis::LayerType::Annotation:
+        case Qgis::LayerType::PointCloud:
+        case Qgis::LayerType::Group:
           break;
       }
     }
@@ -3088,7 +3194,8 @@ namespace QgsWms
 
   void QgsRenderer::setLayerFilter( QgsMapLayer *layer, const QList<QgsWmsParametersFilter> &filters )
   {
-    if ( layer->type() == QgsMapLayerType::VectorLayer )
+
+    if ( layer->type() == Qgis::LayerType::Vector )
     {
       QgsVectorLayer *filteredLayer = qobject_cast<QgsVectorLayer *>( layer );
       QStringList expList;
@@ -3121,10 +3228,12 @@ namespace QgsWms
                                         " has been rejected because of security reasons."
                                         " Note: Text strings have to be enclosed in single or double quotes."
                                         " A space between each word / special character is mandatory."
-                                        " Allowed Keywords and special characters are "
-                                        " IS,NOT,NULL,AND,OR,IN,=,<,>=,>,>=,!=,',',(,),DMETAPHONE,SOUNDEX."
+                                        " Allowed Keywords and special characters are"
+                                        " IS,NOT,NULL,AND,OR,IN,=,<,>=,>,>=,!=,',',(,),DMETAPHONE,SOUNDEX%2."
                                         " Not allowed are semicolons in the filter expression." ).arg(
-                                          filter.mFilter ) );
+                                          filter.mFilter, mContext.settings().allowedExtraSqlTokens().isEmpty() ?
+                                          QString() :
+                                          mContext.settings().allowedExtraSqlTokens().join( ',' ).prepend( ',' ) ) );
           }
 
           QString newSubsetString = filter.mFilter;
@@ -3184,6 +3293,11 @@ namespace QgsWms
     QMap<QString, QString> dimParamValues = mContext.parameters().dimensionValues();
     for ( const QgsMapLayerServerProperties::WmsDimensionInfo &dim : wmsDims )
     {
+      // Skip temporal properties for this layer, give precedence to the dimensions implementation
+      if ( mIsTemporal && dim.name.toUpper() == QLatin1String( "TIME" ) && layer->temporalProperties()->isActive() )
+      {
+        layer->temporalProperties()->setIsActive( false );
+      }
       // Check field index
       int fieldIndex = layer->fields().indexOf( dim.fieldName );
       if ( fieldIndex == -1 )
@@ -3355,7 +3469,7 @@ namespace QgsWms
 
   void QgsRenderer::setLayerSelection( QgsMapLayer *layer, const QStringList &fids ) const
   {
-    if ( !fids.empty() && layer->type() == QgsMapLayerType::VectorLayer )
+    if ( !fids.empty() && layer->type() == Qgis::LayerType::Vector )
     {
       QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
 
@@ -3572,7 +3686,7 @@ namespace QgsWms
     layer->setCustomProperty( "sldStyleName", sldStyleName );
   }
 
-  QgsLegendSettings QgsRenderer::legendSettings() const
+  QgsLegendSettings QgsRenderer::legendSettings()
   {
     // getting scale from bbox or default size
     QgsLegendSettings settings = mWmsParameters.legendSettings();

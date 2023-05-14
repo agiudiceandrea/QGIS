@@ -25,14 +25,13 @@
 #include <QToolButton>
 #include <QWidgetAction>
 #include <QCheckBox>
+#include <QTreeView>
 
 #include "qgisapp.h"
 #include "qgsapplication.h"
 #include "qgsdoublespinbox.h"
-#include "qgsfloatingwidget.h"
 #include "qgslayertreegroup.h"
 #include "qgslayertree.h"
-#include "qgslayertreeview.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayer.h"
 #include "qgsproject.h"
@@ -46,22 +45,6 @@
 #ifdef ENABLE_MODELTEST
 #include "modeltest.h"
 #endif
-
-class SnapTypeMenu: public QMenu
-{
-  public:
-    SnapTypeMenu( const QString &title, QWidget *parent = nullptr )
-      : QMenu( title, parent ) {}
-
-    void mouseReleaseEvent( QMouseEvent *e )
-    {
-      QAction *action = activeAction();
-      if ( action )
-        action->trigger();
-      else
-        QMenu::mouseReleaseEvent( e );
-    }
-};
 
 QgsSnappingWidget::QgsSnappingWidget( QgsProject *project, QgsMapCanvas *canvas, QWidget *parent )
   : QWidget( parent )
@@ -413,7 +396,7 @@ QgsSnappingWidget::QgsSnappingWidget( QgsProject *project, QgsMapCanvas *canvas,
   modeChanged();
   updateToleranceDecimals();
 
-  enableSnapping( QgsSettingsRegistryCore::settingsDigitizingDefaultSnapEnabled.value() );
+  enableSnapping( QgsSettingsRegistryCore::settingsDigitizingDefaultSnapEnabled->value() );
 
   restoreGeometry( QgsSettings().value( QStringLiteral( "/Windows/SnappingWidget/geometry" ) ).toByteArray() );
 }
@@ -514,19 +497,19 @@ void QgsSnappingWidget::projectAvoidIntersectionModeChanged()
 {
   switch ( mProject->avoidIntersectionsMode() )
   {
-    case QgsProject::AvoidIntersectionsMode::AllowIntersections:
+    case Qgis::AvoidIntersectionsMode::AllowIntersections:
       mAvoidIntersectionsModeButton->setDefaultAction( mAllowIntersectionsAction );
       mAllowIntersectionsAction->setChecked( true );
       mAvoidIntersectionsCurrentLayerAction->setChecked( false );
       mAvoidIntersectionsLayersAction->setChecked( false );
       break;
-    case QgsProject::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer:
+    case Qgis::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer:
       mAvoidIntersectionsModeButton->setDefaultAction( mAvoidIntersectionsCurrentLayerAction );
       mAllowIntersectionsAction->setChecked( false );
       mAvoidIntersectionsCurrentLayerAction->setChecked( true );
       mAvoidIntersectionsLayersAction->setChecked( false );
       break;
-    case QgsProject::AvoidIntersectionsMode::AvoidIntersectionsLayers:
+    case Qgis::AvoidIntersectionsMode::AvoidIntersectionsLayers:
       mAvoidIntersectionsModeButton->setDefaultAction( mAvoidIntersectionsLayersAction );
       mAllowIntersectionsAction->setChecked( false );
       mAvoidIntersectionsCurrentLayerAction->setChecked( false );
@@ -649,15 +632,15 @@ void QgsSnappingWidget::avoidIntersectionsModeButtonTriggered( QAction *action )
     mAvoidIntersectionsModeButton->setDefaultAction( action );
     if ( action == mAllowIntersectionsAction )
     {
-      mProject->setAvoidIntersectionsMode( QgsProject::AvoidIntersectionsMode::AllowIntersections );
+      mProject->setAvoidIntersectionsMode( Qgis::AvoidIntersectionsMode::AllowIntersections );
     }
     else if ( action == mAvoidIntersectionsCurrentLayerAction )
     {
-      mProject->setAvoidIntersectionsMode( QgsProject::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer );
+      mProject->setAvoidIntersectionsMode( Qgis::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer );
     }
     else if ( action == mAvoidIntersectionsLayersAction )
     {
-      mProject->setAvoidIntersectionsMode( QgsProject::AvoidIntersectionsMode::AvoidIntersectionsLayers );
+      mProject->setAvoidIntersectionsMode( Qgis::AvoidIntersectionsMode::AvoidIntersectionsLayers );
     }
   }
 }
@@ -755,9 +738,9 @@ void QgsSnappingWidget::updateToleranceDecimals()
   }
   else
   {
-    QgsUnitTypes::DistanceUnit mapUnit = mCanvas->mapUnits();
-    QgsUnitTypes::DistanceUnitType type = QgsUnitTypes::unitType( mapUnit );
-    if ( type == QgsUnitTypes::Standard )
+    Qgis::DistanceUnit mapUnit = mCanvas->mapUnits();
+    Qgis::DistanceUnitType type = QgsUnitTypes::unitType( mapUnit );
+    if ( type == Qgis::DistanceUnitType::Standard )
     {
       mToleranceSpinBox->setDecimals( 2 );
     }
@@ -833,7 +816,7 @@ void QgsSnappingWidget::cleanGroup( QgsLayerTreeNode *node )
   const auto constChildren = node->children();
   for ( QgsLayerTreeNode *child : constChildren )
   {
-    if ( QgsLayerTree::isLayer( child ) && ( !QgsLayerTree::toLayer( child )->layer() || QgsLayerTree::toLayer( child )->layer()->type() != QgsMapLayerType::VectorLayer ) )
+    if ( QgsLayerTree::isLayer( child ) && ( !QgsLayerTree::toLayer( child )->layer() || QgsLayerTree::toLayer( child )->layer()->type() != Qgis::LayerType::Vector ) )
     {
       toRemove << child;
       continue;

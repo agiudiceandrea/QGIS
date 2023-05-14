@@ -73,9 +73,9 @@ void TestQgsServerWmsDxf::use_title_as_layername_true()
   QgsMapLayer *layer = project.layerStore()->mapLayersByName( "testlayer èé" )[0];
   QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
 
-  QgsCapabilitiesCache cache;
   QgsServiceRegistry registry;
   QgsServerSettings settings;
+  QgsCapabilitiesCache cache( settings.capabilitiesCacheSize() );
   QgsServerInterfaceImpl interface( &cache, &registry, &settings );
 
   QgsWms::QgsWmsRenderContext context( &project, &interface );
@@ -88,7 +88,6 @@ void TestQgsServerWmsDxf::use_title_as_layername_true()
   QgsWms::QgsRenderer renderer( context );
   std::unique_ptr<QgsDxfExport> exporter = renderer.getDxf();
 
-  const QString name = exporter->layerName( vl );
   QCOMPARE( exporter->layerName( vl ), QString( "testlayer \u00E8\u00E9" ) );
 
   const QgsFeature ft = vl->getFeature( 1 );
@@ -122,9 +121,9 @@ void TestQgsServerWmsDxf::use_title_as_layername_false()
   QgsMapLayer *layer = project.layerStore()->mapLayersByName( "testlayer èé" )[0];
   QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
 
-  QgsCapabilitiesCache cache;
   QgsServiceRegistry registry;
   QgsServerSettings settings;
+  QgsCapabilitiesCache cache( settings.capabilitiesCacheSize() );
   QgsServerInterfaceImpl interface( &cache, &registry, &settings );
 
   QgsWms::QgsWmsRenderContext context( &project, &interface );
@@ -137,7 +136,6 @@ void TestQgsServerWmsDxf::use_title_as_layername_false()
   QgsWms::QgsRenderer renderer( context );
   std::unique_ptr<QgsDxfExport> exporter = renderer.getDxf();
 
-  const QString name = exporter->layerName( vl );
   QCOMPARE( exporter->layerName( vl ), QString( "A test vector layer" ) );
 
   const QgsFeature ft = vl->getFeature( 1 );

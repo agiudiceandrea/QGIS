@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ***************************************************************************
     OtbChoiceWidget.py
@@ -138,9 +137,6 @@ class OtbChoiceWidgetWrapper(WidgetWrapper):
                 if wrapper.param.name() == parameter.name():
                     v = self.value() == parameter.metadata()['group_value']
                     self.__setWrapperVisibility(wrapper, v)
-
-
-from qgis.core import QgsProcessingParameterDefinition
 
 
 class OtbParameterChoice(QgsProcessingParameterDefinition):

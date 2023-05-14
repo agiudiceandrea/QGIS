@@ -24,7 +24,6 @@
 #include "qgscoordinatetransform.h"
 #include "qgsdatasourceuri.h"
 #include "qgsrasteridentifyresult.h"
-#include "qgsrasterlayer.h"
 #include "qgsrectangle.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsnetworkaccessmanager.h"
@@ -45,11 +44,6 @@
 #ifdef QGISDEBUG
 #include <QDir>
 #endif
-
-#include "gdalwarper.h"
-#include "ogr_srs_api.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 
 #define ERR(message) QGS_ERROR_MESSAGE(message,"WCS provider")
 #define SRVERR(message) QGS_ERROR_MESSAGE(message,"WCS server")
@@ -358,6 +352,7 @@ QgsWcsProvider::QgsWcsProvider( const QgsWcsProvider &other, const QgsDataProvid
   , mBaseUrl( other.mBaseUrl )
   , mIdentifier( other.mIdentifier )
   , mTime( other.mTime )
+  , mBBOX( other.mBBOX )
   , mFormat( other.mFormat )
   , mValid( other.mValid )
   , mCapabilities( other.mCapabilities )
@@ -442,6 +437,12 @@ bool QgsWcsProvider::parseUri( const QString &uriString )
   mIdentifier = uri.param( QStringLiteral( "identifier" ) );
 
   mTime = uri.param( QStringLiteral( "time" ) );
+
+  const QStringList bboxParts = uri.param( QStringLiteral( "bbox" ) ).split( "," );
+  if ( bboxParts.length() == 4 )
+  {
+    mBBOX = QgsRectangle( bboxParts[0].toDouble(), bboxParts[1].toDouble(), bboxParts[2].toDouble(), bboxParts[3].toDouble() );
+  }
 
   setFormat( uri.param( QStringLiteral( "format" ) ) );
 
@@ -702,8 +703,16 @@ void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const &viewExtent, int 
     extent = QgsRectangle( viewExtent.xMinimum() + xRes / 2., viewExtent.yMinimum() + yRes / 2., viewExtent.xMaximum() - xRes / 2., viewExtent.yMaximum() - yRes / 2. );
   }
 
+  if ( changeXY )
+  {
+    extent = QgsRectangle( extent.yMinimum(), extent.xMinimum(), extent.yMaximum(), extent.xMaximum() );
+  }
+  if ( !mBBOX.isEmpty() )
+  {
+    extent = extent.intersect( mBBOX );
+  }
   // Bounding box in WCS format (Warning: does not work with scientific notation)
-  QString bbox = QString( changeXY ? "%2,%1,%4,%3" : "%1,%2,%3,%4" )
+  QString bbox = QString( "%1,%2,%3,%4" )
                  .arg( qgsDoubleToString( extent.xMinimum() ),
                        qgsDoubleToString( extent.yMinimum() ),
                        qgsDoubleToString( extent.xMaximum() ),
@@ -731,7 +740,9 @@ void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const &viewExtent, int 
       // raster (all values 0).
       setQueryItem( url, QStringLiteral( "TIME" ), mTime );
     }
+
     setQueryItem( url, QStringLiteral( "BBOX" ), bbox );
+
     setQueryItem( url, QStringLiteral( "CRS" ), crs ); // request BBOX CRS
     setQueryItem( url, QStringLiteral( "RESPONSE_CRS" ), crs ); // response CRS
     setQueryItem( url, QStringLiteral( "WIDTH" ), QString::number( pixelWidth ) );
@@ -751,6 +762,7 @@ void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const &viewExtent, int 
     }
 
     setQueryItem( url, QStringLiteral( "BOUNDINGBOX" ), bbox );
+
 
     //  Example:
     //   GridBaseCRS=urn:ogc:def:crs:SG:6.6:32618
@@ -944,12 +956,11 @@ QList<QgsColorRampShader::ColorRampItem> QgsWcsProvider::colorTable( int bandNum
   return mColorTables.value( bandNumber - 1 );
 }
 
-int QgsWcsProvider::colorInterpretation( int bandNo ) const
+Qgis::RasterColorInterpretation QgsWcsProvider::colorInterpretation( int bandNo ) const
 {
   GDALRasterBandH myGdalBand = GDALGetRasterBand( mCachedGdalDataset.get(), bandNo );
   return colorInterpretationFromGdal( GDALGetRasterColorInterpretation( myGdalBand ) );
 }
-
 
 bool QgsWcsProvider::parseServiceExceptionReportDom( const QByteArray &xml, const QString &wcsVersion, QString &errorTitle, QString &errorText )
 {
@@ -1038,7 +1049,6 @@ void QgsWcsProvider::parseServiceException( QDomElement const &e, const QString 
   }
   else
   {
-    const QStringList codes;
     seCode = e.attribute( QStringLiteral( "exceptionCode" ) );
     // UMN Mapserver (6.0.3) has messed/switched 'locator' and 'exceptionCode'
     if ( ! exceptions.contains( seCode ) )
@@ -1391,14 +1401,14 @@ QString QgsWcsProvider:: htmlRow( const QString &text1, const QString &text2 )
   return "<tr>" + htmlCell( text1 ) +  htmlCell( text2 ) + "</tr>";
 }
 
-QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPointXY &point, QgsRaster::IdentifyFormat format, const QgsRectangle &boundingBox, int width, int height, int /*dpi*/ )
+QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPointXY &point, Qgis::RasterIdentifyFormat format, const QgsRectangle &boundingBox, int width, int height, int /*dpi*/ )
 {
   QgsDebugMsg( QStringLiteral( "thePoint = %1 %2" ).arg( point.x(), 0, 'g', 10 ).arg( point.y(), 0, 'g', 10 ) );
   QgsDebugMsg( QStringLiteral( "theWidth = %1 height = %2" ).arg( width ).arg( height ) );
   QgsDebugMsg( "boundingBox = " + boundingBox.toString() );
   QMap<int, QVariant> results;
 
-  if ( format != QgsRaster::IdentifyFormatValue )
+  if ( format != Qgis::RasterIdentifyFormat::Value )
   {
     return QgsRasterIdentifyResult( QGS_ERROR( tr( "Format not supported" ) ) );
   }
@@ -1410,7 +1420,7 @@ QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPointXY &point, QgsRa
     {
       results.insert( i, QVariant() );
     }
-    return QgsRasterIdentifyResult( QgsRaster::IdentifyFormatValue, results );
+    return QgsRasterIdentifyResult( Qgis::RasterIdentifyFormat::Value, results );
   }
 
   QgsRectangle finalExtent = boundingBox;
@@ -1442,13 +1452,13 @@ QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPointXY &point, QgsRa
       // set resolution approximately to 1mm
       switch ( mCrs.mapUnits() )
       {
-        case QgsUnitTypes::DistanceMeters:
+        case Qgis::DistanceUnit::Meters:
           xRes = 0.001;
           break;
-        case QgsUnitTypes::DistanceFeet:
+        case Qgis::DistanceUnit::Feet:
           xRes = 0.003;
           break;
-        case QgsUnitTypes::DistanceDegrees:
+        case Qgis::DistanceUnit::Degrees:
           // max length of degree of latitude on pole is 111694 m
           xRes = 1e-8;
           break;
@@ -1564,7 +1574,7 @@ QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPointXY &point, QgsRa
     }
   }
 
-  return QgsRasterIdentifyResult( QgsRaster::IdentifyFormatValue, results );
+  return QgsRasterIdentifyResult( Qgis::RasterIdentifyFormat::Value, results );
 }
 
 QgsCoordinateReferenceSystem QgsWcsProvider::crs() const
@@ -1734,7 +1744,7 @@ void QgsWcsDownloadHandler::cacheReplyFinished()
   if ( mCacheReply->error() == QNetworkReply::NoError )
   {
     const QVariant redirect = mCacheReply->attribute( QNetworkRequest::RedirectionTargetAttribute );
-    if ( !redirect.isNull() )
+    if ( !QgsVariantUtils::isNull( redirect ) )
     {
       mCacheReply->deleteLater();
 
@@ -1765,7 +1775,7 @@ void QgsWcsDownloadHandler::cacheReplyFinished()
 
     const QVariant status = mCacheReply->attribute( QNetworkRequest::HttpStatusCodeAttribute );
     QgsDebugMsg( QStringLiteral( "status = %1" ).arg( status.toInt() ) );
-    if ( !status.isNull() && status.toInt() >= 400 )
+    if ( !QgsVariantUtils::isNull( status ) && status.toInt() >= 400 )
     {
       const QVariant phrase = mCacheReply->attribute( QNetworkRequest::HttpReasonPhraseAttribute );
 
@@ -1985,6 +1995,62 @@ QList< QgsDataItemProvider * > QgsWcsProviderMetadata::dataItemProviders() const
 
 QgsWcsProviderMetadata::QgsWcsProviderMetadata():
   QgsProviderMetadata( QgsWcsProvider::WCS_KEY, QgsWcsProvider::WCS_DESCRIPTION ) {}
+
+QIcon QgsWcsProviderMetadata::icon() const
+{
+  return QgsApplication::getThemeIcon( QStringLiteral( "mIconWcs.svg" ) );
+}
+
+QVariantMap QgsWcsProviderMetadata::decodeUri( const QString &uri ) const
+{
+  const QUrlQuery query { uri };
+  const auto constItems { query.queryItems() };
+  QVariantMap decoded;
+  for ( const auto &item : constItems )
+  {
+    if ( item.first == QLatin1String( "url" ) )
+    {
+      const QUrl url( item.second );
+      if ( url.isLocalFile() )
+      {
+        decoded[ QStringLiteral( "path" ) ] = url.toLocalFile();
+      }
+      else
+      {
+        decoded[ item.first ] = item.second;
+      }
+    }
+    else
+    {
+      decoded[ item.first ] = item.second;
+    }
+  }
+  return decoded;
+}
+
+QString QgsWcsProviderMetadata::encodeUri( const QVariantMap &parts ) const
+{
+  QUrlQuery query;
+  QList<QPair<QString, QString> > items;
+  for ( auto it = parts.constBegin(); it != parts.constEnd(); ++it )
+  {
+    if ( it.key() == QLatin1String( "path" ) )
+    {
+      items.push_back( { QStringLiteral( "url" ), QUrl::fromLocalFile( it.value().toString() ).toString() } );
+    }
+    else
+    {
+      items.push_back( { it.key(), it.value().toString() } );
+    }
+  }
+  query.setQueryItems( items );
+  return query.toString();
+}
+
+QList<Qgis::LayerType> QgsWcsProviderMetadata::supportedLayerTypes() const
+{
+  return { Qgis::LayerType::Raster };
+}
 
 
 #ifndef HAVE_STATIC_PROVIDERS

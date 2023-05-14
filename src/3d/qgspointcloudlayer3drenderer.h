@@ -111,6 +111,8 @@ class _3D_NO_EXPORT QgsPointCloud3DRenderContext : public Qgs3DRenderContext
       switch ( type )
       {
         case QgsPointCloudAttribute::UChar:
+          value = *reinterpret_cast< const unsigned char * >( data + offset );
+          return;
         case QgsPointCloudAttribute::Char:
           value = *( data + offset );
           return;
@@ -186,7 +188,16 @@ class _3D_NO_EXPORT QgsPointCloud3DRenderContext : public Qgs3DRenderContext
      * Returns the feedback object used to cancel rendering and check if rendering was canceled.
      */
     QgsFeedback *feedback() const { return mFeedback.get(); }
+
+    /**
+     * Returns the 3D scene's extent in layer crs.
+     * \since QGIS 3.30
+     */
+    QgsRectangle extent() const { return mExtent; }
+
   private:
+    //! Recalculates the 3D scene's extent in layer's crs
+    void updateExtent();
 #ifdef SIP_RUN
     QgsPointCloudRenderContext( const QgsPointCloudRenderContext &rh );
 #endif
@@ -197,6 +208,7 @@ class _3D_NO_EXPORT QgsPointCloud3DRenderContext : public Qgs3DRenderContext
     double mZValueFixedOffset = 0;
     QgsCoordinateTransform mCoordinateTransform;
     std::unique_ptr<QgsFeedback> mFeedback;
+    QgsRectangle mExtent;
 };
 
 
@@ -300,9 +312,9 @@ class _3D_EXPORT QgsPointCloudLayer3DRenderer : public QgsAbstractPointCloud3DRe
   private:
     QgsMapLayerRef mLayerRef; //!< Layer used to extract mesh data from
     std::unique_ptr< QgsPointCloud3DSymbol > mSymbol;
-    double mMaximumScreenError = 1.0;
+    double mMaximumScreenError = 3.0;
     bool mShowBoundingBoxes = false;
-    int mPointBudget = 1000000;
+    int mPointBudget = 5000000;
 
   private:
 #ifdef SIP_RUN

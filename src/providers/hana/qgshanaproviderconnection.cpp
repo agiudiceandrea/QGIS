@@ -25,7 +25,6 @@
 #include "qgsexception.h"
 #include "qgsfeedback.h"
 #include "qgsmessagelog.h"
-#include "qgssettings.h"
 #include "qgsvectorlayer.h"
 
 #include "odbc/PreparedStatement.h"
@@ -34,8 +33,9 @@
 
 using namespace NS_ODBC;
 
-QgsHanaProviderResultIterator::QgsHanaProviderResultIterator( QgsHanaResultSetRef &&resultSet )
-  : mResultSet( std::move( resultSet ) )
+QgsHanaProviderResultIterator::QgsHanaProviderResultIterator( QgsHanaConnectionRef &&conn, QgsHanaResultSetRef &&resultSet )
+  : mConnection( std::move( conn ) )
+  , mResultSet( std::move( resultSet ) )
   , mNumColumns( mResultSet->getMetadata().getColumnCount() )
   , mNextRow( mResultSet->next() )
 {}
@@ -47,6 +47,7 @@ QVariantList QgsHanaProviderResultIterator::nextRowPrivate()
     return ret;
 
   ret.reserve( mNumColumns );
+  // cppcheck-suppress unsignedLessThanZero
   for ( unsigned short i = 1; i <= mNumColumns; ++i )
     ret.push_back( mResultSet->getValue( i ) );
   mNextRow = mResultSet->next();
@@ -69,7 +70,7 @@ QgsHanaProviderConnection::QgsHanaProviderConnection( const QString &name )
 {
   mProviderKey = QStringLiteral( "hana" );
   QgsHanaSettings settings( name, true );
-  setUri( settings.toDataSourceUri().uri() );
+  setUri( settings.toDataSourceUri().uri( false ) );
   setCapabilities();
 }
 
@@ -82,6 +83,21 @@ QgsHanaProviderConnection::QgsHanaProviderConnection( const QString &uri, const 
 
 void QgsHanaProviderConnection::setCapabilities()
 {
+  mGeometryColumnCapabilities =
+  {
+    //GeometryColumnCapability::Curves, not fully supported yet
+    GeometryColumnCapability::Z,
+    GeometryColumnCapability::M,
+    GeometryColumnCapability::SinglePart
+  };
+  mSqlLayerDefinitionCapabilities =
+  {
+    Qgis::SqlLayerDefinitionCapability::SubsetStringFilter,
+    Qgis::SqlLayerDefinitionCapability::PrimaryKeys,
+    Qgis::SqlLayerDefinitionCapability::GeometryColumn,
+    Qgis::SqlLayerDefinitionCapability::UnstableFeatureIds,
+  };
+
   /*
    * Capability::DropSchema         | CREATE SCHEMA from SYSTEMPRIVILEGE
    * Capability::CreateSchema       | CREATE SCHEMA from SYSTEMPRIVILEGE
@@ -165,7 +181,7 @@ void QgsHanaProviderConnection::setCapabilities()
 void QgsHanaProviderConnection::createVectorTable( const QString &schema,
     const QString &name,
     const QgsFields &fields,
-    QgsWkbTypes::Type wkbType,
+    Qgis::WkbType wkbType,
     const QgsCoordinateReferenceSystem &srs,
     bool overwrite,
     const QMap<QString,
@@ -177,7 +193,7 @@ void QgsHanaProviderConnection::createVectorTable( const QString &schema,
   newUri.setSchema( schema );
   newUri.setTable( name );
   // Set geometry column if it's not aspatial
-  if ( wkbType != QgsWkbTypes::Type::Unknown &&  wkbType != QgsWkbTypes::Type::NoGeometry )
+  if ( wkbType != Qgis::WkbType::Unknown &&  wkbType != Qgis::WkbType::NoGeometry )
   {
     newUri.setGeometryColumn( options->value( QStringLiteral( "geometryColumn" ), QStringLiteral( "geom" ) ).toString() );
   }
@@ -270,17 +286,20 @@ QgsAbstractDatabaseProviderConnection::QueryResult QgsHanaProviderConnection::ex
 
   try
   {
-
     PreparedStatementRef stmt = conn->prepareStatement( sql );
     bool isQuery = stmt->getMetaDataUnicode()->getColumnCount() > 0;
     if ( isQuery )
     {
       QgsHanaResultSetRef rs = conn->executeQuery( sql );
       ResultSetMetaDataUnicode &md = rs->getMetadata();
-      QueryResult ret( std::make_shared<QgsHanaProviderResultIterator>( std::move( rs ) ) );
       unsigned short numColumns = md.getColumnCount();
+      QStringList columns;
+      columns.reserve( numColumns );
       for ( unsigned short i = 1; i <= numColumns; ++i )
-        ret.appendColumn( QgsHanaUtils::toQString( md.getColumnName( i ) ) );
+        columns << QgsHanaUtils::toQString( md.getColumnName( i ) );
+      QueryResult ret( std::make_shared<QgsHanaProviderResultIterator>( std::move( conn ), std::move( rs ) ) );
+      for ( unsigned short i = 0; i < numColumns; ++i )
+        ret.appendColumn( columns[i] );
       return ret;
     }
     else

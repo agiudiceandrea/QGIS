@@ -79,7 +79,7 @@ QgsStatisticalSummaryDockWidget::QgsStatisticalSummaryDockWidget( QWidget *paren
 
   mStatisticsMenu = new QMenu( mOptionsToolButton );
   mOptionsToolButton->setMenu( mStatisticsMenu );
-  mSyncAction = new QAction( tr( "Keep synchronized with TOC" ) );
+  mSyncAction = new QAction( tr( "Follow Selected Layer" ), this );
   mSyncAction->setCheckable( true );
   connect( mSyncAction, &QAction::toggled, this, &QgsStatisticalSummaryDockWidget::manageSyncLayer );
 
@@ -249,6 +249,7 @@ void QgsStatisticalSummaryDockWidget::refreshStatistics()
     mCancelButton->show();
     mCalculatingProgressBar->show();
 
+    // cppcheck-suppress danglingLifetime
     mGatherer = gatherer.get();
     QgsApplication::taskManager()->addTask( gatherer.release() );
   }
@@ -287,7 +288,7 @@ void QgsStatisticalSummaryDockWidget::updateNumericStatistics()
     const double val = value.toDouble( &convertOk );
     if ( convertOk )
       values << val;
-    else if ( value.isNull() )
+    else if ( QgsVariantUtils::isNull( value ) )
     {
       missingValues += 1;
     }

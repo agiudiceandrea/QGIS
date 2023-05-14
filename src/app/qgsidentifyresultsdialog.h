@@ -18,6 +18,7 @@
 #ifndef QGSIDENTIFYRESULTSDIALOG_H
 #define QGSIDENTIFYRESULTSDIALOG_H
 
+#include "qgis_app.h"
 #include "ui_qgsidentifyresultsbase.h"
 #include "qgshelp.h"
 #include "qgsfeature.h"
@@ -33,9 +34,9 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QUrl>
-#include "qgis_app.h"
 
 class QCloseEvent;
+class QToolButton;
 class QTreeWidgetItem;
 class QAction;
 class QMenu;
@@ -49,6 +50,7 @@ class QgsMeshLayer;
 class QgsDockWidget;
 class QgsMapLayerAction;
 class QgsEditorWidgetSetup;
+class QgsSettingsEntryBool;
 
 class QwtPlotCurve;
 
@@ -132,6 +134,8 @@ class APP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::QgsIdenti
     QgsIdentifyResultsDialog( QgsMapCanvas *canvas, QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags() );
 
     ~QgsIdentifyResultsDialog() override;
+
+    static const QgsSettingsEntryBool *settingHideNullValues;
 
     //! Adds feature from vector layer
     void addFeature( QgsVectorLayer *layer,
@@ -267,6 +271,8 @@ class APP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::QgsIdenti
 
     void mActionHideDerivedAttributes_toggled( bool checked );
 
+    void mActionHideNullValues_toggled( bool checked );
+
     void mExpandAction_triggered( bool checked ) { Q_UNUSED( checked ) expandAll(); }
     void mCollapseAction_triggered( bool checked ) { Q_UNUSED( checked ) collapseAll(); }
 
@@ -319,7 +325,7 @@ class APP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::QgsIdenti
 
     void highlightFeature( QTreeWidgetItem *item );
 
-    void doAction( QTreeWidgetItem *item, const QString &action );
+    void doAction( QTreeWidgetItem *item, const QUuid &action );
 
     void doMapLayerAction( QTreeWidgetItem *item, QgsMapLayerAction *action );
 

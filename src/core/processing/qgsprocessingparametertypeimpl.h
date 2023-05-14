@@ -292,7 +292,9 @@ class CORE_EXPORT QgsProcessingParameterTypeBoolean : public QgsProcessingParame
     QStringList acceptedStringValues() const override
     {
       return QStringList() << QObject::tr( "1 for true/yes" )
-             << QObject::tr( "0 for false/no" );
+             << QObject::tr( "0 for false/no" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -1124,7 +1126,9 @@ class CORE_EXPORT QgsProcessingParameterTypeString : public QgsProcessingParamet
 
     QStringList acceptedStringValues() const override
     {
-      return QStringList() << QObject::tr( "String value" );
+      return QStringList() << QObject::tr( "String value" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -1330,7 +1334,9 @@ class CORE_EXPORT QgsProcessingParameterTypeNumber : public QgsProcessingParamet
 
     QStringList acceptedStringValues() const override
     {
-      return QStringList() << QObject::tr( "A numeric value" );
+      return QStringList() << QObject::tr( "A numeric value" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -1382,7 +1388,9 @@ class CORE_EXPORT QgsProcessingParameterTypeDistance : public QgsProcessingParam
 
     QStringList acceptedStringValues() const override
     {
-      return QStringList() << QObject::tr( "A numeric value" );
+      return QStringList() << QObject::tr( "A numeric value" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -1434,7 +1442,9 @@ class CORE_EXPORT QgsProcessingParameterTypeDuration : public QgsProcessingParam
 
     QStringList acceptedStringValues() const override
     {
-      return QStringList() << QObject::tr( "A numeric value (unit type set by algorithms)" );
+      return QStringList() << QObject::tr( "A numeric value (unit type set by algorithms)" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -1753,7 +1763,9 @@ class CORE_EXPORT QgsProcessingParameterTypeColor : public QgsProcessingParamete
 
     QStringList acceptedStringValues() const override
     {
-      return QStringList() << QObject::tr( "String representation of color, e.g #ff0000 or rgba(200,100,50,0.8)" );
+      return QStringList() << QObject::tr( "String representation of color, e.g #ff0000 or rgba(200,100,50,0.8)" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -1908,7 +1920,9 @@ class CORE_EXPORT QgsProcessingParameterTypeDateTime : public QgsProcessingParam
 
     QStringList acceptedStringValues() const override
     {
-      return QStringList() << QObject::tr( "A datetime value in ISO format" );
+      return QStringList() << QObject::tr( "A datetime value in ISO format" )
+             << QObject::tr( "field:FIELD_NAME to use a data defined value taken from the FIELD_NAME field" )
+             << QObject::tr( "expression:SOME EXPRESSION to use a data defined value calculated using a custom QGIS expression" );
     }
 };
 
@@ -2228,6 +2242,58 @@ class CORE_EXPORT QgsProcessingParameterTypePointCloudDestination : public QgsPr
     QStringList acceptedStringValues() const override
     {
       return QStringList() << QObject::tr( "Path for new point cloud layer" );
+    }
+};
+
+/**
+ * \brief A point cloud layer attribute parameter for Processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('attribute')
+ * \since QGIS 3.32
+ */
+class CORE_EXPORT QgsProcessingParameterTypePointCloudAttribute : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterPointCloudAttribute( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A point cloud attribute parameter, for selecting an attribute from a point cloud source." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Point Cloud Attribute" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "attribute" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterPointCloudAttribute" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterPointCloudAttribute" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "str" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "The name of an attribute" )
+             << QObject::tr( "; delimited list of attribute names" );
     }
 };
 

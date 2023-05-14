@@ -30,6 +30,7 @@ set(QGIS_APP_SRCS
   qgsdevtoolspanelwidget.cpp
   qgsdiscoverrelationsdialog.cpp
   qgsdxfexportdialog.cpp
+  qgselevationshadingrenderersettingswidget.cpp
   qgsformannotationdialog.cpp
   qgsguivectorlayertools.cpp
   qgshtmlannotationdialog.cpp
@@ -59,9 +60,9 @@ set(QGIS_APP_SRCS
   qgsmapcanvasdockwidget.cpp
   qgsmapsavedialog.cpp
   qgsprojectlistitemdelegate.cpp
-  qgsprovidersublayersdialog.cpp
   qgspuzzlewidget.cpp
   qgsversionmigration.cpp
+  qgsrasterattributetableapputils.cpp
   qgssnappinglayertreemodel.cpp
   qgssnappingwidget.cpp
   qgsstatusbarcoordinateswidget.cpp
@@ -73,7 +74,6 @@ set(QGIS_APP_SRCS
   qgsrecentprojectsitemsmodel.cpp
   qgsvectorlayerdigitizingproperties.cpp
   qgswelcomepage.cpp
-  qgsdockablewidgethelper.cpp
 
   qgsmaptooladdfeature.cpp
   qgsmaptooladdpart.cpp
@@ -110,6 +110,8 @@ set(QGIS_APP_SRCS
   annotations/qgsannotationitempropertieswidget.cpp
   annotations/qgsannotationlayerproperties.cpp
 
+  canvas/qgscanvasrefreshblocker.cpp
+
   decorations/qgsdecorationitem.cpp
   decorations/qgsdecorationtitle.cpp
   decorations/qgsdecorationtitledialog.cpp
@@ -131,8 +133,6 @@ set(QGIS_APP_SRCS
   pointcloud/qgspointcloudlayerstylewidget.cpp
 
   raster/qgsrasterelevationpropertieswidget.cpp
-
-  vectortile/qgsvectortilelayerproperties.cpp
 
   vertextool/qgslockedfeature.cpp
   vertextool/qgsvertexeditor.cpp
@@ -163,12 +163,17 @@ set(QGIS_APP_SRCS
   browser/qgsinbuiltdataitemproviders.cpp
 
   devtools/qgsappdevtoolutils.cpp
+  devtools/qgsdevtoolsmodelnode.cpp
   devtools/networklogger/qgsnetworklogger.cpp
   devtools/networklogger/qgsnetworkloggernode.cpp
   devtools/networklogger/qgsnetworkloggerpanelwidget.cpp
   devtools/networklogger/qgsnetworkloggerwidgetfactory.cpp
   devtools/profiler/qgsprofilerpanelwidget.cpp
   devtools/profiler/qgsprofilerwidgetfactory.cpp
+  devtools/querylogger/qgsappquerylogger.cpp
+  devtools/querylogger/qgsdatabasequeryloggernode.cpp
+  devtools/querylogger/qgsqueryloggerpanelwidget.cpp
+  devtools/querylogger/qgsqueryloggerwidgetfactory.cpp
 
   dwg/qgsdwgimportdialog.cpp
   dwg/qgsdwgimporter.cpp
@@ -176,6 +181,8 @@ set(QGIS_APP_SRCS
   elevation/qgselevationprofileexportsettingswidget.cpp
   elevation/qgselevationprofileimageexportdialog.cpp
   elevation/qgselevationprofilepdfexportdialog.cpp
+  elevation/qgselevationprofiletoolidentify.cpp
+  elevation/qgselevationprofiletoolmeasure.cpp
   elevation/qgselevationprofilewidget.cpp
   elevation/qgsmaptoolprofilecurve.cpp
   elevation/qgsmaptoolprofilecurvefromfeature.cpp
@@ -190,6 +197,8 @@ set(QGIS_APP_SRCS
   labeling/qgsmaptoolmovelabel.cpp
   labeling/qgsmaptoolrotatelabel.cpp
 
+  layers/qgsapplayerhandling.cpp
+
   layout/qgslayoutappmenuprovider.cpp
   layout/qgslayoutdesignerdialog.cpp
   layout/qgslayoutimagedrophandler.cpp
@@ -202,6 +211,7 @@ set(QGIS_APP_SRCS
 
   locator/qgsactionlocatorfilter.cpp
   locator/qgsactivelayerfeatureslocatorfilter.cpp
+  locator/qgslayermetadatalocatorfilter.cpp
   locator/qgsalllayersfeatureslocatorfilter.cpp
   locator/qgsbookmarklocatorfilter.cpp
   locator/qgsexpressioncalculatorlocatorfilter.cpp
@@ -242,13 +252,29 @@ set(QGIS_APP_SRCS
   options/qgsadvancedoptions.cpp
   options/qgscodeeditoroptions.cpp
   options/qgscustomprojectionoptions.cpp
+  options/qgsfontoptions.cpp
   options/qgsgpsdeviceoptions.cpp
+  options/qgsgpsoptions.cpp
   options/qgsoptions.cpp
   options/qgsoptionsutils.cpp
+  options/qgsrasterrenderingoptions.cpp
+  options/qgsrenderingoptions.cpp
+  options/qgsvectorrenderingoptions.cpp
+  options/qgsuserprofileoptions.cpp
+  options/qgsuserprofileselectiondialog.cpp
 
+  gps/qgsappgpsconnection.cpp
+  gps/qgsappgpsdigitizing.cpp
+  gps/qgsappgpslogging.cpp
+  gps/qgsappgpssettingsmenu.cpp
   gps/qgsgpsbearingitem.cpp
+  gps/qgsgpscanvasbridge.cpp
   gps/qgsgpsinformationwidget.cpp
   gps/qgsgpsmarker.cpp
+  gps/qgsgpstoolbar.cpp
+
+  sensor/qgssensortablewidget.cpp
+  sensor/qgsprojectsensorsettingswidget.cpp
 
   project/qgsprojectelevationsettingswidget.cpp
 
@@ -258,7 +284,7 @@ set(QGIS_APP_SRCS
   pluginmanager/qgspluginsortfilterproxymodel.cpp
   pluginmanager/qgspluginitemdelegate.cpp
 
-  qgssettingstree.cpp
+  qgssettingstreewidgetold.cpp
   qgssettingsregistryapp.cpp
   qgsvariantdelegate.cpp
   qgscrashhandler.cpp
@@ -340,6 +366,7 @@ if (WITH_3D)
     layout/qgslayout3dmapwidget.cpp
     3d/qgsskyboxrenderingsettingswidget.cpp
     3d/qgsshadowrenderingsettingswidget.cpp
+    3d/qgsambientocclusionsettingswidget.cpp
     3d/qgspointcloud3dsymbolwidget.cpp
     3d/qgspointcloudlayer3drendererwidget.cpp
     3d/qgs3dmapcanvaswidget.cpp
@@ -347,8 +374,9 @@ if (WITH_3D)
   )
 endif()
 
+find_package(${QT_VERSION_BASE} COMPONENTS UiTools REQUIRED)
 
-set (WITH_QWTPOLAR FALSE CACHE BOOL "Determines whether QwtPolar should be built")
+set (WITH_QWTPOLAR FALSE CACHE BOOL "Determines whether QwtPolar is available or whether functionality requiring QwtPolar should be disabled.")
 
 if (WITH_QWTPOLAR)
   add_definitions(-DWITH_QWTPOLAR)
@@ -495,16 +523,20 @@ target_include_directories(qgis_app PUBLIC
 
   ${CMAKE_SOURCE_DIR}/src/app
   ${CMAKE_SOURCE_DIR}/src/app/decorations
+  ${CMAKE_SOURCE_DIR}/src/app/devtools
   ${CMAKE_SOURCE_DIR}/src/app/devtools/networklogger
   ${CMAKE_SOURCE_DIR}/src/app/labeling
   ${CMAKE_SOURCE_DIR}/src/app/layout
   ${CMAKE_SOURCE_DIR}/src/app/pluginmanager
   ${CMAKE_SOURCE_DIR}/src/app/gps
+  ${CMAKE_SOURCE_DIR}/src/app/sensor
   ${CMAKE_SOURCE_DIR}/src/app/dwg
   ${CMAKE_SOURCE_DIR}/src/app/maptools
   ${CMAKE_SOURCE_DIR}/src/app/mesh
   ${CMAKE_SOURCE_DIR}/src/app/locator
+  ${CMAKE_SOURCE_DIR}/src/app/options
   ${CMAKE_SOURCE_DIR}/src/app/pointcloud
+  ${CMAKE_SOURCE_DIR}/src/app/settings
   ${CMAKE_SOURCE_DIR}/src/app/vectortile
   ${CMAKE_SOURCE_DIR}/src/plugins
   ${CMAKE_SOURCE_DIR}/src/python

@@ -36,18 +36,10 @@
 
 #include "ui_qgsattributesformproperties.h"
 #include "qgis_gui.h"
-#include "qgsaddattrdialog.h"
-#include "qgslogger.h"
-#include "qgsexpressionbuilderdialog.h"
-#include "qgsfieldcalculator.h"
-#include "qgsfieldexpressionwidget.h"
-#include "qgsattributesforminitcode.h"
-#include "qgsgui.h"
-#include "qgseditorwidgetfactory.h"
-#include "qgseditorwidgetregistry.h"
-#include "qgsrelationmanager.h"
-#include "qgsattributeeditorrelation.h"
-
+#include "qgsoptionalexpression.h"
+#include "qgsexpressioncontextgenerator.h"
+#include "qgsattributeeditorelement.h"
+#include "qgspropertycollection.h"
 
 class QgsAttributesDnDTree;
 class QgsAttributeFormContainerEdit;
@@ -92,6 +84,16 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
       QString htmlCode;
     };
 
+    struct TextElementEditorConfiguration
+    {
+      QString text;
+    };
+
+    struct SpacerElementEditorConfiguration
+    {
+      bool drawLine = false;
+    };
+
     /**
      * \ingroup gui
      * \class DnDTreeItemData
@@ -107,7 +109,9 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
           QmlWidget,
           HtmlWidget,
           WidgetType, //!< In the widget tree, the type of widget
-          Action //!< Layer action
+          Action, //!< Layer action
+          TextWidget, //!< Text widget type, \since QGIS 3.30
+          SpacerWidget, //!< Spacer widget type, \since QGIS 3.30
         };
 
         //do we need that
@@ -134,8 +138,21 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
         int columnCount() const { return mColumnCount; }
         void setColumnCount( int count ) { mColumnCount = count; }
 
-        bool showAsGroupBox() const;
-        void setShowAsGroupBox( bool showAsGroupBox );
+        /**
+         * Returns the container type.
+         *
+         * \see setContainerType()
+         * \since QGIS 3.32
+         */
+        Qgis::AttributeEditorContainerType containerType() const;
+
+        /**
+         * Sets the container type.
+         *
+         * \see containerType()
+         * \since QGIS 3.32
+         */
+        void setContainerType( Qgis::AttributeEditorContainerType type );
 
         /**
          * For group box containers  returns if this group box is collapsed.
@@ -155,6 +172,20 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
          * \since QGIS 3.26
          */
         void setCollapsed( bool collapsed ) { mCollapsed = collapsed; };
+
+        /**
+         * Returns the label style.
+         * \see setLabelStyle()
+         * \since QGIS 3.26
+         */
+        const QgsAttributeEditorElement::LabelStyle labelStyle() const;
+
+        /**
+         * Sets the label style to \a labelStyle.
+         * \see labelStyle()
+         * \since QGIS 3.26
+         */
+        void setLabelStyle( const QgsAttributeEditorElement::LabelStyle &labelStyle );
 
         bool showLabel() const;
         void setShowLabel( bool showLabel );
@@ -198,23 +229,50 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
         HtmlElementEditorConfiguration htmlElementEditorConfiguration() const;
         void setHtmlElementEditorConfiguration( HtmlElementEditorConfiguration htmlElementEditorConfiguration );
 
+        /**
+         * Returns the spacer element configuration
+         * \since QGIS 3.30
+         */
+        SpacerElementEditorConfiguration spacerElementEditorConfiguration() const;
+
+        /**
+         * Sets the the spacer element configuration to \a spacerElementEditorConfiguration
+         * \since QGIS 3.30
+         */
+        void setSpacerElementEditorConfiguration( SpacerElementEditorConfiguration spacerElementEditorConfiguration );
+
         QColor backgroundColor() const;
         void setBackgroundColor( const QColor &backgroundColor );
+
+        /**
+         * Returns the editor configuration for text element.
+         * \since QGIS 3.30
+         */
+        TextElementEditorConfiguration textElementEditorConfiguration() const;
+
+        /**
+         * Sets the editor configuration for text element to \a textElementEditorConfiguration.
+         * \since QGIS 3.30
+         */
+        void setTextElementEditorConfiguration( const TextElementEditorConfiguration &textElementEditorConfiguration );
 
       private:
         Type mType = Field;
         QString mName;
         QString mDisplayName;
         int mColumnCount = 1;
-        bool mShowAsGroupBox = false;
+        Qgis::AttributeEditorContainerType mContainerType = Qgis::AttributeEditorContainerType::Tab;
         bool mShowLabel = true;
         QgsOptionalExpression mVisibilityExpression;
         RelationEditorConfiguration mRelationEditorConfiguration;
         QmlElementEditorConfiguration mQmlElementEditorConfiguration;
         HtmlElementEditorConfiguration mHtmlElementEditorConfiguration;
+        TextElementEditorConfiguration mTextElementEditorConfiguration;
+        SpacerElementEditorConfiguration mSpacerElementEditorConfiguration;
         QColor mBackgroundColor;
         bool mCollapsed = false;
         QgsOptionalExpression mCollapsedExpression;
+        QgsAttributeEditorElement::LabelStyle mLabelStyle;
     };
 
 
@@ -237,6 +295,7 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
       QString mAlias;
       QgsPropertyCollection mDataDefinedProperties;
       QString mComment;
+      Qgis::FieldDomainSplitPolicy mSplitPolicy = Qgis::FieldDomainSplitPolicy::Duplicate;
 
       operator QVariant();
     };
@@ -244,7 +303,10 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
   public:
     explicit QgsAttributesFormProperties( QgsVectorLayer *layer, QWidget *parent = nullptr );
 
-    QgsAttributeEditorElement *createAttributeEditorWidget( QTreeWidgetItem *item, QgsAttributeEditorElement *parent, bool forceGroup = true );
+    /**
+     * Creates a new attribute editor element based on the definition stored in \a item.
+     */
+    QgsAttributeEditorElement *createAttributeEditorWidget( QTreeWidgetItem *item, QgsAttributeEditorElement *parent, bool isTopLevel = false );
 
     void init();
     void apply();
@@ -296,15 +358,15 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
 
     void loadInfoWidget( const QString &infoText );
 
-    QgsEditFormConfig::PythonInitCodeSource mInitCodeSource = QgsEditFormConfig::CodeSourceNone;
+    QTreeWidgetItem *loadAttributeEditorTreeItem( QgsAttributeEditorElement *widgetDef, QTreeWidgetItem *parent, QgsAttributesDnDTree *tree );
+
+    Qgis::AttributeFormPythonInitCodeSource mInitCodeSource = Qgis::AttributeFormPythonInitCodeSource::NoSource;
     QString mInitFunction;
     QString mInitFilePath;
     QString mInitCode;
 
-    QTreeWidgetItem *loadAttributeEditorTreeItem( QgsAttributeEditorElement *widgetDef, QTreeWidgetItem *parent, QgsAttributesDnDTree *tree );
-
   private slots:
-    void addTabOrGroupButton();
+    void addContainer();
     void removeTabOrGroupButton();
     void mEditorLayoutComboBox_currentIndexChanged( int index );
     void pbnSelectEditForm_clicked();
@@ -327,7 +389,7 @@ QDataStream &operator>> ( QDataStream &stream, QgsAttributesFormProperties::DnDT
  *
  * Graphical representation for the attribute editor drag and drop editor
  */
-class GUI_EXPORT QgsAttributesDnDTree : public QTreeWidget
+class GUI_EXPORT QgsAttributesDnDTree : public QTreeWidget, private QgsExpressionContextGenerator
 {
     Q_OBJECT
 
@@ -339,7 +401,13 @@ class GUI_EXPORT QgsAttributesDnDTree : public QTreeWidget
      * Otherwise it is inserted at the specified \a index.
      */
     QTreeWidgetItem *addItem( QTreeWidgetItem *parent, QgsAttributesFormProperties::DnDTreeItemData data, int index = -1, const QIcon &icon = QIcon() );
-    QTreeWidgetItem *addContainer( QTreeWidgetItem *parent, const QString &title, int columnCount );
+
+    /**
+     * Adds a new container to \a parent.
+     *
+     * If no \a parent is set then the container will be forced to a tab widget.
+     */
+    QTreeWidgetItem *addContainer( QTreeWidgetItem *parent, const QString &title, int columnCount, Qgis::AttributeEditorContainerType type );
 
     enum Type
     {
@@ -376,6 +444,10 @@ class GUI_EXPORT QgsAttributesDnDTree : public QTreeWidget
   private:
     QgsVectorLayer *mLayer = nullptr;
     Type mType = QgsAttributesDnDTree::Type::Drag;
+
+    // QgsExpressionContextGenerator interface
+  public:
+    QgsExpressionContext createExpressionContext() const override;
 };
 
 

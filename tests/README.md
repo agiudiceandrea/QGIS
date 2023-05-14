@@ -11,6 +11,13 @@ Make sure that you have enabled building of tests in CMake.
 Some tests require setting up a test environment.
 Below some information about how to set such environment up.
 
+## Docker based environment
+
+The test environment used by the continuous integration system
+is based on Docker and can be reproduced locally by using the
+`.ci/run_tests.sh` script. Run with the --help switch to see
+options.
+
 ## Postgres
 
 Make sure that you have enabled building of postgres test in CMake.
@@ -73,13 +80,13 @@ For example if the output of `make check` ends like this:
 
 ```
    The following tests FAILED:
-         77 - PyQgsLocalServer (Failed)
+         77 - PyQgsFeature (Failed)
 ```
 
 You could re-run the failing test with:
 
 ```
-   ctest -V -R PyQgsLocalServer
+   ctest -V -R PyQgsFeature
 ```
 
 The parameter `-V` enables verbose mode and `-R` takes a regular expression as
@@ -100,6 +107,9 @@ A useful hunting tool is `git grep`, which could be used like this:
   tests/src/python/CMakeLists.txt: ADD_PYTHON_TEST(PyQgsAuthManagerPasswordPostgresTest test_authmanager_password_postgres.py)
   $ ctest -V -R PyQgsAuthManagerPasswordPostgresTest # use the CMakeLists.txt name
 ```
+
+You may also use `ctest -N` to get a list of test names according to
+ctest.
 
 If you get `Could not connect to any X display` errors it means that your build
 machine does not have an X server.  In that case you need to run the test under

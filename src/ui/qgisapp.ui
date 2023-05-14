@@ -209,6 +209,7 @@
      <addaction name="mActionAddAfsLayer"/>
      <addaction name="mActionAddVectorTileLayer"/>
      <addaction name="mActionAddPointCloudLayer"/>
+     <addaction name="mActionAddGpsLayer"/>
     </widget>
     <widget class="QMenu" name="mMenuFilterTable">
      <property name="title">
@@ -271,10 +272,13 @@
     </widget>
     <addaction name="mActionHelpContents"/>
     <addaction name="mActionHelpAPI"/>
+    <addaction name="mActionHelpPyQgisAPI"/>
     <addaction name="separator"/>
     <addaction name="mMenuPluginHelp"/>
     <addaction name="separator"/>
     <addaction name="mActionReportaBug"/>
+    <addaction name="mActionDonate"/>
+    <addaction name="mActionGetInvolved"/>
     <addaction name="mActionNeedSupport"/>
     <addaction name="separator"/>
     <addaction name="mActionQgisHomePage"/>
@@ -1624,7 +1628,7 @@ Shift+R to enable range selection.</string>
      <normaloff>:/images/themes/default/mActionAddMssqlLayer.svg</normaloff>:/images/themes/default/mActionAddMssqlLayer.svg</iconset>
    </property>
    <property name="text">
-    <string>Add MSSQL Spatial Layer…</string>
+    <string>Add MS SQL Server Layer…</string>
    </property>
   </action>
   <action name="mActionAddOracleLayer">
@@ -1942,7 +1946,12 @@ Shift+R to enable range selection.</string>
   </action>
   <action name="mActionHelpAPI">
    <property name="text">
-    <string>API Documentation</string>
+    <string>C++ API Documentation</string>
+   </property>
+  </action>
+  <action name="mActionHelpPyQgisAPI">
+   <property name="text">
+    <string>PyQGIS API Documentation</string>
    </property>
   </action>
   <action name="mActionQgisHomePage">
@@ -3212,6 +3221,15 @@ Shows placeholders for labels which could not be placed, e.g. due to overlaps wi
     <string>Add Point Cloud Layer...</string>
    </property>
   </action>
+  <action name="mActionAddGpsLayer">
+   <property name="icon">
+    <iconset resource="../../images/images.qrc">
+     <normaloff>:/images/themes/default/mActionAddGpsLayer.svg</normaloff>:/images/themes/default/mActionAddGpsLayer.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Add GPX Layer...</string>
+   </property>
+  </action>
   <action name="mActionStreamDigitize">
    <property name="checkable">
     <bool>true</bool>
@@ -3352,6 +3370,16 @@ Shows placeholders for labels which could not be placed, e.g. due to overlaps wi
    </property>
    <property name="toolTip">
     <string>Open an interactive elevation profile chart</string>
+   </property>
+  </action>
+  <action name="mActionDonate">
+   <property name="text">
+    <string>Donate to QGIS</string>
+   </property>
+  </action>
+  <action name="mActionGetInvolved">
+   <property name="text">
+    <string>Get Involved</string>
    </property>
   </action>
  </widget>

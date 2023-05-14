@@ -388,12 +388,7 @@ QgsColorWheel::QgsColorWheel( QWidget *parent )
   mWheelBrush = QBrush( wheelGradient );
 }
 
-QgsColorWheel::~QgsColorWheel()
-{
-  delete mWheelImage;
-  delete mTriangleImage;
-  delete mWidgetImage;
-}
+QgsColorWheel::~QgsColorWheel() = default;
 
 QSize QgsColorWheel::sizeHint() const
 {
@@ -406,14 +401,14 @@ void QgsColorWheel::paintEvent( QPaintEvent *event )
   Q_UNUSED( event )
   QPainter painter( this );
 
-  if ( !mWidgetImage || !mWheelImage || !mTriangleImage )
+  if ( mWidgetImage.isNull() || mWheelImage.isNull() || mTriangleImage.isNull() )
   {
     createImages( size() );
   }
 
   //draw everything in an image
-  mWidgetImage->fill( Qt::transparent );
-  QPainter imagePainter( mWidgetImage );
+  mWidgetImage.fill( Qt::transparent );
+  QPainter imagePainter( &mWidgetImage );
   imagePainter.setRenderHint( QPainter::Antialiasing );
 
   if ( mWheelDirty )
@@ -424,11 +419,11 @@ void QgsColorWheel::paintEvent( QPaintEvent *event )
 
   //draw wheel centered on widget
   const QPointF center = QPointF( width() / 2.0, height() / 2.0 );
-  imagePainter.drawImage( QPointF( center.x() - ( mWheelImage->width() / 2.0 ), center.y() - ( mWheelImage->height() / 2.0 ) ), *mWheelImage );
+  imagePainter.drawImage( QPointF( center.x() - ( mWheelImage.width() / 2.0 ), center.y() - ( mWheelImage.height() / 2.0 ) ), mWheelImage );
 
   //draw hue marker
   const int h = hue();
-  const double length = mWheelImage->width() / 2.0;
+  const double length = mWheelImage.width() / 2.0;
   QLineF hueMarkerLine = QLineF( center.x(), center.y(), center.x() + length, center.y() );
   hueMarkerLine.setAngle( h );
   imagePainter.save();
@@ -447,7 +442,7 @@ void QgsColorWheel::paintEvent( QPaintEvent *event )
   {
     createTriangle();
   }
-  imagePainter.drawImage( QPointF( center.x() - ( mWheelImage->width() / 2.0 ), center.y() - ( mWheelImage->height() / 2.0 ) ), *mTriangleImage );
+  imagePainter.drawImage( QPointF( center.x() - ( mWheelImage.width() / 2.0 ), center.y() - ( mWheelImage.height() / 2.0 ) ), mTriangleImage );
 
   //draw current color marker
   const double triangleRadius = length - mWheelThickness - 1;
@@ -476,7 +471,7 @@ void QgsColorWheel::paintEvent( QPaintEvent *event )
   imagePainter.end();
 
   //draw image onto widget
-  painter.drawImage( QPoint( 0, 0 ), *mWidgetImage );
+  painter.drawImage( QPoint( 0, 0 ), mWidgetImage );
   painter.end();
 }
 
@@ -497,12 +492,9 @@ void QgsColorWheel::createImages( const QSizeF size )
   mWheelThickness = wheelSize / 15.0;
 
   //recreate cache images at correct size
-  delete mWheelImage;
-  mWheelImage = new QImage( wheelSize, wheelSize, QImage::Format_ARGB32 );
-  delete mTriangleImage;
-  mTriangleImage = new QImage( wheelSize, wheelSize, QImage::Format_ARGB32 );
-  delete mWidgetImage;
-  mWidgetImage = new QImage( size.width(), size.height(), QImage::Format_ARGB32 );
+  mWheelImage = QImage( wheelSize, wheelSize, QImage::Format_ARGB32 );
+  mTriangleImage = QImage( wheelSize, wheelSize, QImage::Format_ARGB32 );
+  mWidgetImage = QImage( size.width(), size.height(), QImage::Format_ARGB32 );
 
   //trigger a redraw for the images
   mWheelDirty = true;
@@ -511,9 +503,26 @@ void QgsColorWheel::createImages( const QSizeF size )
 
 void QgsColorWheel::resizeEvent( QResizeEvent *event )
 {
+  QgsColorWidget::resizeEvent( event );
+#ifdef Q_OS_WIN
+  // For some reason the first reported size than that of the parent widget, leading to a cut-off color wheel
+  if ( event->size().width() > parentWidget()->size().width() )
+  {
+    QSize newSize(
+      std::min( event->size().width(), parentWidget()->size().width() - 2 ),
+      std::min( event->size().height(), parentWidget()->size().height() - 2 )
+    );
+    resize( newSize );
+    createImages( newSize );
+  }
+  else
+  {
+    createImages( event->size() );
+  }
+#else
   //recreate images for new size
   createImages( event->size() );
-  QgsColorWidget::resizeEvent( event );
+#endif
 }
 
 void QgsColorWheel::setColorFromPos( const QPointF pos )
@@ -541,7 +550,7 @@ void QgsColorWheel::setColorFromPos( const QPointF pos )
     const double hueRadians = h * M_PI / 180.0;
     double rad0 = std::fmod( eventAngleRadians + 2.0 * M_PI - hueRadians, 2.0 * M_PI );
     double rad1 = std::fmod( rad0, ( ( 2.0 / 3.0 ) * M_PI ) ) - ( M_PI / 3.0 );
-    const double length = mWheelImage->width() / 2.0;
+    const double length = mWheelImage.width() / 2.0;
     const double triangleLength = length - mWheelThickness - 1;
 
     const double a = 0.5 * triangleLength;
@@ -617,7 +626,7 @@ void QgsColorWheel::mousePressEvent( QMouseEvent *event )
     //create a line from the widget's center to the event
     const QLineF line = QLineF( width() / 2.0, height() / 2.0, event->pos().x(), event->pos().y() );
 
-    const double innerLength = mWheelImage->width() / 2.0 - mWheelThickness;
+    const double innerLength = mWheelImage.width() / 2.0 - mWheelThickness;
     if ( line.length() < innerLength )
     {
       mClickedPart = QgsColorWheel::Triangle;
@@ -649,16 +658,16 @@ void QgsColorWheel::mouseReleaseEvent( QMouseEvent *event )
 
 void QgsColorWheel::createWheel()
 {
-  if ( !mWheelImage )
+  if ( mWheelImage.isNull() )
   {
     return;
   }
 
-  const int maxSize = std::min( mWheelImage->width(),  mWheelImage->height() );
+  const int maxSize = std::min( mWheelImage.width(),  mWheelImage.height() );
   const double wheelRadius = maxSize / 2.0;
 
-  mWheelImage->fill( Qt::transparent );
-  QPainter p( mWheelImage );
+  mWheelImage.fill( Qt::transparent );
+  QPainter p( &mWheelImage );
   p.setRenderHint( QPainter::Antialiasing );
   p.setBrush( mWheelBrush );
   p.setPen( Qt::NoPen );
@@ -678,19 +687,19 @@ void QgsColorWheel::createWheel()
 
 void QgsColorWheel::createTriangle()
 {
-  if ( !mWheelImage || !mTriangleImage )
+  if ( mWheelImage.isNull() || mTriangleImage.isNull() )
   {
     return;
   }
 
-  const QPointF center = QPointF( mWheelImage->width() / 2.0, mWheelImage->height() / 2.0 );
-  mTriangleImage->fill( Qt::transparent );
+  const QPointF center = QPointF( mWheelImage.width() / 2.0, mWheelImage.height() / 2.0 );
+  mTriangleImage.fill( Qt::transparent );
 
-  QPainter imagePainter( mTriangleImage );
+  QPainter imagePainter( &mTriangleImage );
   imagePainter.setRenderHint( QPainter::Antialiasing );
 
   const int angle = hue();
-  const double wheelRadius = mWheelImage->width() / 2.0;
+  const double wheelRadius = mWheelImage.width() / 2.0;
   const double triangleRadius = wheelRadius - mWheelThickness - 1;
 
   //pure version of hue (at full saturation and value)
@@ -1556,22 +1565,30 @@ void QgsColorTextWidget::textChanged()
 void QgsColorTextWidget::showMenu()
 {
   QMenu colorContextMenu;
+  QAction *hexRgbaAction = nullptr;
+  QAction *rgbaAction = nullptr;
 
   QAction *hexRgbAction = new QAction( tr( "#RRGGBB" ), nullptr );
   colorContextMenu.addAction( hexRgbAction );
-  QAction *hexRgbaAction = new QAction( tr( "#RRGGBBAA" ), nullptr );
-  colorContextMenu.addAction( hexRgbaAction );
+  if ( mAllowAlpha )
+  {
+    hexRgbaAction = new QAction( tr( "#RRGGBBAA" ), nullptr );
+    colorContextMenu.addAction( hexRgbaAction );
+  }
   QAction *rgbAction = new QAction( tr( "rgb( r, g, b )" ), nullptr );
   colorContextMenu.addAction( rgbAction );
-  QAction *rgbaAction = new QAction( tr( "rgba( r, g, b, a )" ), nullptr );
-  colorContextMenu.addAction( rgbaAction );
+  if ( mAllowAlpha )
+  {
+    rgbaAction = new QAction( tr( "rgba( r, g, b, a )" ), nullptr );
+    colorContextMenu.addAction( rgbaAction );
+  }
 
   QAction *selectedAction = colorContextMenu.exec( QCursor::pos() );
   if ( selectedAction == hexRgbAction )
   {
     mFormat = QgsColorTextWidget::HexRgb;
   }
-  else if ( selectedAction == hexRgbaAction )
+  else if ( hexRgbaAction && selectedAction == hexRgbaAction )
   {
     mFormat = QgsColorTextWidget::HexRgbA;
   }
@@ -1579,7 +1596,7 @@ void QgsColorTextWidget::showMenu()
   {
     mFormat = QgsColorTextWidget::Rgb;
   }
-  else if ( selectedAction == rgbaAction )
+  else if ( rgbaAction && selectedAction == rgbaAction )
   {
     mFormat = QgsColorTextWidget::Rgba;
   }
@@ -1591,6 +1608,10 @@ void QgsColorTextWidget::showMenu()
   updateText();
 }
 
+void QgsColorTextWidget::setAllowOpacity( const bool allowOpacity )
+{
+  mAllowAlpha = allowOpacity;
+}
 
 //
 // QgsColorPreviewWidget

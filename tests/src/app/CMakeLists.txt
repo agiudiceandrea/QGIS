@@ -18,6 +18,7 @@ set(TESTS
   testqgsapplocatorfilters.cpp
   testqgsdecorationscalebar.cpp
   testqgsfieldcalculator.cpp
+  testqgsmapcanvasdockwidget.cpp
   testqgsmaptooleditannotation.cpp
   testqgsmaptoolidentifyaction.cpp
   testqgsmaptoollabel.cpp
@@ -36,6 +37,7 @@ set(TESTS
   testqgsmaptoolsplitfeatures.cpp
   testqgsmeasuretool.cpp
   testqgsmeasurebearingtool.cpp
+  testqgsvertexeditor.cpp
   testqgsvertextool.cpp
   testqgsvectorlayersaveasdialog.cpp
   testqgsmaptoolreverseline.cpp
@@ -43,8 +45,9 @@ set(TESTS
   testqgsprojectproperties.cpp
   testqgsapplayoutvaliditychecks.cpp
   testqgsmeshcalculatordialog.cpp
-  testqgsgpsinformationwidget.cpp
+  testqgsgpsintegration.cpp
   testqgslabelpropertydialog.cpp
+  testqgsmergeattributesdialog.cpp
 )
 
 if (HAVE_GEOREFERENCER)

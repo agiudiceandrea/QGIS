@@ -18,6 +18,7 @@
 
 #include "qgsserversettings.h"
 #include "qgsapplication.h"
+#include "qgsvariantutils.h"
 
 #include <QSettings>
 #include <QDir>
@@ -162,6 +163,18 @@ void QgsServerSettings::initSettings()
                                         QVariant()
                                       };
   mSettings[ sTrustLayerMetadata.envVar ] = sTrustLayerMetadata;
+
+
+  // force to open layers in read-only mode
+  const Setting sForceReadOnlyLayers = { QgsServerSettingsEnv::QGIS_SERVER_FORCE_READONLY_LAYERS,
+                                         QgsServerSettingsEnv::DEFAULT_VALUE,
+                                         QStringLiteral( "Force to open layers in read-only mode" ),
+                                         QString(),
+                                         QVariant::Bool,
+                                         QVariant( false ),
+                                         QVariant()
+                                       };
+  mSettings[ sForceReadOnlyLayers.envVar ] = sForceReadOnlyLayers;
 
   // don't load layouts
   const Setting sDontLoadLayouts = { QgsServerSettingsEnv::QGIS_SERVER_DISABLE_GETPRINT,
@@ -356,6 +369,35 @@ void QgsServerSettings::initSettings()
                                         };
   mSettings[ sProjectCacheStrategy.envVar ] = sProjectCacheStrategy;
 
+  const Setting sAllowedExtraSqlTokens = { QgsServerSettingsEnv::QGIS_SERVER_ALLOWED_EXTRA_SQL_TOKENS,
+                                           QgsServerSettingsEnv::DEFAULT_VALUE,
+                                           QStringLiteral( "List of comma separated SQL tokens to be added to the list of allowed tokens that the services accepts when filtering features" ),
+                                           QStringLiteral( "/qgis/server_allowed_extra_sql_tokens" ),
+                                           QVariant::String,
+                                           QVariant( "" ),
+                                           QVariant()
+                                         };
+  mSettings[ sAllowedExtraSqlTokens.envVar ] = sAllowedExtraSqlTokens;
+
+  const Setting sApplicationName = { QgsServerSettingsEnv::QGIS_SERVER_APPLICATION_NAME,
+                                     QgsServerSettingsEnv::DEFAULT_VALUE,
+                                     QStringLiteral( "The QGIS Server application name" ),
+                                     QStringLiteral( "/qgis/application_full_name" ),
+                                     QVariant::String,
+                                     QVariant( QgsApplication::applicationFullName() ),
+                                     QVariant()
+                                   };
+  mSettings[ sApplicationName.envVar ] = sApplicationName;
+
+  const Setting sCapabilitiesCacheSize = { QgsServerSettingsEnv::QGIS_SERVER_CAPABILITIES_CACHE_SIZE,
+                                           QgsServerSettingsEnv::DEFAULT_VALUE,
+                                           QStringLiteral( "The QGIS Server capabilities cache size" ),
+                                           QStringLiteral( "/qgis/capabilities_cache_size" ),
+                                           QVariant::Int,
+                                           QVariant( 40 ),
+                                           QVariant()
+                                         };
+  mSettings[ sCapabilitiesCacheSize.envVar ] = sCapabilitiesCacheSize;
 }
 
 void QgsServerSettings::load()
@@ -445,7 +487,7 @@ void QgsServerSettings::prioritize( const QMap<QgsServerSettingsEnv::EnvVar, QSt
       varValue.setValue( env.value( e ) );
     }
 
-    if ( ! varValue.isNull() && varValue.canConvert( s.type ) )
+    if ( !QgsVariantUtils::isNull( varValue ) && varValue.canConvert( s.type ) )
     {
       s.val = varValue;
       s.src = QgsServerSettingsEnv::ENVIRONMENT_VARIABLE;
@@ -601,12 +643,17 @@ bool QgsServerSettings::trustLayerMetadata() const
   return value( QgsServerSettingsEnv::QGIS_SERVER_TRUST_LAYER_METADATA ).toBool();
 }
 
+bool QgsServerSettings::forceReadOnlyLayers() const
+{
+  return value( QgsServerSettingsEnv::QGIS_SERVER_FORCE_READONLY_LAYERS ).toBool();
+}
+
 bool QgsServerSettings::getPrintDisabled() const
 {
   return value( QgsServerSettingsEnv::QGIS_SERVER_DISABLE_GETPRINT ).toBool();
 }
 
-bool QgsServerSettings::logProfile()
+bool QgsServerSettings::logProfile() const
 {
   return value( QgsServerSettingsEnv::QGIS_SERVER_LOG_PROFILE, false ).toBool();
 }
@@ -657,3 +704,28 @@ QString QgsServerSettings::projectCacheStrategy() const
   return result;
 }
 
+QStringList QgsServerSettings::allowedExtraSqlTokens() const
+{
+  const QString strVal { value( QgsServerSettingsEnv::QGIS_SERVER_ALLOWED_EXTRA_SQL_TOKENS ).toString().trimmed() };
+  if ( strVal.isEmpty() )
+  {
+    return QStringList();
+  }
+  return strVal.split( ',' );
+}
+
+QString QgsServerSettings::applicationName() const
+{
+  return value( QgsServerSettingsEnv::QGIS_SERVER_APPLICATION_NAME ).toString().trimmed();
+}
+
+int QgsServerSettings::capabilitiesCacheSize() const
+{
+  bool ok;
+  int size = value( QgsServerSettingsEnv::QGIS_SERVER_CAPABILITIES_CACHE_SIZE ).toInt( &ok );
+  if ( ok && size >= 1 )
+    return size;
+
+  QgsMessageLog::logMessage( QStringLiteral( "Invalid capabilities cache size, expecting integer - defaulting to 40" ), "Server", Qgis::MessageLevel::Warning );
+  return 40;
+}

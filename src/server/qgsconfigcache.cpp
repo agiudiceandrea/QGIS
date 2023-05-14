@@ -28,14 +28,14 @@ QgsConfigCache *QgsConfigCache::sInstance = nullptr;
 QgsAbstractCacheStrategy *getStrategyFromSettings( QgsServerSettings *settings )
 {
   QgsAbstractCacheStrategy *strategy;
-  if ( settings && settings->projectCacheStrategy() == QStringLiteral( "periodic" ) )
+  if ( settings && settings->projectCacheStrategy() == QLatin1String( "periodic" ) )
   {
     strategy = new QgsPeriodicCacheStrategy( settings->projectCacheCheckInterval() );
     QgsMessageLog::logMessage(
       QStringLiteral( "Initializing 'periodic' cache strategy" ),
       QStringLiteral( "Server" ), Qgis::MessageLevel::Info );
   }
-  else if ( settings && settings->projectCacheStrategy() == QStringLiteral( "off" ) )
+  else if ( settings && settings->projectCacheStrategy() == QLatin1String( "off" ) )
   {
     strategy = new QgsNullCacheStrategy();
     QgsMessageLog::logMessage(
@@ -98,7 +98,8 @@ const QgsProject *QgsConfigCache::project( const QString &path, const QgsServerS
 {
   if ( !mProjectCache[ path ] )
   {
-    std::unique_ptr<QgsProject> prj( new QgsProject() );
+    // disable the project style database -- this incurs unwanted cost and is not required
+    std::unique_ptr<QgsProject> prj( new QgsProject( nullptr, Qgis::ProjectCapabilities() ) );
 
     // This is required by virtual layers that call QgsProject::instance() inside the constructor :(
     QgsProject::setInstance( prj.get() );
@@ -107,18 +108,24 @@ const QgsProject *QgsConfigCache::project( const QString &path, const QgsServerS
     prj->setBadLayerHandler( badLayerHandler );
 
     // Always skip original styles storage
-    QgsProject::ReadFlags readFlags = QgsProject::ReadFlag() | QgsProject::ReadFlag::FlagDontStoreOriginalStyles ;
+    Qgis::ProjectReadFlags readFlags = Qgis::ProjectReadFlag::DontStoreOriginalStyles
+                                       | Qgis::ProjectReadFlag::DontLoad3DViews;
     if ( settings )
     {
       // Activate trust layer metadata flag
       if ( settings->trustLayerMetadata() )
       {
-        readFlags |= QgsProject::ReadFlag::FlagTrustLayerMetadata;
+        readFlags |= Qgis::ProjectReadFlag::TrustLayerMetadata;
+      }
+      // Activate force layer read only flag
+      if ( settings->forceReadOnlyLayers() )
+      {
+        readFlags |= Qgis::ProjectReadFlag::ForceReadOnlyLayers;
       }
       // Activate don't load layouts flag
       if ( settings->getPrintDisabled() )
       {
-        readFlags |= QgsProject::ReadFlag::FlagDontLoadLayouts;
+        readFlags |= Qgis::ProjectReadFlag::DontLoadLayouts;
       }
     }
 
@@ -173,6 +180,19 @@ const QgsProject *QgsConfigCache::project( const QString &path, const QgsServerS
 
   auto entry = mProjectCache[ path ];
   return entry ? entry->second.get() : nullptr;
+}
+
+QList<QgsProject *> QgsConfigCache::projects() const
+{
+  QList<QgsProject *> projects;
+
+  const auto constKeys {  mProjectCache.keys() };
+  for ( const auto &path : std::as_const( constKeys ) )
+  {
+    projects << mProjectCache[path]->second.get();
+  }
+
+  return projects;
 }
 
 QDomDocument *QgsConfigCache::xmlDocument( const QString &filePath )
@@ -332,4 +352,3 @@ void QgsNullCacheStrategy::entryInserted( const QString &path )
 {
   Q_UNUSED( path )
 }
-

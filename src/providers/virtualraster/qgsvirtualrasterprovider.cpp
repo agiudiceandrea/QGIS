@@ -16,6 +16,7 @@
 #include "qgsrastermatrix.h"
 #include "qgsrasterlayer.h"
 #include "qgsrasterprojector.h"
+#include "qgsapplication.h"
 
 #define PROVIDER_KEY QStringLiteral( "virtualraster" )
 #define PROVIDER_DESCRIPTION QStringLiteral( "Virtual Raster data provider" )
@@ -120,6 +121,7 @@ QgsVirtualRasterProvider::QgsVirtualRasterProvider( const QgsVirtualRasterProvid
   , mYBlockSize( other.mYBlockSize )
   , mFormulaString( other.mFormulaString )
   , mLastError( other.mLastError )
+  , mRasterLayers{} // see note in other constructor above
 
 {
   for ( const auto &it : other.mRasterLayers )
@@ -260,10 +262,43 @@ QgsVirtualRasterProviderMetadata::QgsVirtualRasterProviderMetadata()
 
 }
 
+QIcon QgsVirtualRasterProviderMetadata::icon() const
+{
+  return QgsApplication::getThemeIcon( QStringLiteral( "mIconRaster.svg" ) );
+}
+
 QgsVirtualRasterProvider *QgsVirtualRasterProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
 {
   Q_UNUSED( flags );
   return new QgsVirtualRasterProvider( uri, options );
+}
+
+QString QgsVirtualRasterProviderMetadata::absoluteToRelativeUri( const QString &uri, const QgsReadWriteContext &context ) const
+{
+  QgsRasterDataProvider::VirtualRasterParameters decodedVirtualParams = QgsRasterDataProvider::decodeVirtualRasterProviderUri( uri );
+
+  for ( auto &it : decodedVirtualParams.rInputLayers )
+  {
+    it.uri = context.pathResolver().writePath( it.uri );
+  }
+  return QgsRasterDataProvider::encodeVirtualRasterProviderUri( decodedVirtualParams ) ;
+}
+
+QString QgsVirtualRasterProviderMetadata::relativeToAbsoluteUri( const QString &uri, const QgsReadWriteContext &context ) const
+{
+  QgsRasterDataProvider::VirtualRasterParameters decodedVirtualParams = QgsRasterDataProvider::decodeVirtualRasterProviderUri( uri );
+
+  for ( auto &it : decodedVirtualParams.rInputLayers )
+  {
+    it.uri = context.pathResolver().readPath( it.uri );
+  }
+  return QgsRasterDataProvider::encodeVirtualRasterProviderUri( decodedVirtualParams ) ;
+}
+
+
+QList<Qgis::LayerType> QgsVirtualRasterProviderMetadata::supportedLayerTypes() const
+{
+  return { Qgis::LayerType::Raster };
 }
 
 QgsVirtualRasterProvider *QgsVirtualRasterProvider::clone() const
