@@ -132,13 +132,13 @@ void TestQgsMapToPixel::getters()
 void TestQgsMapToPixel::fromScale()
 {
   QgsMapToPixel m2p = QgsMapToPixel::fromScale( 1000, Qgis::DistanceUnit::Meters, 96.0 );
-  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 0.264583, 0.000001 );
+  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 25.4 / 96, 0.000001 );
   m2p = QgsMapToPixel::fromScale( 10000, Qgis::DistanceUnit::Meters, 96.0 );
-  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 2.645833, 0.000001 );
+  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 10 * 25.4 / 96, 0.000001 );
   m2p = QgsMapToPixel::fromScale( 1000, Qgis::DistanceUnit::Meters, 72.0 );
-  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 0.352778, 0.000001 );
+  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 25.4 / 72, 0.000001 );
   m2p = QgsMapToPixel::fromScale( 1000, Qgis::DistanceUnit::Kilometers, 96.0 );
-  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 0.000265, 0.000001 );
+  QGSCOMPARENEAR( m2p.mapUnitsPerPixel(), 25.4 / 96 / 1000, 0.000001 );
 }
 
 void TestQgsMapToPixel::equality()

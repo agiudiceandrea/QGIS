@@ -95,22 +95,22 @@ void QgsLegendSettings::setLineSpacing( double s ) SIP_DEPRECATED
 
   QgsTextFormat f = rstyle( QgsLegendStyle::Title ).textFormat();
   // assume font sizes in points, since that was what we always had from before this method was deprecated
-  f.setLineHeight( f.size() * 0.352778 + s );
+  f.setLineHeight( f.size() * 25.4 / 72 + s );
   f.setLineHeightUnit( Qgis::RenderUnit::Millimeters );
   rstyle( QgsLegendStyle::Title ).setTextFormat( f );
 
   f = rstyle( QgsLegendStyle::Group ).textFormat();
-  f.setLineHeight( f.size() * 0.352778 + s );
+  f.setLineHeight( f.size() * 25.4 / 72 + s );
   f.setLineHeightUnit( Qgis::RenderUnit::Millimeters );
   rstyle( QgsLegendStyle::Group ).setTextFormat( f );
 
   f = rstyle( QgsLegendStyle::Subgroup ).textFormat();
-  f.setLineHeight( f.size() * 0.352778 + s );
+  f.setLineHeight( f.size() * 25.4 / 72 + s );
   f.setLineHeightUnit( Qgis::RenderUnit::Millimeters );
   rstyle( QgsLegendStyle::Subgroup ).setTextFormat( f );
 
   f = rstyle( QgsLegendStyle::SymbolLabel ).textFormat();
-  f.setLineHeight( f.size() * 0.352778 + s );
+  f.setLineHeight( f.size() * 25.4 / 72 + s );
   f.setLineHeightUnit( Qgis::RenderUnit::Millimeters );
   rstyle( QgsLegendStyle::SymbolLabel ).setTextFormat( f );
 }
