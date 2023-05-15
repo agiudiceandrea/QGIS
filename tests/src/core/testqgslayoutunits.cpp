@@ -706,8 +706,8 @@ void TestQgsLayoutUnits::conversionToFeet()
   QCOMPARE( convertedFromPoints.units(), Qgis::LayoutUnit::Feet );
   QCOMPARE( convertedFromPicas.units(), Qgis::LayoutUnit::Feet );
 
-  QGSCOMPARENEAR( convertedFromMillimeters.length(), 1.0 / 0.3048 / 1000, 0.000001 );
-  QGSCOMPARENEAR( convertedFromCentimeters.length(), 1.0 / 0.3048 / 100, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMillimeters.length(), 1.0 / 304.8, 0.000001 );
+  QGSCOMPARENEAR( convertedFromCentimeters.length(), 1.0 / 30.48, 0.000001 );
   QGSCOMPARENEAR( convertedFromMeters.length(), 1.0 / 0.3048, 0.000001 );
   QGSCOMPARENEAR( convertedFromInches.length(), 1.0 / 12, 0.000001 );
   QCOMPARE( convertedFromFeet.length(), 1.0 );
