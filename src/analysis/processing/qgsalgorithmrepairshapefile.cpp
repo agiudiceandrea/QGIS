@@ -79,12 +79,13 @@ QVariantMap QgsRepairShapefileAlgorithm::processAlgorithm( const QVariantMap &pa
     throw QgsProcessingException( QObject::tr( "Could not load source layer for %1." ).arg( QLatin1String( "INPUT" ) ) );
 
   CPLSetConfigOption( "SHAPE_RESTORE_SHX", "YES" );
+  CPLErrorReset();
 
   std::unique_ptr< QgsVectorLayer > layer = std::make_unique< QgsVectorLayer >( path );
   if ( !layer->isValid() )
   {
     CPLSetConfigOption( "SHAPE_RESTORE_SHX", nullptr );
-    throw QgsProcessingException( QObject::tr( "Could not repair %1." ).arg( path ) );
+    throw QgsProcessingException( QObject::tr( "Repair of %1 failed (OGR error: %2)" ).arg( path,  QString::fromUtf8( CPLGetLastErrorMsg() ) ) );
   }
 
   CPLSetConfigOption( "SHAPE_RESTORE_SHX", nullptr );
