@@ -792,7 +792,7 @@ QFont QgsTextFormat::toQFont() const
       break;
 
     case Qgis::RenderUnit::Millimeters:
-      f.setPointSizeF( size() * 2.83464567 );
+      f.setPointSizeF( size() * 72 / 25.4 );
       break;
 
     case Qgis::RenderUnit::Inches:

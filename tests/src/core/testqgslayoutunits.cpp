@@ -567,8 +567,8 @@ void TestQgsLayoutUnits::conversionToMM()
   QCOMPARE( convertedFromMeters.length(), 1000.0 );
   QCOMPARE( convertedFromInches.length(), 25.4 );
   QCOMPARE( convertedFromFeet.length(), 304.8 );
-  QCOMPARE( convertedFromPoints.length(), 0.352777778 );
-  QCOMPARE( convertedFromPicas.length(), 4.23333333 );
+  QCOMPARE( convertedFromPoints.length(), 25.4 / 72 );
+  QCOMPARE( convertedFromPicas.length(), 25.4 / 6 );
 }
 
 void TestQgsLayoutUnits::conversionToCM()
@@ -603,8 +603,8 @@ void TestQgsLayoutUnits::conversionToCM()
   QCOMPARE( convertedFromMeters.length(), 100.0 );
   QCOMPARE( convertedFromInches.length(), 2.54 );
   QCOMPARE( convertedFromFeet.length(), 30.48 );
-  QCOMPARE( convertedFromPoints.length(), 0.0352777778 );
-  QCOMPARE( convertedFromPicas.length(), 0.423333333 );
+  QCOMPARE( convertedFromPoints.length(), 2.54 / 72 );
+  QCOMPARE( convertedFromPicas.length(), 2.54 / 6 );
 }
 
 void TestQgsLayoutUnits::conversionToM()
@@ -639,8 +639,8 @@ void TestQgsLayoutUnits::conversionToM()
   QCOMPARE( convertedFromMeters.length(), 1.0 );
   QCOMPARE( convertedFromInches.length(), 0.0254 );
   QCOMPARE( convertedFromFeet.length(), 0.3048 );
-  QCOMPARE( convertedFromPoints.length(), 0.000352777778 );
-  QCOMPARE( convertedFromPicas.length(), 0.00423333333 );
+  QCOMPARE( convertedFromPoints.length(), 25.4 / 72 / 1000 );
+  QCOMPARE( convertedFromPicas.length(), 25.4 / 6 / 1000 );
 }
 
 void TestQgsLayoutUnits::conversionToInches()
@@ -670,13 +670,13 @@ void TestQgsLayoutUnits::conversionToInches()
   QCOMPARE( convertedFromPoints.units(), Qgis::LayoutUnit::Inches );
   QCOMPARE( convertedFromPicas.units(), Qgis::LayoutUnit::Inches );
 
-  QGSCOMPARENEAR( convertedFromMillimeters.length(), 0.0393701, 0.000001 );
-  QGSCOMPARENEAR( convertedFromCentimeters.length(), 0.3937008, 0.000001 );
-  QGSCOMPARENEAR( convertedFromMeters.length(), 39.3700787, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMillimeters.length(), 1 / 25.4, 0.000001 );
+  QGSCOMPARENEAR( convertedFromCentimeters.length(), 10 / 25.4, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMeters.length(), 1000 / 25.4, 0.000001 );
   QCOMPARE( convertedFromInches.length(), 1.0 );
   QCOMPARE( convertedFromFeet.length(), 12.0 );
-  QGSCOMPARENEAR( convertedFromPoints.length(), 0.0138888889, 0.000001 );
-  QGSCOMPARENEAR( convertedFromPicas.length(), 0.166666667, 0.000001 );
+  QGSCOMPARENEAR( convertedFromPoints.length(), 1.0 / 72, 0.000001 );
+  QGSCOMPARENEAR( convertedFromPicas.length(), 1.0 / 6, 0.000001 );
 }
 
 void TestQgsLayoutUnits::conversionToFeet()
@@ -706,13 +706,13 @@ void TestQgsLayoutUnits::conversionToFeet()
   QCOMPARE( convertedFromPoints.units(), Qgis::LayoutUnit::Feet );
   QCOMPARE( convertedFromPicas.units(), Qgis::LayoutUnit::Feet );
 
-  QGSCOMPARENEAR( convertedFromMillimeters.length(), 0.0032808399, 0.000001 );
-  QGSCOMPARENEAR( convertedFromCentimeters.length(), 0.032808399, 0.000001 );
-  QGSCOMPARENEAR( convertedFromMeters.length(), 3.2808399, 0.000001 );
-  QGSCOMPARENEAR( convertedFromInches.length(), 0.0833333, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMillimeters.length(), 1.0 / 304.8, 0.000001 );
+  QGSCOMPARENEAR( convertedFromCentimeters.length(), 1.0 / 30.48, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMeters.length(), 1.0 / 0.3048, 0.000001 );
+  QGSCOMPARENEAR( convertedFromInches.length(), 1.0 / 12, 0.000001 );
   QCOMPARE( convertedFromFeet.length(), 1.0 );
-  QGSCOMPARENEAR( convertedFromPoints.length(), 0.00115740741, 0.000001 );
-  QGSCOMPARENEAR( convertedFromPicas.length(), 0.0138888889, 0.000001 );
+  QGSCOMPARENEAR( convertedFromPoints.length(), 1.0 / 72 / 12, 0.000001 );
+  QGSCOMPARENEAR( convertedFromPicas.length(), 1.0 / 72, 0.000001 );
 }
 
 void TestQgsLayoutUnits::conversionToPoints()
@@ -742,9 +742,9 @@ void TestQgsLayoutUnits::conversionToPoints()
   QCOMPARE( convertedFromPoints.units(), Qgis::LayoutUnit::Points );
   QCOMPARE( convertedFromPicas.units(), Qgis::LayoutUnit::Points );
 
-  QGSCOMPARENEAR( convertedFromMillimeters.length(), 2.83464567, 0.000001 );
-  QGSCOMPARENEAR( convertedFromCentimeters.length(), 28.3464567, 0.000001 );
-  QGSCOMPARENEAR( convertedFromMeters.length(), 2834.64567, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMillimeters.length(), 72 / 25.4, 0.000001 );
+  QGSCOMPARENEAR( convertedFromCentimeters.length(), 10 * 72 / 25.4, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMeters.length(), 1000 * 72 / 25.4, 0.000001 );
   QGSCOMPARENEAR( convertedFromInches.length(), 72.0, 0.000001 );
   QGSCOMPARENEAR( convertedFromFeet.length(), 864.0, 0.000001 );
   QCOMPARE( convertedFromPoints.length(), 1.0 );
@@ -778,12 +778,12 @@ void TestQgsLayoutUnits::conversionToPicas()
   QCOMPARE( convertedFromPoints.units(), Qgis::LayoutUnit::Picas );
   QCOMPARE( convertedFromPicas.units(), Qgis::LayoutUnit::Picas );
 
-  QGSCOMPARENEAR( convertedFromMillimeters.length(), 0.236220472, 0.000001 );
-  QGSCOMPARENEAR( convertedFromCentimeters.length(), 2.36220472, 0.000001 );
-  QGSCOMPARENEAR( convertedFromMeters.length(), 236.220472, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMillimeters.length(), 6 / 25.4, 0.000001 );
+  QGSCOMPARENEAR( convertedFromCentimeters.length(), 10 * 6 / 25.4, 0.000001 );
+  QGSCOMPARENEAR( convertedFromMeters.length(), 1000 * 6 / 25.4, 0.000001 );
   QGSCOMPARENEAR( convertedFromInches.length(), 6.0, 0.000001 );
   QGSCOMPARENEAR( convertedFromFeet.length(), 72.0, 0.000001 );
-  QGSCOMPARENEAR( convertedFromPoints.length(), 0.0833333333, 0.000001 );
+  QGSCOMPARENEAR( convertedFromPoints.length(), 1.0 / 12, 0.000001 );
   QCOMPARE( convertedFromPicas.length(), 1.0 );
 }
 
@@ -812,10 +812,10 @@ void TestQgsLayoutUnits::conversionFromPixels()
   converter.setDpi( 96.0 );
   convertedToInches = converter.convert( measurementInPixels, Qgis::LayoutUnit::Inches );
   QCOMPARE( convertedToInches.units(), Qgis::LayoutUnit::Inches );
-  QGSCOMPARENEAR( convertedToInches.length(), 3.125, 0.000001 );
+  QGSCOMPARENEAR( convertedToInches.length(), 300.0 / 96.0, 0.000001 );
   convertedToMM = converter.convert( measurementInPixels, Qgis::LayoutUnit::Millimeters );
   QCOMPARE( convertedToMM.units(), Qgis::LayoutUnit::Millimeters );
-  QGSCOMPARENEAR( convertedToMM.length(), 79.375, 0.000001 );
+  QGSCOMPARENEAR( convertedToMM.length(), 300.0 * 25.4 / 96.0, 0.000001 );
 }
 
 void TestQgsLayoutUnits::conversionToPixels()
@@ -831,7 +831,7 @@ void TestQgsLayoutUnits::conversionToPixels()
   QGSCOMPARENEAR( convertedToPixels.length(), 300.0, 0.000001 );
   convertedToPixels = converter.convert( measurementInMM, Qgis::LayoutUnit::Pixels );
   QCOMPARE( convertedToPixels.units(), Qgis::LayoutUnit::Pixels );
-  QGSCOMPARENEAR( convertedToPixels.length(), 11.811023622, 0.000001 );
+  QGSCOMPARENEAR( convertedToPixels.length(), 300.0 / 25.4, 0.000001 );
 
   //try with 96 dpi
   converter.setDpi( 96.0 );
@@ -840,7 +840,7 @@ void TestQgsLayoutUnits::conversionToPixels()
   QGSCOMPARENEAR( convertedToPixels.length(), 96.0, 0.000001 );
   convertedToPixels = converter.convert( measurementInMM, Qgis::LayoutUnit::Pixels );
   QCOMPARE( convertedToPixels.units(), Qgis::LayoutUnit::Pixels );
-  QGSCOMPARENEAR( convertedToPixels.length(), 3.77952755906, 0.000001 );
+  QGSCOMPARENEAR( convertedToPixels.length(), 96.0 / 25.4, 0.000001 );
 }
 
 void TestQgsLayoutUnits::sizeConversion()
