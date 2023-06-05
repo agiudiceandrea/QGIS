@@ -67,7 +67,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
         firstFeature = false;
       }
 
-      if ( f.hasGeometry() && !f.geometry().isNull() )
+      if ( f.hasGeometry() && !f.geometry().isEmpty() )
       {
         geomQueue.append( f.geometry() );
         if ( maxQueueLength > 0 && geomQueue.length() > maxQueueLength )
@@ -136,7 +136,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
         attributeHash.insert( indexAttributes, f.attributes() );
       }
 
-      if ( f.hasGeometry() && !f.geometry().isNull() )
+      if ( f.hasGeometry() && !f.geometry().isEmpty() )
       {
         geometryHash[ indexAttributes ].append( f.geometry() );
       }
