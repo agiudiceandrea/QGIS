@@ -1888,7 +1888,7 @@ void TestQgsProcessingAlgsPt2::splitWithLines()
 
 void TestQgsProcessingAlgsPt2::dissolveEmptyGeometries()
 {
-  QgsVectorLayer *layer = new QgsVectorLayer( QStringLiteral( "Point?crs=epsg:4326&field=col1:string&field=col2:string" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) );
+  QgsVectorLayer *layer = new QgsVectorLayer( QStringLiteral( "MultiPolygon?crs=epsg:4326&field=col1:string&field=col2:string" ), QStringLiteral( "vl" ), QgsProcessing::TEMPORARY_OUTPUT );
   QVERIFY( layer->isValid() );
 
   QgsFeature f;
