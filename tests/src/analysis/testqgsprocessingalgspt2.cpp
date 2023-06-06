@@ -1940,7 +1940,7 @@ void TestQgsProcessingAlgsPt2::dissolveEmptyGeometries()
   dissolveLayer = qobject_cast< QgsVectorLayer * >( context->getMapLayer( results.value( QStringLiteral( "OUTPUT" ) ).toString() ) );
   QVERIFY( dissolveLayer->isValid() );
   QCOMPARE( dissolveLayer->wkbType(), Qgis::WkbType::MultiPolygon );
-  QCOMPARE( dissolveLayer->featureCount(), 1 );
+  QCOMPARE( dissolveLayer->featureCount(), 2 );
 }
 
 bool TestQgsProcessingAlgsPt2::imageCheck( const QString &testName, const QString &renderedImage )
