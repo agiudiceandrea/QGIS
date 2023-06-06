@@ -62,8 +62,6 @@ QString temp3( GRASS_VERSION_MINOR );
 QString temp4( GRASS_VERSION_RELEASE );
 #endif
 
-bool QgsGrassNewMapset::sRunning = false;
-
 QgsGrassNewMapset::QgsGrassNewMapset( QgisInterface *iface,
                                       QgsGrassPlugin *plugin, QWidget *parent,
                                       Qt::WindowFlags f )
@@ -103,11 +101,6 @@ QgsGrassNewMapset::QgsGrassNewMapset( QgisInterface *iface,
 #ifdef Q_OS_MAC
   setWizardStyle( QWizard::ClassicStyle );
 #endif
-
-  sRunning = true;
-  mProjectionSelector = nullptr;
-  mPreviousPage = -1;
-  mRegionModified = false;
 
   QString mapPath = QStringLiteral( ":/images/grass/world.png" );
   QgsDebugMsgLevel( QString( "mapPath = %1" ).arg( mapPath ), 2 );
@@ -151,10 +144,7 @@ QgsGrassNewMapset::QgsGrassNewMapset( QgisInterface *iface,
   connect( this, &QWizard::currentIdChanged, this, &QgsGrassNewMapset::pageSelected );
 }
 
-QgsGrassNewMapset::~QgsGrassNewMapset()
-{
-  sRunning = false;
-}
+QgsGrassNewMapset::~QgsGrassNewMapset() = default;
 
 void QgsGrassNewMapset::databaseChanged()
 {
@@ -536,8 +526,8 @@ void QgsGrassNewMapset::setGrassRegionDefaults()
 {
   QgsDebugMsgLevel( QString( "mCellHead.proj = %1" ).arg( mCellHead.proj ), 3 );
 
-  QgsCoordinateReferenceSystem srs = mIface->mapCanvas()->mapSettings().destinationCrs();
-  QgsDebugMsgLevel( "srs = " + srs.toWkt(), 3 );
+  QgsCoordinateReferenceSystem canvasCrs = mIface->mapCanvas()->mapSettings().destinationCrs();
+  QgsDebugMsgLevel( "srs = " + canvasCrs.toWkt(), 3 );
 
   QgsRectangle ext = mIface->mapCanvas()->extent();
   bool extSet = false;
@@ -546,27 +536,50 @@ void QgsGrassNewMapset::setGrassRegionDefaults()
     extSet = true;
   }
 
+  const QgsCoordinateReferenceSystem selectedCrs = mProjectionSelector->crs();
+
   QgsRectangle defaultExtent;
   if ( extSet &&
        ( mNoProjRadioButton->isChecked() ||
          ( mProjRadioButton->isChecked()
-           && srs == mProjectionSelector->crs() )
+           && canvasCrs == selectedCrs )
        )
      )
   {
     defaultExtent = ext;
   }
-  else if ( mCellHead.proj == PROJECTION_XY )
+  else if ( !selectedCrs.bounds().isEmpty() )
   {
-    defaultExtent = QgsRectangle( 0, 0, 1000, 1000 );
+    const QgsRectangle boundsWgs84 = selectedCrs.bounds();
+    QgsCoordinateTransform fromWgs84Transform( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ),
+        selectedCrs,
+        QgsProject::instance()->transformContext()
+                                             );
+    fromWgs84Transform.setBallparkTransformsAreAppropriate( true );
+
+    try
+    {
+      defaultExtent = fromWgs84Transform.transformBoundingBox( boundsWgs84 );
+    }
+    catch ( QgsCsException & )
+    {
+
+    }
   }
-  else if ( mCellHead.proj == PROJECTION_LL )
+  if ( defaultExtent.isEmpty() )
   {
-    defaultExtent = QgsRectangle( -180, -90, 180, 90 );
-  }
-  else
-  {
-    defaultExtent = QgsRectangle( -100000, -100000, 100000, 100000 );
+    if ( mCellHead.proj == PROJECTION_XY )
+    {
+      defaultExtent = QgsRectangle( 0, 0, 1000, 1000 );
+    }
+    else if ( mCellHead.proj == PROJECTION_LL )
+    {
+      defaultExtent = QgsRectangle( -180, -90, 180, 90 );
+    }
+    else
+    {
+      defaultExtent = QgsRectangle( -100000, -100000, 100000, 100000 );
+    }
   }
   mExtentWidget->setOutputExtentFromUser( defaultExtent, mProjectionSelector->crs() );
 
@@ -938,6 +951,8 @@ void QgsGrassNewMapset::drawRegion()
     }
 
     QgsCoordinateTransform trans( source, dest, QgsProject::instance() );
+    trans.setAllowFallbackTransforms( true );
+    trans.setBallparkTransformsAreAppropriate( true );
 
     for ( int i = points.size() - 1; i >= 0; i-- )
     {
@@ -1301,24 +1316,4 @@ void QgsGrassNewMapset::pageSelected( int index )
       break;
   }
   mPreviousPage = index;
-}
-
-bool QgsGrassNewMapset::isRunning( void )
-{
-  return sRunning;
-}
-
-void QgsGrassNewMapset::close( void )
-{
-
-  hide();
-  sRunning = false;
-  deleteLater();
-}
-
-void QgsGrassNewMapset::closeEvent( QCloseEvent *e )
-{
-
-  e->accept();
-  close();
 }

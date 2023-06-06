@@ -63,12 +63,6 @@ class QgsGrassNewMapset : public QWizard, private Ui::QgsGrassNewMapsetBase
     //! Next page
     int nextId() const override;
 
-    //! Is running
-    static bool isRunning();
-
-    //! Close
-    void close();
-
   public slots:
 
     //! Database changed
@@ -171,9 +165,6 @@ class QgsGrassNewMapset : public QWizard, private Ui::QgsGrassNewMapsetBase
     //! New page was selected
     void pageSelected( int index );
 
-    //! Close event
-    void closeEvent( QCloseEvent *e ) override;
-
     //! Key event
     void keyPressEvent( QKeyEvent *e ) override;
 
@@ -202,14 +193,14 @@ class QgsGrassNewMapset : public QWizard, private Ui::QgsGrassNewMapsetBase
 
     //! GRASS projection
     struct Cell_head mCellHead;
-    struct Key_Value *mProjInfo;
-    struct Key_Value *mProjUnits;
+    struct Key_Value *mProjInfo = nullptr;
+    struct Key_Value *mProjUnits = nullptr;
 
     //! Previous page
-    int mPreviousPage;
+    int mPreviousPage = -1;
 
     //! Was the region page modified by user
-    bool mRegionModified;
+    bool mRegionModified = false;
 
     //! Check region setting
     void checkRegion();
@@ -221,7 +212,7 @@ class QgsGrassNewMapset : public QWizard, private Ui::QgsGrassNewMapsetBase
     void loadRegions();
 
     //! Locations were initialized
-    bool mRegionsInited;
+    bool mRegionsInited = false;
 
     //! Last projection used for region
     QgsCoordinateReferenceSystem mCrs;
