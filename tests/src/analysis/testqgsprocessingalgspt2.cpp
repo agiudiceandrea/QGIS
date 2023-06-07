@@ -1888,7 +1888,7 @@ void TestQgsProcessingAlgsPt2::splitWithLines()
 
 void TestQgsProcessingAlgsPt2::dissolveEmptyGeometries()
 {
-  QgsVectorLayer *layer = new QgsVectorLayer( QStringLiteral( "MultiPolygon?crs=epsg:4326&field=col1:string&field=col2:string" ), QStringLiteral( "vl" ), QgsProcessing::TEMPORARY_OUTPUT );
+  QgsVectorLayer *layer = new QgsVectorLayer( QStringLiteral( "MultiPolygon?crs=epsg:4326&field=col1:string&field=col2:string" ), QStringLiteral( "vl" ), StringLiteral( "memory" ) );
   QVERIFY( layer->isValid() );
 
   QgsFeature f;
@@ -1905,7 +1905,7 @@ void TestQgsProcessingAlgsPt2::dissolveEmptyGeometries()
   QVariantMap parameters;
   parameters.insert( QStringLiteral( "INPUT" ), QVariant::fromValue( layer ) );
   parameters.insert( QStringLiteral( "SEPARATE_DISJOINT" ), false );
-  parameters.insert( QStringLiteral( "OUTPUT" ), QStringLiteral( "memory:" ) );
+  parameters.insert( QStringLiteral( "OUTPUT" ), QgsProcessing::TEMPORARY_OUTPUT );
 
   bool ok = false;
   std::unique_ptr< QgsProcessingContext > context = std::make_unique< QgsProcessingContext >();
