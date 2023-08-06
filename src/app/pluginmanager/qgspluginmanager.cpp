@@ -1036,11 +1036,17 @@ void QgsPluginManager::showPluginDetails( QStandardItem *item )
     }
 
     QString dateUpdatedStr;
+    QString dateTimeFormat = QLocale().dateTimeFormat( QLocale::FormatType::ShortFormat );
+    if ( !dateTimeFormat.contains( "yyyy" ) )
+    {
+      // enforce year with 4 digits
+      dateTimeFormat.replace( "yy", "yyyy" );
+    }
     if ( ! metadata->value( QStringLiteral( "update_date_stable" ) ).isEmpty() )
     {
       const QDateTime dateUpdated = QDateTime::fromString( metadata->value( QStringLiteral( "update_date_stable" ) ).trimmed(), Qt::ISODate );
       if ( dateUpdated.isValid() )
-        dateUpdatedStr += tr( "updated at %1" ).arg( QLocale().toString( dateUpdated, QLocale::FormatType::ShortFormat ) );
+        dateUpdatedStr += tr( "updated at %1" ).arg( QLocale().toString( dateUpdated, dateTimeFormat ) );
     }
 
     html += QStringLiteral( "<tr><td class='key'>%1 </td><td title='%2'><a href='%2'>%3</a> %4</td></tr>"
@@ -1064,7 +1070,7 @@ void QgsPluginManager::showPluginDetails( QStandardItem *item )
     {
       const QDateTime dateUpdated = QDateTime::fromString( metadata->value( QStringLiteral( "update_date_experimental" ) ).trimmed(), Qt::ISODate );
       if ( dateUpdated.isValid() )
-        dateUpdatedStr += tr( "updated at %1" ).arg( QLocale().toString( dateUpdated, QLocale::FormatType::ShortFormat ) );
+        dateUpdatedStr += tr( "updated at %1" ).arg( QLocale().toString( dateUpdated, dateTimeFormat ) );
     }
 
     html += QStringLiteral( "<tr><td class='key'>%1 </td><td title='%2'><a href='%2'>%3</a> %4</td></tr>"
