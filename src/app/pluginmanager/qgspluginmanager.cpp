@@ -1025,6 +1025,13 @@ void QgsPluginManager::showPluginDetails( QStandardItem *item )
                                  ver );
   }
 
+  // use a localized date/time short format string
+  QString dateTimeFormat = QLocale().dateTimeFormat( QLocale::FormatType::ShortFormat );
+  if ( !dateTimeFormat.contains( "yyyy" ) )
+  {
+    // enforce year with 4 digits
+    dateTimeFormat.replace( "yy", "yyyy" );
+  }
   // if we allow experimental, we show both stable and experimental versions
   if ( ! metadata->value( QStringLiteral( "version_available_stable" ) ).isEmpty() )
   {
@@ -1036,12 +1043,6 @@ void QgsPluginManager::showPluginDetails( QStandardItem *item )
     }
 
     QString dateUpdatedStr;
-    QString dateTimeFormat = QLocale().dateTimeFormat( QLocale::FormatType::ShortFormat );
-    if ( !dateTimeFormat.contains( "yyyy" ) )
-    {
-      // enforce year with 4 digits
-      dateTimeFormat.replace( "yy", "yyyy" );
-    }
     if ( ! metadata->value( QStringLiteral( "update_date_stable" ) ).isEmpty() )
     {
       const QDateTime dateUpdated = QDateTime::fromString( metadata->value( QStringLiteral( "update_date_stable" ) ).trimmed(), Qt::ISODate );
