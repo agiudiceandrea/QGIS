@@ -20,7 +20,6 @@
 #include "qgspointcloudsourceselect.h"
 #include "qgsproviderregistry.h"
 #include "qgsprovidermetadata.h"
-#include "qgshelp.h"
 
 ///@cond PRIVATE
 

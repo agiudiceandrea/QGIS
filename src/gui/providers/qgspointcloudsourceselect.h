@@ -24,6 +24,7 @@
 #include "ui_qgspointcloudsourceselectbase.h"
 #include "qgsabstractdatasourcewidget.h"
 #include "qgis_gui.h"
+#include "qgshelp.h"
 
 
 /**
