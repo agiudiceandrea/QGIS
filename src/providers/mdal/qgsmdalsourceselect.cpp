@@ -55,10 +55,9 @@ void QgsMdalSourceSelect::addButtonClicked()
     Q_NOWARN_DEPRECATED_POP
     emit addLayer( Qgis::LayerType::Mesh, path, QFileInfo( path ).completeBaseName(), QStringLiteral( "mdal" ) );
   }
+}
 
-  void QgsMdalSourceSelect::showHelp()
-  {
-    QgsHelp::openHelp( QStringLiteral( "managing_data_source/opening_data.html#loading-a-mesh-layer" ) );
-  }
-
+void QgsMdalSourceSelect::showHelp()
+{
+  QgsHelp::openHelp( QStringLiteral( "managing_data_source/opening_data.html#loading-a-mesh-layer" ) );
 }
