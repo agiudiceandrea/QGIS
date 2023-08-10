@@ -151,7 +151,7 @@ QgsLayerMetadataSearchWidget::QgsLayerMetadataSearchWidget( QWidget *parent, Qt:
     updateExtentFilter( mExtentFilterComboBox->currentIndex() );
   } );
 
-  connect( buttonBox, &QDialogButtonBox::helpRequested, this, &QgsLayerMetadataSearchWidget::showHelp );
+  connect( mButtonBox, &QDialogButtonBox::helpRequested, this, &QgsLayerMetadataSearchWidget::showHelp );
 
   // Start loading metadata in the model
   mSourceModel->reloadAsync();
