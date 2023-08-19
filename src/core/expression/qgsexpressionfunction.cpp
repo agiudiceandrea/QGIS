@@ -5402,22 +5402,22 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 
   QgsPointXY point1 = geom1.asPoint();
   if ( geom1.isMultipart() )
+  {
+    QgsMultiPointXY multiPoint = geom.asMultiPoint();
+    if ( multiPoint.count() == 1 )
     {
-      QgsMultiPointXY multiPoint = geom.asMultiPoint();
-      if ( multiPoint.count() == 1 )
-      {
-        point = multiPoint[0];
-      }
+      point = multiPoint[0];
     }
+  }
   QgsPointXY point2 = geom2.asPoint();
   if ( geom2.isMultipart() )
+  {
+    QgsMultiPointXY multiPoint = geom2.asMultiPoint();
+    if ( multiPoint.count() == 1 )
     {
-      QgsMultiPointXY multiPoint = geom2.asMultiPoint();
-      if ( multiPoint.count() == 1 )
-      {
-        point2 = multiPoint[0];
-      }
+      point2 = multiPoint[0];
     }
+  }
   if ( point1.isEmpty() || point2.isEmpty() )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires point geometries or multi point geometries with a single part." ) );
@@ -5439,7 +5439,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 
   QgsDistanceArea da;
   da.setSourceCrs( sCrs, tContext );
-  if ( !da.setEllipsoid ( ellipsoid ) )
+  if ( !da.setEllipsoid( ellipsoid ) )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires a valid ellipsoid acronym or ellipsoid auth ID." ) );
     return QVariant();
