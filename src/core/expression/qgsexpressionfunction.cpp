@@ -5406,7 +5406,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
     QgsMultiPointXY multiPoint = geom1.asMultiPoint();
     if ( multiPoint.count() == 1 )
     {
-      point = multiPoint[0];
+      point1 = multiPoint[0];
     }
   }
   QgsPointXY point2 = geom2.asPoint();
