@@ -5447,7 +5447,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 
   try
   {
-    const double bearing = std::fmod( da.bearing( point1, point2 ) + 2 * M_PI, 2 * M_PI_2 );
+    const double bearing = std::fmod( da.bearing( point1, point2 ) + 2 * M_PI, 2 * M_PI );
     return bearing;
   }
   catch ( QgsCsException &cse )

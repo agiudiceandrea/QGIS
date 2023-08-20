@@ -14,7 +14,7 @@
     "description": "the source auth CRS ID of the points"
   }, {
     "arg": "ellipsoid",
-    "description": "the acronym or auth CRS ID of the ellipsoid"
+    "description": "the acronym or the auth ID of the ellipsoid"  
   }],
   "examples": [{
     "expression": "degrees( bearing( make_point(12.452334, 41.923753), make_point(12.501944, 42.245617), 'EPSG:4326', 'EPSG:7022') )",
