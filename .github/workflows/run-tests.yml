@@ -295,7 +295,6 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: build
-    if: always()
 
     strategy:
       matrix:
