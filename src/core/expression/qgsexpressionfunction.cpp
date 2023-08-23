@@ -5449,7 +5449,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 
   QgsDistanceArea da;
   da.setSourceCrs( sCrs, tContext );
-  if ( !da.setEllipsoid( ellipsoid )
+  if ( !da.setEllipsoid( ellipsoid ) )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires a valid ellipsoid acronym or ellipsoid auth ID." ) );
     return QVariant();
