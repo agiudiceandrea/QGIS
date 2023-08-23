@@ -5400,8 +5400,8 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
     return QVariant();
   }
 
-  QgsPointXY point1 = geom1.asPoint();
-  QgsPointXY point2 = geom2.asPoint();
+  const QgsPointXY point1 = geom1.asPoint();
+  const QgsPointXY point2 = geom2.asPoint();
   if ( point1.isEmpty() || point2.isEmpty() )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires point geometries or multi point geometries with a single part." ) );
@@ -5442,13 +5442,17 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
   try
   {
     const double bearing = da.bearing( point1, point2 );
-    return std::fmod( bearing + 2 * M_PI, 2 * M_PI );
+    if ( std::isfinite( bearing ) )
+    {
+      return std::fmod( bearing + 2 * M_PI, 2 * M_PI );
+    }
   }
   catch ( QgsCsException &cse )
   {
     QgsMessageLog::logMessage( QObject::tr( "Error caught in bearing() function: %1" ).arg( cse.what() ) );
     return QVariant();
   }
+  return QVariant();
 }
 
 static QVariant fcnProject( const QVariantList &values, const QgsExpressionContext *, QgsExpression *parent, const QgsExpressionNodeFunction * )

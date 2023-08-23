@@ -11,9 +11,11 @@
     "description": "point geometry"
   }, {
     "arg": "source_auth_id",
+    "optional": true,
     "description": "the source auth CRS ID of the points"
   }, {
     "arg": "ellipsoid",
+    "optional": true,
     "description": "the acronym or the auth ID of the ellipsoid"  
   }],
   "examples": [{
