@@ -5424,7 +5424,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
     return QVariant();
   }
 
-  const QgsCoordinateReferenceSystem sCrs = QgsCoordinateReferenceSystem::fromOgcWmsCrs( !sAuthId.isEmpty() ? sAuthId : contex->variable( QStringLiteral( "layer_crs" ) ) );
+  const QgsCoordinateReferenceSystem sCrs = QgsCoordinateReferenceSystem::fromOgcWmsCrs( !sAuthId.isEmpty() ? sAuthId : context->variable( QStringLiteral( "layer_crs" ) ) );
   if ( !sCrs.isValid() )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires a valid source auth CRS ID." ) );
@@ -5439,7 +5439,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 
   QgsDistanceArea da;
   da.setSourceCrs( sCrs, tContext );
-  if ( !da.setEllipsoid( !ellipsoid.isEmpty() ? ellipsoid : contex->variable( QStringLiteral( "project_ellipsoid" ) ) ) )
+  if ( !da.setEllipsoid( !ellipsoid.isEmpty() ? ellipsoid : context->variable( QStringLiteral( "project_ellipsoid" ) ) ) )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires a valid ellipsoid acronym or ellipsoid auth ID." ) );
     return QVariant();
