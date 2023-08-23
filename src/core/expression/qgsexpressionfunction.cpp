@@ -5391,8 +5391,8 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 {
   const QgsGeometry geom1 = QgsExpressionUtils::getGeometry( values.at( 0 ), parent );
   const QgsGeometry geom2 = QgsExpressionUtils::getGeometry( values.at( 1 ), parent );
-  const QString sAuthId = QgsExpressionUtils::getStringValue( values.at( 2 ), parent );
-  const QString ellipsoid = QgsExpressionUtils::getStringValue( values.at( 3 ), parent );
+  QString sAuthId = QgsExpressionUtils::getStringValue( values.at( 2 ), parent );
+  QString ellipsoid = QgsExpressionUtils::getStringValue( values.at( 3 ), parent );
 
   if ( geom1.isNull() || geom2.isNull() || geom1.type() != Qgis::GeometryType::Point || geom2.type() != Qgis::GeometryType::Point )
   {
@@ -5424,22 +5424,32 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
     return QVariant();
   }
 
-  const QgsCoordinateReferenceSystem sCrs = QgsCoordinateReferenceSystem::fromOgcWmsCrs( !sAuthId.isEmpty() ? sAuthId : context->variable( QStringLiteral( "layer_crs" ) ).toString() );
+  QgsCoordinateTransformContext tContext;
+  if ( context )
+  {
+    tContext = context->variable( QStringLiteral( "_project_transform_context" ) ).value<QgsCoordinateTransformContext>();
+
+    if ( sAuthId.isEmpty() )
+    {
+      sAuthId = context->variable( QStringLiteral( "layer_crs" ) ).toString();
+    }
+
+    if ( ellipsoid.isEmpty() )
+    {
+      ellipsoid = context->variable( QStringLiteral( "project_ellipsoid" ) ).toString();
+    }
+  }
+
+  const QgsCoordinateReferenceSystem sCrs = QgsCoordinateReferenceSystem::fromOgcWmsCrs( sAuthId );
   if ( !sCrs.isValid() )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires a valid source auth CRS ID." ) );
     return QVariant();
   }
 
-  QgsCoordinateTransformContext tContext;
-  if ( context )
-  {
-    tContext = context->variable( QStringLiteral( "_project_transform_context" ) ).value<QgsCoordinateTransformContext>();
-  }
-
   QgsDistanceArea da;
   da.setSourceCrs( sCrs, tContext );
-  if ( !da.setEllipsoid( !ellipsoid.isEmpty() ? ellipsoid : context->variable( QStringLiteral( "project_ellipsoid" ) ).toString() ) )
+  if ( !da.setEllipsoid( ellipsoid )
   {
     parent->setEvalErrorString( QObject::tr( "Function `bearing` requires a valid ellipsoid acronym or ellipsoid auth ID." ) );
     return QVariant();
