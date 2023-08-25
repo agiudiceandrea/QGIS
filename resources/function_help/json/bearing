@@ -2,7 +2,7 @@
   "name": "bearing",
   "type": "function",
   "groups": ["GeometryGroup"],
-  "description": "Returns the north-based bearing as the angle in radians measured clockwise on the ellipsoid from the vertical on point_a to point_b.",
+  "description": "Returns the north-based bearing as the angle in radians measured clockwise on the ellipsoid from the vertical on point_a to point_b..",
   "arguments": [{
     "arg": "point_a",
     "description": "point geometry"
