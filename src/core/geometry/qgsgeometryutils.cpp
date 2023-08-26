@@ -419,8 +419,10 @@ int QgsGeometryUtils::circleCircleIntersections( const QgsPointXY &center1, cons
    * centers.
   */
 
+  const bool singleSolution = qgsDoubleNear( d, r1 + r2 );
+
   // Determine the distance from point 0 to point 2.
-  const double a = ( ( r1 * r1 ) - ( r2 * r2 ) + ( d * d ) ) / ( 2.0 * d ) ;
+  const double a = singleSolution ? r1 : ( ( r1 * r1 ) - ( r2 * r2 ) + ( d * d ) ) / ( 2.0 * d ) ;
 
   /* dx and dy are the vertical and horizontal distances between
    * the circle centers.
@@ -431,6 +433,16 @@ int QgsGeometryUtils::circleCircleIntersections( const QgsPointXY &center1, cons
   // Determine the coordinates of point 2.
   const double x2 = center1.x() + ( dx * a / d );
   const double y2 = center1.y() + ( dy * a / d );
+
+  if ( singleSolution )
+  {
+    // only 1 solution
+    intersection1 = QgsPointXY( x2, y2 );
+    intersection2 = QgsPointXY( x2, y2 );
+    return 1;
+  }
+
+  // 2 solutions
 
   /* Determine the distance from point 2 to either of the
    * intersection points.
@@ -446,10 +458,6 @@ int QgsGeometryUtils::circleCircleIntersections( const QgsPointXY &center1, cons
   // determine the absolute intersection points
   intersection1 = QgsPointXY( x2 + rx, y2 - ry );
   intersection2 = QgsPointXY( x2 - rx, y2 +  ry );
-
-  // see if we have 1 or 2 solutions
-  if ( qgsDoubleNear( d, r1 + r2 ) )
-    return 1;
 
   return 2;
 }
