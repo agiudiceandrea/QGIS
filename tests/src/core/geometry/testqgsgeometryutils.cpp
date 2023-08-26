@@ -1083,7 +1083,6 @@ void TestQgsGeometryUtils::testCircleCircleIntersection()
   QCOMPARE( QgsGeometryUtils::circleCircleIntersections( QgsPointXY( -1.33611111111111125, -0.08333333333333348 ), 0.8101402103918971, QgsPointXY( -0.19561185568356954, -0.68452673929513763 ), 2.0993927314298557, int1, int2 ), 1 );
   QCOMPARE( int1, QgsPointXY( -2.052777777777778, 0.2944444444444439 ) );
   QCOMPARE( int2, QgsPointXY( -2.052777777777778, 0.2944444444444439 ) );
-  
   // two intersections
   QCOMPARE( QgsGeometryUtils::circleCircleIntersections( QgsPointXY( 5, 3 ), 2, QgsPointXY( 7, -1 ), 4, int1, int2 ), 2 );
   QGSCOMPARENEAR( int1.x(), 3.8, 0.001 );
