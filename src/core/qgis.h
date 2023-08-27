@@ -4216,7 +4216,7 @@ inline bool qgsDoubleNear( double a, double b, double epsilon = 4 * std::numeric
     return aIsNan && bIsNan;
 
   const double diff = a - b;
-  return diff > -epsilon && diff <= epsilon;
+  return diff >= -epsilon && diff <= epsilon;
 }
 
 /**
