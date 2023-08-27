@@ -397,13 +397,17 @@ int QgsGeometryUtils::circleCircleIntersections( const QgsPointXY &center1, cons
   // determine the straight-line distance between the centers
   const double d = center1.distance( center2 );
 
+  // check if the circles intersect at only 1 point, either "externally" or "internally"
+  const bool singleSolutionExt = qgsDoubleNear( d, r1 + r2 );
+  const bool singleSolutionInt = qgsDoubleNear( d, std::fabs( r1 - r2 ) );
+
   // check for solvability
-  if ( d > ( r1 + r2 ) )
+  if ( !singleSolutionExt && d > ( r1 + r2 ) )
   {
     // no solution. circles do not intersect.
     return 0;
   }
-  else if ( d < std::fabs( r1 - r2 ) )
+  else if ( !singleSolutionInt && d < std::fabs( r1 - r2 ) )
   {
     // no solution. one circle is contained in the other
     return 0;
@@ -418,10 +422,6 @@ int QgsGeometryUtils::circleCircleIntersections( const QgsPointXY &center1, cons
    * intersection points crosses the line between the circle
    * centers.
   */
-
-  // check if the circles intersect at only 1 point, either "externally" or "internally"
-  const bool singleSolutionExt = qgsDoubleNear( d, r1 + r2 );
-  const bool singleSolutionInt = qgsDoubleNear( d, std::fabs( r1 - r2 ) );
 
   /* Determine the distance 'a' from point 0 to point 2.
    * In the genearl case, a = ( ( r1 * r1 ) - ( r2 * r2 ) + ( d * d ) ) / ( 2.0 * d ).
