@@ -118,6 +118,7 @@ class TestQgsProcessingAlgsPt2: public QObject
     void splitVectorLayer();
     void buffer();
     void splitWithLines();
+    void dissolveEmptyGeometries();
 
   private:
 
@@ -1883,6 +1884,63 @@ void TestQgsProcessingAlgsPt2::splitWithLines()
   QVERIFY( splitLayer->isValid() );
   QCOMPARE( splitLayer->wkbType(), Qgis::WkbType::MultiPolygon );
   QCOMPARE( splitLayer->featureCount(), 20 );
+}
+
+void TestQgsProcessingAlgsPt2::dissolveEmptyGeometries()
+{
+  QgsVectorLayer *layer = new QgsVectorLayer( QStringLiteral( "MultiPolygon?crs=epsg:4326&field=col1:string&field=col2:string" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) );
+  QVERIFY( layer->isValid() );
+
+  QgsFeature f;
+  f.setAttributes( QgsAttributes() << QStringLiteral( "A" ) << QStringLiteral( "A" ) );
+  f.setGeometry( QgsGeometry::fromWkt( "MultiPolygon (((25 41, 25 38, 18 38, 18 41, 25 41),(19 39, 24 39, 24 40, 19 40, 19 39)))" ) );
+  layer->dataProvider()->addFeature( f );
+  f.setAttributes( QgsAttributes() << QStringLiteral( "A" ) << QStringLiteral( "B" ) );
+  f.setGeometry( QgsGeometry::fromWkt( "MultiPolygon EMPTY" ) );
+  layer->dataProvider()->addFeature( f );
+
+  std::unique_ptr< QgsProcessingAlgorithm > alg( QgsApplication::processingRegistry()->createAlgorithmById( QStringLiteral( "native:dissolve" ) ) );
+  QVERIFY( alg != nullptr );
+
+  QVariantMap parameters;
+  parameters.insert( QStringLiteral( "INPUT" ), QVariant::fromValue( layer ) );
+  parameters.insert( QStringLiteral( "SEPARATE_DISJOINT" ), false );
+  parameters.insert( QStringLiteral( "OUTPUT" ), QgsProcessing::TEMPORARY_OUTPUT );
+
+  bool ok = false;
+  std::unique_ptr< QgsProcessingContext > context = std::make_unique< QgsProcessingContext >();
+  QgsProcessingFeedback feedback;
+  QVariantMap results;
+  results = alg->run( parameters, *context, &feedback, &ok );
+  QVERIFY( ok );
+
+  QVERIFY( !results.value( QStringLiteral( "OUTPUT" ) ).toString().isEmpty() );
+  QgsVectorLayer *dissolveLayer = qobject_cast< QgsVectorLayer * >( context->getMapLayer( results.value( QStringLiteral( "OUTPUT" ) ).toString() ) );
+  QVERIFY( dissolveLayer->isValid() );
+  QCOMPARE( dissolveLayer->wkbType(), Qgis::WkbType::MultiPolygon );
+  QCOMPARE( dissolveLayer->featureCount(), 1 );
+
+  parameters.insert( QStringLiteral( "FIELD" ), QStringLiteral( "col1" ) );
+  ok = false;
+  results = alg->run( parameters, *context, &feedback, &ok );
+  QVERIFY( ok );
+
+  QVERIFY( !results.value( QStringLiteral( "OUTPUT" ) ).toString().isEmpty() );
+  dissolveLayer = qobject_cast< QgsVectorLayer * >( context->getMapLayer( results.value( QStringLiteral( "OUTPUT" ) ).toString() ) );
+  QVERIFY( dissolveLayer->isValid() );
+  QCOMPARE( dissolveLayer->wkbType(), Qgis::WkbType::MultiPolygon );
+  QCOMPARE( dissolveLayer->featureCount(), 1 );
+
+  parameters.insert( QStringLiteral( "FIELD" ), QStringLiteral( "col2" ) );
+  ok = false;
+  results = alg->run( parameters, *context, &feedback, &ok );
+  QVERIFY( ok );
+
+  QVERIFY( !results.value( QStringLiteral( "OUTPUT" ) ).toString().isEmpty() );
+  dissolveLayer = qobject_cast< QgsVectorLayer * >( context->getMapLayer( results.value( QStringLiteral( "OUTPUT" ) ).toString() ) );
+  QVERIFY( dissolveLayer->isValid() );
+  QCOMPARE( dissolveLayer->wkbType(), Qgis::WkbType::MultiPolygon );
+  QCOMPARE( dissolveLayer->featureCount(), 2 );
 }
 
 bool TestQgsProcessingAlgsPt2::imageCheck( const QString &testName, const QString &renderedImage )
