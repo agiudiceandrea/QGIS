@@ -5444,7 +5444,7 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
     const double bearing = da.bearing( point1, point2 );
     if ( std::isfinite( bearing ) )
     {
-      return std::fmod( bearing + 2 * M_PI, 2 * M_PI );
+      return std::fmod( RAD2DEG( bearing ) + 360, 360 );
     }
   }
   catch ( QgsCsException &cse )
