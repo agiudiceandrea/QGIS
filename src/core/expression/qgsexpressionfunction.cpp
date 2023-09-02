@@ -5441,10 +5441,10 @@ static QVariant fcnBearing( const QVariantList &values, const QgsExpressionConte
 
   try
   {
-    const double bearing = da.bearing( point1, point2 );
+    const double bearing = da.bearing( point1, point2 ); // QgsDistanceArea::bearing returns the angle in radians in the range ]-M_PI, M_PI]
     if ( std::isfinite( bearing ) )
     {
-      return std::fmod( RAD2DEG( bearing ) + 360, 360 );
+      return std::fmod( bearing + 2 * M_PI, 2 * M_PI ) * 180 / M_PI; // return the angle in degrees in the range [0, 360[
     }
   }
   catch ( QgsCsException &cse )
