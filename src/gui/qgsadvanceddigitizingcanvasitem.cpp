@@ -165,7 +165,10 @@ void QgsAdvancedDigitizingCanvasItem::paint( QPainter *painter )
     QPainterPath ellipsePath;
     ellipsePath.addEllipse( prevPointPix, r, r );
     const QPolygonF ellipsePoly = ellipsePath.toFillPolygon();
-    painter->drawPolygon( ellipsePoly );
+    const double a = std::atan2( -( curPoint.y() - prevPoint.y() ), curPoint.x() - prevPoint.x() ) + canvasRotationRad;
+    const QTransform t = QTransform().translate( prevPoint.x(), prevPoint.y() ).rotateRadians( a ).translate( -prevPoint.x(), -prevPoint.y() );
+    const QPolygonF rotatedEllipsePoly = transform.map( ellipsePoly )
+    painter->drawPolygon( rotatedEllipsePoly );
   }
 
   // Draw x
