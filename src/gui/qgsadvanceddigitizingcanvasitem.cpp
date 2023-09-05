@@ -162,7 +162,10 @@ void QgsAdvancedDigitizingCanvasItem::paint( QPainter *painter )
   {
     painter->setPen( mLockedPen );
     const double r = mAdvancedDigitizingDockWidget->constraintDistance()->value() / mupp;
-    painter->drawEllipse( prevPointPix, r, r );
+    QPainterPath ellipsePath;
+    ellipsePath.addEllipse( prevPointPix, r, r );
+    const QPolygonF ellipsePoly = ellipsePath.toFillPolygon();
+    painter->drawPolygon( ellipsePoly );
   }
 
   // Draw x
