@@ -771,6 +771,7 @@ void QgsExpression::initVariableHelp()
   sVariableHelpTexts()->insert( QStringLiteral( "feature" ), QCoreApplication::translate( "variable_help", "The current feature being evaluated. This can be used with the 'attribute' function to evaluate attribute values from the current feature." ) );
   sVariableHelpTexts()->insert( QStringLiteral( "id" ), QCoreApplication::translate( "variable_help", "The ID of the current feature being evaluated." ) );
   sVariableHelpTexts()->insert( QStringLiteral( "geometry" ), QCoreApplication::translate( "variable_help", "The geometry of the current feature being evaluated." ) );
+  sVariableHelpTexts()->insert( QStringLiteral( "layer_crs_ellipsoid" ), QCoreApplication::translate( "variable_help", "Ellipsoid acronym of current layer CRS." ) );
 
   //composition variables
   sVariableHelpTexts()->insert( QStringLiteral( "layout_name" ), QCoreApplication::translate( "variable_help", "Name of composition." ) );
