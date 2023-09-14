@@ -81,7 +81,7 @@ jobs:
             mingw64-ccache-${{ github.ref }}-
             mingw64-ccache-refs/heads/master-
 
-      - name: Build QGIS Application
+      - name: Build QGIS Application (debug)
         run: |
           CCACHE_DIR=/w/.ccache/QGIS ./ms-windows/mingw/build.sh x86_64 debug 4
 
