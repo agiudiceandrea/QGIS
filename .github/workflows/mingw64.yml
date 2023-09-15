@@ -83,7 +83,7 @@ jobs:
 
       - name: Build QGIS Application
         run: |
-          CCACHE_DIR=/w/.ccache/QGIS ./ms-windows/mingw/build.sh x86_64 debug 4
+          CCACHE_DIR=/w/.ccache/QGIS ./ms-windows/mingw/build.sh x86_64 nodebug 4
 
       - name: Create Portable zip
         run: |
