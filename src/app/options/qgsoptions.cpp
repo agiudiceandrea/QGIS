@@ -2329,7 +2329,6 @@ void QgsOptions::loadGdalDriverList()
     QgsDebugMsgLevel( QStringLiteral( "driver #%1 - %2" ).arg( i ).arg( myGdalDriverDescription ), 2 );
 
     // get driver R/W flags, adopted from GDALGeneralCmdLineProcessor()
-    QString driverFlags = "";
     if ( driversType.value( myGdalDriverDescription ).contains( static_cast< int >( QgsMapLayerType::RasterLayer ) ) )
     {
       QString driverFlags = "";
