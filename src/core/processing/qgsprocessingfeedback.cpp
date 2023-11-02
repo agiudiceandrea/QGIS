@@ -26,6 +26,11 @@
 #include <pdal/pdal.hpp>
 #endif
 
+extern "C"
+{
+#include <grass/version.h>
+}
+
 QgsProcessingFeedback::QgsProcessingFeedback( bool logFeedback )
   : mLogFeedback( logFeedback )
 {
@@ -132,6 +137,11 @@ void QgsProcessingFeedback::pushVersionInfo( const QgsProcessingProvider *provid
   pushDebugInfo( tr( "PDAL version: %1" ).arg( QString::fromStdString( pdal::GetFullVersionString() ) ) );
 #endif
 #endif
+
+  if ( provider && provider->name() == QLatin1String( "grass") )
+  {
+    pushDebugInfo( tr( "GRASS version: %1" ).arg( GRASS_VERSION_STRING ) );
+  }
 
   if ( provider && !provider->versionInfo().isEmpty() )
   {
