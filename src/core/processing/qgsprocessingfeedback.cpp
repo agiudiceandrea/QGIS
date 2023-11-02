@@ -138,7 +138,7 @@ void QgsProcessingFeedback::pushVersionInfo( const QgsProcessingProvider *provid
 #endif
 #endif
 
-  if ( provider && provider->name() == QLatin1String( "grass") )
+  if ( provider && provider->name() == QLatin1String( "grass" ) )
   {
     pushDebugInfo( tr( "GRASS version: %1" ).arg( GRASS_VERSION_STRING ) );
   }
