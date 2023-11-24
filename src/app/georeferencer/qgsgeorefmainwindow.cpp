@@ -1961,45 +1961,63 @@ bool QgsGeoreferencerMainWindow::writePDFReportFile( const QString &fileName, co
   }
 
   QGraphicsRectItem *previousItem = layoutMap;
+  QString parameterTitle;
   if ( wldTransform )
   {
-    QString parameterTitle = tr( "Transformation parameters" ) + QStringLiteral( " (" ) + QgsGcpTransformerInterface::methodToString( transform.transformParametrisation() ) + QStringLiteral( ")" );
-    parameterLabel = new QgsLayoutItemLabel( &layout );
-    parameterLabel->setTextFormat( titleFormat );
-    parameterLabel->setText( parameterTitle );
-    parameterLabel->adjustSizeToText();
-    layout.addLayoutItem( parameterLabel );
-    parameterLabel->attemptSetSceneRect( QRectF( leftMargin, layoutMap->rect().bottom() + layoutMap->pos().y() + 5, contentWidth, 8 ) );
-    parameterLabel->setFrameEnabled( false );
+    parameterTitle = tr( "Transformation parameters" );
+  }
+  else
+  {
+    parameterTitle = tr( "Transformation parameter" );
+  }
+  parameterTitle += QStringLiteral( " (" ) + QgsGcpTransformerInterface::methodToString( transform.transformParametrisation() ) + QStringLiteral( ")" );
+  parameterLabel = new QgsLayoutItemLabel( &layout );
+  parameterLabel->setTextFormat( titleFormat );
+  parameterLabel->setText( parameterTitle );
+  parameterLabel->adjustSizeToText();
+  layout.addLayoutItem( parameterLabel );
+  parameterLabel->attemptSetSceneRect( QRectF( leftMargin, layoutMap->rect().bottom() + layoutMap->pos().y() + 5, contentWidth, 8 ) );
+  parameterLabel->setFrameEnabled( false );
 
-    //calculate mean error
-    double meanError = 0;
-    calculateMeanError( meanError );
+  //calculate mean error
+  double meanError = 0;
+  calculateMeanError( meanError );
 
-    parameterTable = new QgsLayoutItemTextTable( &layout );
-    parameterTable->setHeaderTextFormat( tableHeaderFormat );
-    parameterTable->setContentTextFormat( tableContentFormat );
+  parameterTable = new QgsLayoutItemTextTable( &layout );
+  parameterTable->setHeaderTextFormat( tableHeaderFormat );
+  parameterTable->setContentTextFormat( tableContentFormat );
 
-    QgsLayoutTableColumns columns;
+  QgsLayoutTableColumns columns;
+  if ( wldTransform )
+  {
     columns << QgsLayoutTableColumn( tr( "Translation x" ) )
             << QgsLayoutTableColumn( tr( "Translation y" ) )
             << QgsLayoutTableColumn( tr( "Scale x" ) )
             << QgsLayoutTableColumn( tr( "Scale y" ) )
-            << QgsLayoutTableColumn( tr( "Rotation [degrees]" ) )
-            << QgsLayoutTableColumn( tr( "Mean error [%1]" ).arg( residualUnits ) );
+            << QgsLayoutTableColumn( tr( "Rotation [degrees]" ) );
+  }
+  columns << QgsLayoutTableColumn( tr( "Mean error [%1]" ).arg( residualUnits ) );
+  parameterTable->setColumns( columns );
 
-    parameterTable->setColumns( columns );
-    QStringList row;
-    row << QString::number( origin.x(), 'f', 3 ) << QString::number( origin.y(), 'f', 3 ) << QString::number( scaleX ) << QString::number( scaleY ) << QString::number( rotation * 180 / M_PI ) << QString::number( meanError );
-    parameterTable->addRow( row );
+  QStringList row;
+  if ( wldTransform )
+  {
+    row << QString::number( origin.x(), 'f', 3 )
+        << QString::number( origin.y(), 'f', 3 )
+        << QString::number( scaleX )
+        << QString::number( scaleY )
+        << QString::number( rotation * 180 / M_PI );
+  }
+  row << QString::number( meanError );
+  parameterTable->addRow( row );
 
-    QgsLayoutFrame *tableFrame = new QgsLayoutFrame( &layout, parameterTable );
-    tableFrame->attemptSetSceneRect( QRectF( leftMargin, parameterLabel->rect().bottom() + parameterLabel->pos().y() + 5, contentWidth, 12 ) );
-    parameterTable->addFrame( tableFrame );
+  QgsLayoutFrame *tableFrame = new QgsLayoutFrame( &layout, parameterTable );
+  tableFrame->attemptSetSceneRect( QRectF( leftMargin, parameterLabel->rect().bottom() + parameterLabel->pos().y() + 5, contentWidth, 12 ) );
+  parameterTable->addFrame( tableFrame );
 
-    parameterTable->setGridStrokeWidth( 0.1 );
+  parameterTable->setGridStrokeWidth( 0.1 );
 
-    previousItem = tableFrame;
+  previousItem = tableFrame;
   }
 
   QgsLayoutItemLabel *residualLabel = new QgsLayoutItemLabel( &layout );
