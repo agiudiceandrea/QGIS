@@ -1809,6 +1809,7 @@ bool QgsGeoreferencerMainWindow::writePDFMapFile( const QString &fileName, const
 
   //create layout
   QgsLayout layout( QgsProject::instance() );
+  layout->renderContext().setTextRenderFormat( Qgis::TextRenderFormat::AlwaysText );
   std::unique_ptr< QgsLayoutItemPage > page = std::make_unique< QgsLayoutItemPage >( &layout );
 
   double leftMargin = 8;
