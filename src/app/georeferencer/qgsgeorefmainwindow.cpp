@@ -2040,7 +2040,7 @@ bool QgsGeoreferencerMainWindow::writePDFReportFile( const QString &fileName, co
   gcpTable->setHeaderTextFormat( tableHeaderFormat );
   gcpTable->setContentTextFormat( tableContentFormat );
   gcpTable->setHeaderMode( QgsLayoutTable::AllFrames );
-  QgsLayoutTableColumns columns;
+  columns.clear();
   columns << QgsLayoutTableColumn( tr( "ID" ) )
           << QgsLayoutTableColumn( tr( "Enabled" ) )
           << QgsLayoutTableColumn( tr( "Pixel X" ) )
