@@ -2018,7 +2018,6 @@ bool QgsGeoreferencerMainWindow::writePDFReportFile( const QString &fileName, co
   parameterTable->setGridStrokeWidth( 0.1 );
 
   previousItem = tableFrame;
-  }
 
   QgsLayoutItemLabel *residualLabel = new QgsLayoutItemLabel( &layout );
   residualLabel->setTextFormat( titleFormat );
