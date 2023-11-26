@@ -1809,7 +1809,6 @@ bool QgsGeoreferencerMainWindow::writePDFMapFile( const QString &fileName, const
 
   //create layout
   QgsLayout layout( QgsProject::instance() );
-  layout.renderContext().setTextRenderFormat( Qgis::TextRenderFormat::AlwaysText );
   std::unique_ptr< QgsLayoutItemPage > page = std::make_unique< QgsLayoutItemPage >( &layout );
 
   double leftMargin = 8;
@@ -1876,7 +1875,6 @@ bool QgsGeoreferencerMainWindow::writePDFReportFile( const QString &fileName, co
 
   //create layout A4 with 300 dpi
   QgsLayout layout( QgsProject::instance() );
-  layout.renderContext().setTextRenderFormat( Qgis::TextRenderFormat::AlwaysText );
 
   std::unique_ptr< QgsLayoutItemPage > page = std::make_unique< QgsLayoutItemPage >( &layout );
   page->setPageSize( QgsLayoutSize( 210, 297 ) ); //A4
@@ -2100,6 +2098,7 @@ bool QgsGeoreferencerMainWindow::writePDFReportFile( const QString &fileName, co
   QgsLayoutExporter exporter( &layout );
   QgsLayoutExporter::PdfExportSettings settings;
   settings.dpi = 300;
+  settings.textRenderFormat = Qgis::TextRenderFormat::AlwaysText;
   exporter.exportToPdf( fileName, settings );
 
   return true;
