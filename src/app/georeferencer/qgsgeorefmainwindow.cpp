@@ -1876,6 +1876,7 @@ bool QgsGeoreferencerMainWindow::writePDFReportFile( const QString &fileName, co
 
   //create layout A4 with 300 dpi
   QgsLayout layout( QgsProject::instance() );
+  layout.renderContext().setTextRenderFormat( Qgis::TextRenderFormat::AlwaysText );
 
   std::unique_ptr< QgsLayoutItemPage > page = std::make_unique< QgsLayoutItemPage >( &layout );
   page->setPageSize( QgsLayoutSize( 210, 297 ) ); //A4
