@@ -136,6 +136,7 @@ QgsFeatureList QgsExtractVerticesAlgorithm::processFeature( const QgsFeature &fe
           << QVariant()
           << QVariant();
 
+    f.clearGeometry();
     f.setAttributes( attrs );
     outputFeatures << f;
   }
