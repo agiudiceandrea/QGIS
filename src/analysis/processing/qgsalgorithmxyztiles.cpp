@@ -371,6 +371,7 @@ void QgsXyzTilesDirectoryAlgorithm::processMetaTile( QgsMapRendererSequentialJob
   QImage img = job->renderedImage();
 
   QMap<QPair<int, int>, Tile>::const_iterator it = metaTile.tiles.constBegin();
+  const bool isJpg = mTileFormat == QLatin1String( "JPG" );
   while ( it != metaTile.tiles.constEnd() )
   {
     QPair<int, int> tm = it.key();
@@ -383,7 +384,14 @@ void QgsXyzTilesDirectoryAlgorithm::processMetaTile( QgsMapRendererSequentialJob
     {
       y = tile2tms( y, tile.z );
     }
-    tileImage.save( QStringLiteral( "%1/%2.%3" ).arg( tileDir.absolutePath() ).arg( y ).arg( mTileFormat.toLower() ), mTileFormat.toStdString().c_str(), mJpgQuality );
+    if ( isJpg )
+    {
+      tileImage.save( QStringLiteral( "%1/%2.%3" ).arg( tileDir.absolutePath() ).arg( y ).arg( mTileFormat.toLower() ), mTileFormat.toStdString().c_str(), mJpgQuality );
+    }
+    else
+    {
+      tileImage.save( QStringLiteral( "%1/%2.%3" ).arg( tileDir.absolutePath() ).arg( y ).arg( mTileFormat.toLower() ), mTileFormat.toStdString().c_str() );
+    }
     ++it;
   }
 
@@ -496,6 +504,7 @@ void QgsXyzTilesMbtilesAlgorithm::processMetaTile( QgsMapRendererSequentialJob *
   QImage img = job->renderedImage();
 
   QMap<QPair<int, int>, Tile>::const_iterator it = metaTile.tiles.constBegin();
+  const bool isJpg = mTileFormat == QLatin1String( "JPG" );
   while ( it != metaTile.tiles.constEnd() )
   {
     QPair<int, int> tm = it.key();
@@ -504,7 +513,14 @@ void QgsXyzTilesMbtilesAlgorithm::processMetaTile( QgsMapRendererSequentialJob *
     QByteArray ba;
     QBuffer buffer( &ba );
     buffer.open( QIODevice::WriteOnly );
-    tileImage.save( &buffer, mTileFormat.toStdString().c_str(), mJpgQuality );
+    if ( isJpg )
+    {
+      tileImage.save( &buffer, mTileFormat.toStdString().c_str(), mJpgQuality );
+    }
+    else
+    {
+      tileImage.save( &buffer, mTileFormat.toStdString().c_str() );
+    }
     mMbtilesWriter->setTileData( tile.z, tile.x, tile2tms( tile.y, tile.z ), ba );
     ++it;
   }
