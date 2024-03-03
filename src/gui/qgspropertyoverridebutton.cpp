@@ -262,6 +262,10 @@ void QgsPropertyOverrideButton::mouseReleaseEvent( QMouseEvent *event )
     event->ignore();
     return;
   }
+  else if ( event->button() == Qt::MiddleButton )
+  {
+    showExpressionDialog();
+  }
 
   // pass to default behavior
   QToolButton::mousePressEvent( event );
