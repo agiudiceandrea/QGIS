@@ -280,17 +280,20 @@ void QgsStatisticalSummaryDockWidget::updateNumericStatistics()
   const QList< QVariant > variantValues = mGatherer->values();
 
   QList<double> values;
-  bool convertOk = false;
+  bool convertOk;
   int missingValues = 0;
   const auto constVariantValues = variantValues;
   for ( const QVariant &value : constVariantValues )
   {
-    const double val = value.toDouble( &convertOk );
-    if ( convertOk )
-      values << val;
-    else if ( QgsVariantUtils::isNull( value ) )
-    {
+    if ( QgsVariantUtils::isNull( value ) )
       missingValues += 1;
+    else
+    {
+      const double val = value.toDouble( &convertOk );
+      if ( convertOk )
+        values << val;
+      else
+        missingValues += 1;
     }
   }
 
