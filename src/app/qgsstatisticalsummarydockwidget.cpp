@@ -280,7 +280,7 @@ void QgsStatisticalSummaryDockWidget::updateNumericStatistics()
   const QList< QVariant > variantValues = mGatherer->values();
 
   QList<double> values;
-  bool convertOk;
+  bool convertOk = false;
   int missingValues = 0;
   const auto constVariantValues = variantValues;
   for ( const QVariant &value : constVariantValues )
