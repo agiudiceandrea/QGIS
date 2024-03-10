@@ -111,6 +111,7 @@ void QgsSimpleFillSymbolLayer::applyDataDefinedSymbology( QgsSymbolRenderContext
   {
     context.setOriginalValueVariable( QgsSymbolLayerUtils::encodeColor( mColor ) );
     QColor fillColor = mDataDefinedProperties.valueAsColor( QgsSymbolLayer::Property::FillColor, context.renderContext().expressionContext(), mColor );
+    QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | fillColor.alphaF() = %2" ).arg( context.opacity(), fillColor.alphaF() ), 2 );
     fillColor.setAlphaF( context.opacity() * fillColor.alphaF() );
     brush.setColor( fillColor );
   }
@@ -125,6 +126,7 @@ void QgsSimpleFillSymbolLayer::applyDataDefinedSymbology( QgsSymbolRenderContext
   {
     context.setOriginalValueVariable( QgsSymbolLayerUtils::encodeColor( mStrokeColor ) );
     QColor penColor = mDataDefinedProperties.valueAsColor( QgsSymbolLayer::Property::StrokeColor, context.renderContext().expressionContext(), mStrokeColor );
+    QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | mColor.alphaF() = %2" ).arg( context.opacity(), penColor.alphaF() ), 2 );
     penColor.setAlphaF( context.opacity() * penColor.alphaF() );
     pen.setColor( penColor );
   }
@@ -261,12 +263,14 @@ QString QgsSimpleFillSymbolLayer::layerType() const
 void QgsSimpleFillSymbolLayer::startRender( QgsSymbolRenderContext &context )
 {
   QColor fillColor = mColor;
+  QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | mColor.alphaF() = %2" ).arg( context.opacity(), mColor.alphaF() ), 2 );
   fillColor.setAlphaF( context.opacity() * mColor.alphaF() );
   mBrush = QBrush( fillColor, mBrushStyle );
 
   QColor selColor = context.renderContext().selectionColor();
   QColor selPenColor = selColor == mColor ? selColor : mStrokeColor;
   if ( ! SELECTION_IS_OPAQUE )
+    QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1" ).arg( context.opacity() ), 2 );
     selColor.setAlphaF( context.opacity() );
   mSelBrush = QBrush( selColor );
   // N.B. unless a "selection line color" is implemented in addition to the "selection color" option
@@ -275,6 +279,7 @@ void QgsSimpleFillSymbolLayer::startRender( QgsSymbolRenderContext &context )
     mSelBrush.setStyle( mBrushStyle );
 
   QColor strokeColor = mStrokeColor;
+  QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | mStrokeColor.alphaF() = %2" ).arg( context.opacity(), mStrokeColor.alphaF() ), 2 );
   strokeColor.setAlphaF( context.opacity() * mStrokeColor.alphaF() );
   mPen = QPen( strokeColor );
   mSelPen = QPen( selPenColor );
@@ -297,9 +302,11 @@ void QgsSimpleFillSymbolLayer::renderPolygon( const QPolygonF &points, const QVe
   }
 
   QColor fillColor = mColor;
+  QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | mColor.alphaF() = %2" ).arg( context.opacity(), mColor.alphaF() ), 2 );
   fillColor.setAlphaF( context.opacity() * mColor.alphaF() );
   mBrush.setColor( fillColor );
   QColor strokeColor = mStrokeColor;
+  QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | mStrokeColor.alphaF() = %2" ).arg( context.opacity(), mStrokeColor.alphaF() ), 2 );
   strokeColor.setAlphaF( context.opacity() * mStrokeColor.alphaF() );
   mPen.setColor( strokeColor );
 
