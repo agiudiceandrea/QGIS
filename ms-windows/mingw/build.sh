@@ -44,7 +44,7 @@ if $DEBUG; then
   optflags="-O0 -g1 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -fno-omit-frame-pointer"
   buildtype="Debug"
 else
-  optflags="-O2 -g1 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -fno-omit-frame-pointer"
+  optflags="-O0 -g1 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4 -fno-omit-frame-pointer"
   buildtype="RelWithDebugInfo"
 fi
 pyver=$(mingw${bits}-python3 -c "import sys; print('.'.join(list(map(str, sys.version_info))[0:2]))")
