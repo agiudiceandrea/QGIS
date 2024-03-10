@@ -270,8 +270,10 @@ void QgsSimpleFillSymbolLayer::startRender( QgsSymbolRenderContext &context )
   QColor selColor = context.renderContext().selectionColor();
   QColor selPenColor = selColor == mColor ? selColor : mStrokeColor;
   if ( ! SELECTION_IS_OPAQUE )
+  {
     QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1" ).arg( context.opacity() ), 2 );
     selColor.setAlphaF( context.opacity() );
+  }
   mSelBrush = QBrush( selColor );
   // N.B. unless a "selection line color" is implemented in addition to the "selection color" option
   // this would mean symbols with "no fill" look the same whether or not they are selected
