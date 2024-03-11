@@ -236,7 +236,7 @@ void QgsLineSymbol::renderPolyline( const QPolygonF &points, const QgsFeature *f
 
   //save old painter
   QPainter *renderPainter = context.painter();
-  QgsSymbolRenderContext symbolContext( context, Qgis::RenderUnit::Unknown, opacity, selected, mRenderHints, f );
+  QgsSymbolRenderContext symbolContext( context, Qgis::RenderUnit::Unknown, opacity >= 0 && opacity <= 1 ? opacity : mOpacity, selected, mRenderHints, f );
   symbolContext.setOriginalGeometryType( Qgis::GeometryType::Line );
   symbolContext.setGeometryPartCount( symbolRenderContext()->geometryPartCount() );
   symbolContext.setGeometryPartNum( symbolRenderContext()->geometryPartNum() );

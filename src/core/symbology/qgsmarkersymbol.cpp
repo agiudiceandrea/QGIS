@@ -449,7 +449,7 @@ void QgsMarkerSymbol::renderPoint( QPointF point, const QgsFeature *f, QgsRender
   const double opacity = dataDefinedProperties().hasActiveProperties() ? dataDefinedProperties().valueAsDouble( QgsSymbol::Property::Opacity, context.expressionContext(), mOpacity * 100 ) * 0.01
                          : mOpacity;
 
-  QgsSymbolRenderContext symbolContext( context, Qgis::RenderUnit::Unknown, opacity, selected, mRenderHints, f );
+  QgsSymbolRenderContext symbolContext( context, Qgis::RenderUnit::Unknown, opacity >= 0 && opacity <= 1 ? opacity : mOpacity, selected, mRenderHints, f );
   symbolContext.setGeometryPartCount( symbolRenderContext()->geometryPartCount() );
   symbolContext.setGeometryPartNum( symbolRenderContext()->geometryPartNum() );
 
