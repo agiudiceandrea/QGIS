@@ -261,7 +261,6 @@ QString QgsSimpleFillSymbolLayer::layerType() const
 void QgsSimpleFillSymbolLayer::startRender( QgsSymbolRenderContext &context )
 {
   QColor fillColor = mColor;
-  QgsDebugMsgLevel( QStringLiteral( "context.opacity() = %1 | mColor.alphaF() = %2" ).arg( context.opacity() ).arg( mColor.alphaF() ), 2 );
   fillColor.setAlphaF( context.opacity() * mColor.alphaF() );
   mBrush = QBrush( fillColor, mBrushStyle );
 
