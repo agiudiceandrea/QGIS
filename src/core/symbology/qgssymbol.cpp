@@ -945,7 +945,7 @@ void QgsSymbol::drawPreviewIcon( QPainter *painter, QSize size, QgsRenderContext
 
   const double opacity = expressionContext ? dataDefinedProperties().valueAsDouble( QgsSymbol::Property::Opacity, *expressionContext, mOpacity * 100 ) * 0.01 : mOpacity;
 
-  QgsSymbolRenderContext symbolContext( *context, Qgis::RenderUnit::Unknown, std::clamp( opacity, 0, 1 ), false, mRenderHints, nullptr );
+  QgsSymbolRenderContext symbolContext( *context, Qgis::RenderUnit::Unknown, std::clamp( opacity, 0.0, 1.0 ), false, mRenderHints, nullptr );
   symbolContext.setSelected( selected );
   switch ( mType )
   {
