@@ -635,7 +635,7 @@ void QgsAppFileItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu *m
       }
     }
 
-    if ( qobject_cast< QgsDataCollectionItem * >( item ) )
+    if ( qobject_cast< QgsDataCollectionItem * >( item ) || qobject_cast< QgsGeoPackageCollectionItem * >( item ) )
     {
       QAction *actionRefresh = new QAction( QObject::tr( "Refresh" ), menu );
       connect( actionRefresh, &QAction::triggered, item, [item] { item->refresh(); } );
