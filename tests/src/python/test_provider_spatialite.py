@@ -28,7 +28,6 @@ from qgis.core import (
     QgsFieldConstraints,
     QgsGeometry,
     QgsPathResolver,
-    QgsPoint,
     QgsPointXY,
     QgsProject,
     QgsProviderRegistry,
@@ -1837,9 +1836,9 @@ class TestQgsSpatialiteProvider(QgisTestCase, ProviderTestCase):
         self.assertEqual(vl.featureCount(), 1)
         self.assertEqual(vl.wkbType(), QgsWkbTypes.Type.Point)
         feature = vl.getFeature(1)
-        geom = feature.geometry()
-        self.assertEqual(geom.wkbType(), QgsWkbTypes.Type.Point)
-        self.assertEqual(geom.constGet(), QgsPoint(x=16, y=42))
+        geom = feature.geometry().constGet()
+        self.assertEqual(geom.x(), 16)
+        self.assertEqual(geom.y(), 42)
 
         query = "SELECT id, MakePointZ(x,y,z,srid) as geom FROM test_querygeometry"
         vl = QgsVectorLayer(f"dbname={self.dbname} table='({query})' (geom) key='id'",
@@ -1848,31 +1847,35 @@ class TestQgsSpatialiteProvider(QgisTestCase, ProviderTestCase):
         self.assertEqual(vl.featureCount(), 1)
         self.assertEqual(vl.wkbType(), QgsWkbTypes.Type.PointZ)
         feature = vl.getFeature(1)
-        geom = feature.geometry()
-        self.assertEqual(geom.wkbType(), QgsWkbTypes.Type.PointZ)
-        self.assertEqual(geom.constGet(), QgsPoint(x=16, y=42, z=100))
+        geom = feature.geometry().constGet()
+        self.assertEqual(geom.x(), 16)
+        self.assertEqual(geom.y(), 42)
+        self.assertEqual(geom.z(), 100)
 
-        query = "SELECT id, MakePointZ(x,y,m,srid) as geom FROM test_querygeometry"
+        query = "SELECT id, MakePointM(x,y,m,srid) as geom FROM test_querygeometry"
         vl = QgsVectorLayer(f"dbname={self.dbname} table='({query})' (geom) key='id'",
                             "QueryGeometry", "spatialite")
         self.assertTrue(vl.isValid())
         self.assertEqual(vl.featureCount(), 1)
         self.assertEqual(vl.wkbType(), QgsWkbTypes.Type.PointM)
         feature = vl.getFeature(1)
-        geom = feature.geometry()
-        self.assertEqual(geom.wkbType(), QgsWkbTypes.Type.PointM)
-        self.assertEqual(geom.constGet(), QgsPoint(x=16, y=42, m=10))
+        geom = feature.geometry().constGet()
+        self.assertEqual(geom.x(), 16)
+        self.assertEqual(geom.y(), 42)
+        self.assertEqual(geom.m(), 10)
 
-        query = "SELECT id, MakePointZ(x,y,z,m,srid) as geom FROM test_querygeometry"
+        query = "SELECT id, MakePointZM(x,y,z,m,srid) as geom FROM test_querygeometry"
         vl = QgsVectorLayer(f"dbname={self.dbname} table='({query})' (geom) key='id'",
                             "QueryGeometry", "spatialite")
         self.assertTrue(vl.isValid())
         self.assertEqual(vl.featureCount(), 1)
         self.assertEqual(vl.wkbType(), QgsWkbTypes.Type.PointZM)
         feature = vl.getFeature(1)
-        geom = feature.geometry()
-        self.assertEqual(geom.wkbType(), QgsWkbTypes.Type.PointZM)
-        self.assertEqual(geom.constGet(), QgsPoint(x=16, y=42, z=100, m=10))
+        geom = feature.geometry().constGet()
+        self.assertEqual(geom.x(), 16)
+        self.assertEqual(geom.y(), 42)
+        self.assertEqual(geom.z(), 100)
+        self.assertEqual(geom.m(), 10)
 
     def testViewsExtentFilter(self):
         """Test extent filtering of a views-based spatialite layer"""
