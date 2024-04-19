@@ -28,6 +28,7 @@ from qgis.core import (
     QgsFieldConstraints,
     QgsGeometry,
     QgsPathResolver,
+    QgsPoint,
     QgsPointXY,
     QgsProject,
     QgsProviderRegistry,
