@@ -230,6 +230,7 @@ void QgsQueryResultWidget::updateButtons()
   mFilterLineEdit->setEnabled( mFirstRowFetched );
   mFilterToolButton->setEnabled( mFirstRowFetched );
   mExecuteButton->setEnabled( ! mSqlEditor->text().isEmpty() );
+  mExecuteButton->setText( mSqlEditor.selectedText().length() > 0 ? tr( "Execute Selection" ) : tr( "Execute" ) );
   mLoadAsNewLayerGroupBox->setVisible( mConnection && mConnection->capabilities().testFlag( QgsAbstractDatabaseProviderConnection::Capability::SqlLayers ) );
   mLoadAsNewLayerGroupBox->setEnabled(
     mSqlErrorMessage.isEmpty() &&
