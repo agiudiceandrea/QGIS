@@ -33,6 +33,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="mStopButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Stop</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="mStatusLabel">
        <property name="text">
         <string>Status and errors goes here.</string>
@@ -63,16 +73,6 @@
       <widget class="QPushButton" name="mClearButton">
        <property name="text">
         <string>Clear</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="mStopButton">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Stop</string>
        </property>
       </widget>
      </item>
