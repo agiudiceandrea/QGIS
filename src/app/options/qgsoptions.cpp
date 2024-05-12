@@ -1595,8 +1595,8 @@ void QgsOptions::saveOptions()
   QgsDebugMsgLevel( QStringLiteral( "toULongLong: %1" ).arg( QVariant::fromValue( mCacheSize->value() * 1024L ).toULongLong() ), 4 );
 
   mSettings->setValue( QStringLiteral( "cache/size" ), QVariant::fromValue( mCacheSize->value() * 1024L ) );
-  mSettings->setValue( QStringLiteral( "cache/size2" ), mCacheSize->value() * 1024L );
-  mSettings->setValue( QStringLiteral( "cache/size3" ), QVariant( mCacheSize->value() * 1024L ) );
+  // mSettings->setValue( QStringLiteral( "cache/size2" ), mCacheSize->value() * 1024L );
+  // mSettings->setValue( QStringLiteral( "cache/size3" ), QVariant( mCacheSize->value() * 1024L ) );
   mSettings->setValue( QStringLiteral( "cache/size4" ), QVariant::fromValue( mCacheSize->value() * 1024LL ) );
   mSettings->setValue( QStringLiteral( "cache/size5" ), QVariant( mCacheSize->value() * 1024LL ) );
 
