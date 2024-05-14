@@ -83,7 +83,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
       current++;
     }
 
-    if ( !geomQueue.isEmpy() )
+    if ( !geomQueue.isEmpty() )
     {
       if ( !separateDisjoint )
       {
