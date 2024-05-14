@@ -139,7 +139,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
         attributeHash.insert( indexAttributes, f.attributes() );
       }
 
-      if ( f.hasGeometry() && !f.geometry().isEmpy() )
+      if ( f.hasGeometry() && !f.geometry().isEmpty() )
       {
         geometryHash[ indexAttributes ].append( f.geometry() );
       }
