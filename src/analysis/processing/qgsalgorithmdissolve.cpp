@@ -67,7 +67,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
         firstFeature = false;
       }
 
-      if ( f.hasGeometry() && !f.geometry().isNull() )
+      if ( f.hasGeometry() && !f.geometry().isEmpty() )
       {
         geomQueue.append( f.geometry() );
         if ( maxQueueLength > 0 && geomQueue.length() > maxQueueLength )
@@ -136,7 +136,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
         attributeHash.insert( indexAttributes, f.attributes() );
       }
 
-      if ( f.hasGeometry() && !f.geometry().isNull() )
+      if ( f.hasGeometry() && !f.geometry().isEmpty() )
       {
         geometryHash[ indexAttributes ].append( f.geometry() );
       }
@@ -262,6 +262,9 @@ QVariantMap QgsDissolveAlgorithm::processAlgorithm( const QVariantMap &parameter
 
   return processCollection( parameters, context, feedback, [ & ]( const QVector< QgsGeometry > &parts )->QgsGeometry
   {
+    if ( parts.isEmpty() )
+      return QgsGeometry();
+
     QgsGeometry result( QgsGeometry::unaryUnion( parts ) );
     if ( QgsWkbTypes::geometryType( result.wkbType() ) == Qgis::GeometryType::Line )
       result = result.mergeLines();
