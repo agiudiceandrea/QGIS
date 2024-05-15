@@ -89,7 +89,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
       current++;
     }
 
-    if ( !separateDisjoint )
+    if ( !separateDisjoint || geomQueue.isEmpty() )
     {
       outputFeature.setGeometry( collector( geomQueue ) );
       if ( !sink->addFeature( outputFeature, QgsFeatureSink::FastInsert ) )
