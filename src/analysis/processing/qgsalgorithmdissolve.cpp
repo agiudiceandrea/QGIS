@@ -43,7 +43,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
 
   const long count = source->featureCount();
 
-  if ( ! count > 0 )
+  if ( !( count > 0 ) )
     return outputs;
 
   QgsFeature f;
