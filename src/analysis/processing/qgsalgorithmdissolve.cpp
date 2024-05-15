@@ -36,9 +36,15 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
+  QVariantMap outputs;
+  outputs.insert( QStringLiteral( "OUTPUT" ), dest );
+
   const QStringList fields = parameterAsStrings( parameters, QStringLiteral( "FIELD" ), context );
 
   const long count = source->featureCount();
+
+  if ( ! count > 0 )
+    return outputs;
 
   QgsFeature f;
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), sourceFlags );
@@ -190,8 +196,6 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
     }
   }
 
-  QVariantMap outputs;
-  outputs.insert( QStringLiteral( "OUTPUT" ), dest );
   return outputs;
 }
 
