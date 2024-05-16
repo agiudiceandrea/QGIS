@@ -59,7 +59,10 @@ QgsQueryResultWidget::QgsQueryResultWidget( QWidget *parent, QgsAbstractDatabase
   }
          );
   connect( mSqlEditor, &QgsCodeEditorSQL::textChanged, this, &QgsQueryResultWidget::updateButtons );
-  connect( mSqlEditor, &QgsCodeEditorSQL::selectionChanged, this, &QgsQueryResultWidget::updateButtons );
+  connect( mSqlEditor, &QgsCodeEditorSQL::selectionChanged, this, [ = ]
+  {
+    mExecuteButton->setText( mSqlEditor->selectedText().isEmpty() ? tr( "Execute" ) : tr( "Execute Selection" ) );
+  } );
   connect( mFilterToolButton, &QToolButton::pressed, this, [ = ]
   {
     if ( mConnection )
@@ -230,7 +233,6 @@ void QgsQueryResultWidget::updateButtons()
   mFilterLineEdit->setEnabled( mFirstRowFetched );
   mFilterToolButton->setEnabled( mFirstRowFetched );
   mExecuteButton->setEnabled( ! mSqlEditor->text().isEmpty() );
-  mExecuteButton->setText( mSqlEditor->selectedText().isEmpty() ? tr( "Execute" ) : tr( "Execute Selection" ) );
   mLoadAsNewLayerGroupBox->setVisible( mConnection && mConnection->capabilities().testFlag( QgsAbstractDatabaseProviderConnection::Capability::SqlLayers ) );
   mLoadAsNewLayerGroupBox->setEnabled(
     mSqlErrorMessage.isEmpty() &&
@@ -508,7 +510,7 @@ void QgsQueryResultWidget::copyResults( int fromRow, int toRow, int fromColumn, 
 
 QgsAbstractDatabaseProviderConnection::SqlVectorLayerOptions QgsQueryResultWidget::sqlVectorLayerOptions() const
 {
-  mSqlVectorLayerOptions.sql = mSqlEditor->selectedText().isEmpty() ? mSqlEditor->text() : mSqlEditor->selectedText();
+  mSqlVectorLayerOptions.sql = mSqlEditor->text();
   mSqlVectorLayerOptions.filter = mFilterLineEdit->text();
   mSqlVectorLayerOptions.primaryKeyColumns = mPkColumnsComboBox->checkedItems();
   mSqlVectorLayerOptions.geometryColumn = mGeometryColumnComboBox->currentText();
