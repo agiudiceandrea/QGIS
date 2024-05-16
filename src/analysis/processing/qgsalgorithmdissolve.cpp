@@ -89,7 +89,12 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
       current++;
     }
 
-    if ( !separateDisjoint || geomQueue.isEmpty() )
+    if ( geomQueue.isEmpty() )
+    {
+      if ( !sink->addFeature( outputFeature, QgsFeatureSink::FastInsert ) )
+        throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
+    }
+    else if ( !separateDisjoint )
     {
       outputFeature.setGeometry( collector( geomQueue ) );
       if ( !sink->addFeature( outputFeature, QgsFeatureSink::FastInsert ) )
@@ -266,9 +271,6 @@ QVariantMap QgsDissolveAlgorithm::processAlgorithm( const QVariantMap &parameter
 
   return processCollection( parameters, context, feedback, [ & ]( const QVector< QgsGeometry > &parts )->QgsGeometry
   {
-    if ( parts.isEmpty() )
-      return QgsGeometry();
-
     QgsGeometry result( QgsGeometry::unaryUnion( parts ) );
     if ( QgsWkbTypes::geometryType( result.wkbType() ) == Qgis::GeometryType::Line )
       result = result.mergeLines();
