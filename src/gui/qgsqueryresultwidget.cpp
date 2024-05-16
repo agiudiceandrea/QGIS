@@ -176,7 +176,7 @@ void QgsQueryResultWidget::executeQuery()
   cancelRunningQuery();
   if ( mConnection )
   {
-    const QString sql = mSqlEditor->selectedText().isEmpty() ? mSqlEditor->text() : mSqlEditor->selectedText();
+    const QString sql { mSqlEditor->selectedText().isEmpty() ? mSqlEditor->text() : mSqlEditor->selectedText() };
 
     bool ok = false;
     mCurrentHistoryEntryId = QgsGui::historyProviderRegistry()->addEntry( QStringLiteral( "dbquery" ),
