@@ -91,6 +91,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
 
     if ( geomQueue.isEmpty() )
     {
+      outputFeature.clearGeometry();
       if ( !sink->addFeature( outputFeature, QgsFeatureSink::FastInsert ) )
         throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
     }
