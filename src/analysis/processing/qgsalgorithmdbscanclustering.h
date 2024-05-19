@@ -59,7 +59,7 @@ class ANALYSIS_EXPORT QgsDbscanClusteringAlgorithm : public QgsProcessingAlgorit
                           const double eps1,
                           const double eps2,
                           bool borderPointsAreNoise,
-                          long featureCount,
+                          long long featureCount,
                           QgsFeatureIterator features,
                           QgsSpatialIndexKDBush &index,
                           std::unordered_map< QgsFeatureId, int> &idToCluster,
