@@ -107,9 +107,9 @@ QVariantMap QgsRemoveDuplicatesByAttributeAlgorithm::processAlgorithm( const QVa
   std::unique_ptr< QgsFeatureSink > dupesSink( parameterAsSink( parameters, QStringLiteral( "DUPLICATES" ), context, dupeSinkId, source->fields(),
       source->wkbType(), source->sourceCrs() ) );
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   long long keptCount = 0;
   long long discardedCount = 0;

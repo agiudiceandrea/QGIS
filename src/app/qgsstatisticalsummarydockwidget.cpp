@@ -267,7 +267,7 @@ void QgsStatisticalSummaryDockWidget::refreshStatistics()
       }
     }
 
-    const long featureCount = selectedOnly ? mLayer->selectedFeatureCount() : mLayer->featureCount();
+    const long long featureCount = selectedOnly ? mLayer->selectedFeatureCount() : mLayer->featureCount();
     std::unique_ptr< QgsStatisticsValueGatherer > gatherer = std::make_unique< QgsStatisticsValueGatherer >( mLayer, fit, featureCount, sourceFieldExp, mFieldType, statsToCalc, stringStatsToCalc, dateTimeStatsToCalc );
     switch ( mFieldType )
     {
@@ -642,7 +642,7 @@ DataType QgsStatisticalSummaryDockWidget::fieldType( const QString &fieldName )
 QgsStatisticsValueGatherer::QgsStatisticsValueGatherer(
   QgsVectorLayer *layer,
   const QgsFeatureIterator &fit,
-  long featureCount,
+  long long featureCount,
   const QString &sourceFieldExp,
   DataType fieldType,
   Qgis::Statistics statsToCalculate,

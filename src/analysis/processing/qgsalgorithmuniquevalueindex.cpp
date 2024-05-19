@@ -105,9 +105,9 @@ QVariantMap QgsAddUniqueValueIndexAlgorithm::processAlgorithm( const QVariantMap
 
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks );
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
   QgsFeature feature;
   while ( it.nextFeature( feature ) )
   {

@@ -95,14 +95,14 @@ QVariantMap QgsCoverageValidateAlgorithm::processAlgorithm( const QVariantMap &p
 
   QgsGeometryCollection collection;
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
   if ( count >  0 )
   {
     collection.reserve( count );
   }
 
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   feedback->pushInfo( QObject::tr( "Collecting features" ) );
 

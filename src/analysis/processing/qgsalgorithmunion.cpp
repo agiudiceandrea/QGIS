@@ -107,8 +107,8 @@ QVariantMap QgsUnionAlgorithm::processAlgorithm( const QVariantMap &parameters, 
   const QList<int> fieldIndicesA = QgsProcessingUtils::fieldNamesToIndices( QStringList(), sourceA->fields() );
   const QList<int> fieldIndicesB = QgsProcessingUtils::fieldNamesToIndices( QStringList(), sourceB->fields() );
 
-  long count = 0;
-  const long total = sourceA->featureCount() * 2 + sourceB->featureCount();
+  long long count = 0;
+  const long long total = sourceA->featureCount() * 2 + sourceB->featureCount();
 
   QgsGeometryParameters geometryParameters;
   if ( parameters.value( QStringLiteral( "GRID_SIZE" ) ).isValid() )

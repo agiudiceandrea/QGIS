@@ -213,7 +213,7 @@ QVariantMap QgsRandomPointsInPolygonsAlgorithm::processAlgorithm( const QVariant
   int emptyOrNullGeom = 0;
 
   long long attempts = 0; // used for unique feature IDs in the indexes
-  const long numberOfFeatures = polygonSource->featureCount();
+  const long long numberOfFeatures = polygonSource->featureCount();
   long long desiredNumberOfPoints = 0;
   const double featureProgressStep = 100.0 / ( numberOfFeatures > 0 ? numberOfFeatures : 1 );
   double baseFeatureProgress = 0.0;

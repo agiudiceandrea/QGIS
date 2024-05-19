@@ -100,7 +100,7 @@ QVariantMap QgsMultiDifferenceAlgorithm::processAlgorithm( const QVariantMap &pa
   const Qgis::WkbType geometryType = QgsWkbTypes::multiType( sourceA->wkbType() );
   const QgsCoordinateReferenceSystem crs = sourceA->sourceCrs();
   std::unique_ptr< QgsFeatureSink > sink;
-  long count = 0;
+  long long count = 0;
   QVariantMap outputs;
 
   if ( totalLayerCount == 1 )
@@ -114,7 +114,7 @@ QVariantMap QgsMultiDifferenceAlgorithm::processAlgorithm( const QVariantMap &pa
 
     QgsVectorLayer *overlayLayer = qobject_cast< QgsVectorLayer * >( layers.at( 0 ) );
 
-    const long total = sourceA->featureCount();
+    const long long total = sourceA->featureCount();
     QgsOverlayUtils::difference( *sourceA, *overlayLayer, *sink, context, feedback, count, total, QgsOverlayUtils::OutputA );
   }
   else

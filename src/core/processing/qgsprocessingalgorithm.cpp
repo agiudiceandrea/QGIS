@@ -1155,13 +1155,13 @@ QVariantMap QgsProcessingFeatureBasedAlgorithm::processAlgorithm( const QVariant
   algContext.appendScopes( createExpressionContext( parameters, context, mSource.get() ).takeScopes() );
   context.setExpressionContext( algContext );
 
-  long count = mSource->featureCount();
+  long long count = mSource->featureCount();
 
   QgsFeature f;
   QgsFeatureIterator it = mSource->getFeatures( request(), sourceFlags() );
 
   double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
   while ( it.nextFeature( f ) )
   {
     if ( feedback->isCanceled() )

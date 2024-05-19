@@ -113,14 +113,14 @@ QVariantMap QgsBufferAlgorithm::processAlgorithm( const QVariantMap &parameters,
     bufferProperty = parameters.value( QStringLiteral( "DISTANCE" ) ).value< QgsProperty >();
   }
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
 
   QgsFeature f;
   // buffer doesn't care about invalid features, and buffering can be used to repair geometries
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks );
 
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   QVector< QgsGeometry > bufferedGeometriesForDissolve;
   QgsAttributes dissolveAttrs;

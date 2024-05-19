@@ -111,8 +111,8 @@ QVariantMap QgsDifferenceAlgorithm::processAlgorithm( const QVariantMap &paramet
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
 
-  long count = 0;
-  const long total = sourceA->featureCount();
+  long long count = 0;
+  const long long total = sourceA->featureCount();
 
   QgsGeometryParameters geometryParameters;
   if ( parameters.value( QStringLiteral( "GRID_SIZE" ) ).isValid() )

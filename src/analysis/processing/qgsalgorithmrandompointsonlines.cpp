@@ -217,7 +217,7 @@ QVariantMap QgsRandomPointsOnLinesAlgorithm::processAlgorithm( const QVariantMap
   int missedLines = 0;
   int emptyOrNullGeom = 0;
 
-  const long numberOfFeatures = lineSource->featureCount();
+  const long long numberOfFeatures = lineSource->featureCount();
   long long desiredNumberOfPoints = 0;
   const double featureProgressStep = 100.0 / ( numberOfFeatures > 0 ? numberOfFeatures : 1 );
   double baseFeatureProgress = 0.0;

@@ -101,13 +101,13 @@ QVariantMap QgsFilterAlgorithm::processAlgorithm( const QVariantMap &parameters,
     output->expression.prepare( &expressionContext );
   }
 
-  long count = source->featureCount();
+  long long count = source->featureCount();
 
   QgsFeature f;
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks );
 
   double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   while ( it.nextFeature( f ) )
   {

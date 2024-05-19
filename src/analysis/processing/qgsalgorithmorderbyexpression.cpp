@@ -86,9 +86,9 @@ QVariantMap QgsOrderByExpressionAlgorithm::processAlgorithm( const QVariantMap &
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   QgsFeatureRequest request;
   request.addOrderBy( expressionString, ascending, nullsFirst );

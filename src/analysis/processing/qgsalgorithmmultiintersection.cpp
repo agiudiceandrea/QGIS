@@ -101,7 +101,7 @@ QVariantMap QgsMultiIntersectionAlgorithm::processAlgorithm( const QVariantMap &
   const Qgis::WkbType geometryType = QgsWkbTypes::multiType( sourceA->wkbType() );
   const QgsCoordinateReferenceSystem crs = sourceA->sourceCrs();
   std::unique_ptr< QgsFeatureSink > sink;
-  long count = 0;
+  long long count = 0;
   QVariantMap outputs;
 
   QList<int> fieldIndicesA, fieldIndicesB;
@@ -126,7 +126,7 @@ QVariantMap QgsMultiIntersectionAlgorithm::processAlgorithm( const QVariantMap &
 
     outputs.insert( QStringLiteral( "OUTPUT" ), dest );
 
-    const long total = sourceA->featureCount();
+    const long long total = sourceA->featureCount();
     QgsOverlayUtils::intersection( *sourceA, *overlayLayer, *sink, context, feedback, count, total, fieldIndicesA, fieldIndicesB );
   }
   else

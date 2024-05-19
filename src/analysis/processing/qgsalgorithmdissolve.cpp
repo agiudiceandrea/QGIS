@@ -41,7 +41,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
 
   const QStringList fields = parameterAsStrings( parameters, QStringLiteral( "FIELD" ), context );
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
 
   if ( !( count > 0 ) )
     return outputs;
@@ -50,7 +50,7 @@ QVariantMap QgsCollectorAlgorithm::processCollection( const QVariantMap &paramet
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), sourceFlags );
 
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   if ( fields.isEmpty() )
   {

@@ -109,9 +109,9 @@ QVariantMap QgsRasterSamplingAlgorithm::processAlgorithm( const QVariantMap &par
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
   const double step = count > 0 ? 100.0 / count : 1;
-  long current = 0;
+  long long current = 0;
 
   const QgsCoordinateTransform ct( source->sourceCrs(), mCrs, context.transformContext() );
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest() );

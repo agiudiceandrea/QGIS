@@ -165,7 +165,7 @@ QVariantMap QgsDbscanClusteringAlgorithm::processAlgorithm( const QVariantMap &p
   feedback->pushInfo( QObject::tr( "Analysing clusters" ) );
   std::unordered_map< QgsFeatureId, int> idToCluster;
   idToCluster.reserve( index.size() );
-  const long featureCount = source->featureCount();
+  const long long featureCount = source->featureCount();
   QgsFeatureIterator features = source->getFeatures( QgsFeatureRequest().setNoAttributes() );
   stdbscan( minSize, eps1, eps2, borderPointsAreNoise, featureCount, features, index, idToCluster, idToDateTime, feedback );
 
@@ -176,7 +176,7 @@ QVariantMap QgsDbscanClusteringAlgorithm::processAlgorithm( const QVariantMap &p
   // write clusters
   const double writeStep = featureCount > 0 ? 10.0 / featureCount : 1;
   features = source->getFeatures();
-  int i = 0;
+  long long i = 0;
   QgsFeature feat;
   while ( features.nextFeature( feat ) )
   {
@@ -212,7 +212,7 @@ void QgsDbscanClusteringAlgorithm::stdbscan( const std::size_t minSize,
     const double eps1,
     const double eps2,
     const bool borderPointsAreNoise,
-    const long featureCount,
+    const long long featureCount,
     QgsFeatureIterator features,
     QgsSpatialIndexKDBush &index,
     std::unordered_map< QgsFeatureId, int> &idToCluster,
@@ -225,7 +225,7 @@ void QgsDbscanClusteringAlgorithm::stdbscan( const std::size_t minSize,
   visited.reserve( index.size() );
 
   QgsFeature feat;
-  int i = 0;
+  long long i = 0;
   int clusterCount = 0;
 
   while ( features.nextFeature( feat ) )

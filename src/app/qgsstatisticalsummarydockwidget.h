@@ -56,7 +56,7 @@ class QgsStatisticsValueGatherer : public QgsTask
     QgsStatisticsValueGatherer(
       QgsVectorLayer *layer,
       const QgsFeatureIterator &fit,
-      long featureCount,
+      long long featureCount,
       const QString &sourceFieldExp,
       DataType fieldType,
       Qgis::Statistics statsToCalculate,
@@ -74,7 +74,7 @@ class QgsStatisticsValueGatherer : public QgsTask
   private:
 
     QgsFeatureIterator mFeatureIterator;
-    long mFeatureCount = 0;
+    long long mFeatureCount = 0;
     QString mFieldExpression;
     int mFieldIndex = -1;
     DataType mFieldType;

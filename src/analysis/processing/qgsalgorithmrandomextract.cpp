@@ -84,7 +84,7 @@ QVariantMap QgsRandomExtractAlgorithm::processAlgorithm( const QVariantMap &para
 
   const int method = parameterAsEnum( parameters, QStringLiteral( "METHOD" ), context );
   int number = parameterAsInt( parameters, QStringLiteral( "NUMBER" ), context );
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
 
   if ( method == 0 )
   {

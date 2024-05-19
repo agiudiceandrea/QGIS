@@ -59,10 +59,10 @@ namespace QgsOverlayUtils
   Q_DECLARE_FLAGS( SanitizeFlags, SanitizeFlag )
 
 
-  void difference( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, long &count, long totalCount, DifferenceOutput outputAttrs, const QgsGeometryParameters &parameters = QgsGeometryParameters(),
+  void difference( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, long long &count, long long totalCount, DifferenceOutput outputAttrs, const QgsGeometryParameters &parameters = QgsGeometryParameters(),
                    SanitizeFlags flags = SanitizeFlags() );
 
-  void intersection( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, long &count, long totalCount, const QList<int> &fieldIndicesA, const QList<int> &fieldIndicesB, const QgsGeometryParameters &parameters = QgsGeometryParameters() );
+  void intersection( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, long long &count, long long totalCount, const QList<int> &fieldIndicesA, const QList<int> &fieldIndicesB, const QgsGeometryParameters &parameters = QgsGeometryParameters() );
 
   //! Makes sure that what came out from intersection of two geometries is good to be used in the output
   bool sanitizeIntersectionResult( QgsGeometry &geom, Qgis::GeometryType geometryType, SanitizeFlags flags = SanitizeFlags() );

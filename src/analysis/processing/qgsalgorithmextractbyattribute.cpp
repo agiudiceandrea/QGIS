@@ -178,10 +178,10 @@ QVariantMap QgsExtractByAttributeAlgorithm::processAlgorithm( const QVariantMap 
 
   QgsExpressionContext expressionContext = createExpressionContext( parameters, context, source.get() );
 
-  const long count = source->featureCount();
+  const long long count = source->featureCount();
 
   const double step = count > 0 ? 100.0 / count : 1;
-  int current = 0;
+  long long current = 0;
 
   if ( !nonMatchingSink )
   {

@@ -98,9 +98,9 @@ QVariantMap QgsZonalHistogramAlgorithm::processAlgorithm( const QVariantMap &par
   if ( !zones )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT_VECTOR" ) ) );
 
-  const long count = zones->featureCount();
+  const long long count = zones->featureCount();
   const double step = count > 0 ? 100.0 / count : 1;
-  long current = 0;
+  long long current = 0;
 
   QList< double > uniqueValues;
   QMap< QgsFeatureId, QHash< double, qgssize > > featuresUniqueValues;

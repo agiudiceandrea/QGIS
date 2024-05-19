@@ -108,7 +108,7 @@ Qgis::ZonalStatisticResult QgsZonalStatistics::calculateStatistics( QgsFeedback 
 
   vectorProvider->addAttributes( newFieldList );
 
-  long featureCount = vectorProvider->featureCount();
+  long long featureCount = vectorProvider->featureCount();
 
   QgsFeatureRequest request;
   request.setNoAttributes();
@@ -117,7 +117,7 @@ Qgis::ZonalStatisticResult QgsZonalStatistics::calculateStatistics( QgsFeedback 
   QgsFeatureIterator fi = vectorProvider->getFeatures( request );
   QgsFeature feature;
 
-  int featureCounter = 0;
+  long long featureCounter = 0;
 
   QgsChangedAttributesMap changeMap;
   while ( fi.nextFeature( feature ) )

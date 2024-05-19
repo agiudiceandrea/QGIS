@@ -168,8 +168,8 @@ int findClosestVertex( const QgsPointXY &point, SpatialIndex::ISpatialIndex *ind
 void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const QVector< QgsPointXY > &additionalPoints,
                                         QVector< QgsPointXY > &snappedPoints, QgsFeedback *feedback ) const
 {
-  long featureCount = mSource->featureCount() * 2;
-  int step = 0;
+  unsigned long long featureCount = mSource->featureCount() * 2;
+  unsigned long long step = 0;
 
   QgsCoordinateTransform ct;
   ct.setSourceCrs( mSource->sourceCrs() );
