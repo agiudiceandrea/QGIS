@@ -168,7 +168,7 @@ int findClosestVertex( const QgsPointXY &point, SpatialIndex::ISpatialIndex *ind
 void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const QVector< QgsPointXY > &additionalPoints,
                                         QVector< QgsPointXY > &snappedPoints, QgsFeedback *feedback ) const
 {
-  unsigned long long featureCount = mSource->featureCount() * 2;
+  long long featureCount = mSource->featureCount();
   unsigned long long step = 0;
 
   QgsCoordinateTransform ct;
@@ -274,7 +274,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
       }
     }
     if ( feedback )
-      feedback->setProgress( 100.0 * static_cast< double >( ++step ) / featureCount );
+      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / featureCount );
   }
 
   // build a hash of feature ids to tie points which depend on this feature
@@ -411,7 +411,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
     }
     if ( feedback )
     {
-      feedback->setProgress( 100.0 * static_cast< double >( ++step ) / featureCount );
+      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / featureCount );
     }
 
   }
