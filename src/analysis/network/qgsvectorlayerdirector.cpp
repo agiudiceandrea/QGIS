@@ -274,7 +274,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
       }
     }
     if ( feedback )
-      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / featureCount );
+      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / static_cast< double >( featureCount ) );
   }
 
   // build a hash of feature ids to tie points which depend on this feature
@@ -411,7 +411,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
     }
     if ( feedback )
     {
-      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / featureCount );
+      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / static_cast< double >( featureCount ) );
     }
 
   }
