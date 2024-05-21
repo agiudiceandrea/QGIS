@@ -169,7 +169,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
                                         QVector< QgsPointXY > &snappedPoints, QgsFeedback *feedback ) const
 {
   const long long featureCount = mSource->featureCount();
-  unsigned long long step = 0;
+  long long step = 0;
 
   QgsCoordinateTransform ct;
   ct.setSourceCrs( mSource->sourceCrs() );
@@ -324,6 +324,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
   }
 
   fit = mSource->getFeatures( QgsFeatureRequest().setSubsetOfAttributes( requiredAttributes() ) );
+  step = 0;
   while ( fit.nextFeature( feature ) )
   {
     if ( feedback && feedback->isCanceled() )
@@ -411,7 +412,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
     }
     if ( feedback )
     {
-      feedback->setProgress( 50.0 * static_cast< double >( ++step ) / static_cast< double >( featureCount ) );
+      feedback->setProgress( 50.0 + 50.0 * static_cast< double >( ++step ) / static_cast< double >( featureCount ) );
     }
 
   }
