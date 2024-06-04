@@ -1054,7 +1054,7 @@ void QgsAttributeTableModel::prefetchSortData( const QString &expressionString, 
   }
 
   const QgsFeatureRequest request = QgsFeatureRequest( mFeatureRequest )
-                                    .setFlags( Qgis::FeatureRequestFlag::NoGeometry )
+                                    .setFlags( cache.sortCacheExpression.needsGeometry() ? Qgis::FeatureRequestFlag::NoFlags : Qgis::FeatureRequestFlag::NoGeometry )
                                     .setSubsetOfAttributes( cache.sortCacheAttributes );
   QgsFeatureIterator it = mLayerCache->getFeatures( request );
 
