@@ -289,7 +289,7 @@ QVariant QgsLayerTreeModel::data( const QModelIndex &index, int role ) const
           QString layerCrs = layer->crs().authid();
           if ( !std::isnan( layer->crs().coordinateEpoch() ) )
           {
-            layerCrs += QStringLiteral( " @ %1" ).arg( layer->crs().coordinateEpoch(), 0, 'f', 3 );
+            layerCrs += QStringLiteral( " @ %1" ).arg( qgsDoubleToString( layer->crs().coordinateEpoch(), 3 ) );
           }
           if ( QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer ) )
             title += tr( " (%1 - %2)" ).arg( QgsWkbTypes::displayString( vl->wkbType() ), layerCrs ).toHtmlEscaped();

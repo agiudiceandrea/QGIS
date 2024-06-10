@@ -3364,7 +3364,7 @@ QString QgsMapLayer::crsHtmlMetadata() const
     // coordinate epoch
     if ( !std::isnan( c.coordinateEpoch() ) )
     {
-      metadata += QStringLiteral( "<tr><td class=\"highlight\">" ) + tr( "Coordinate Epoch" ) + QStringLiteral( "</td><td>%1</td></tr>\n" ).arg( c.coordinateEpoch(), 0, 'f', 3 );
+      metadata += QStringLiteral( "<tr><td class=\"highlight\">" ) + tr( "Coordinate Epoch" ) + QStringLiteral( "</td><td>%1</td></tr>\n" ).arg( qgsDoubleToString( c.coordinateEpoch(), 3 ) );
     }
   }
 
