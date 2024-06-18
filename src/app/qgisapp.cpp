@@ -8096,8 +8096,10 @@ void QgisApp::diagramProperties()
            &dlg, &QDialog::reject );
   connect( buttonBox->button( QDialogButtonBox::Apply ), &QAbstractButton::clicked,
            gui, &QgsDiagramProperties::apply );
-  connect( buttonBox->button( QDialogButtonBox::Help ), &QAbstractButton::clicked,
-           gui, &QgsDiagramProperties::showHelp );
+  connect( buttonBox->button( QDialogButtonBox::Help ), &QAbstractButton::clicked, gui, [ = ]
+    {
+      QgsHelp::openHelp( QStringLiteral( "working_with_vector/vector_properties.html#diagrams-properties" ) );
+    } );
 
   if ( dlg.exec() )
     gui->apply();
