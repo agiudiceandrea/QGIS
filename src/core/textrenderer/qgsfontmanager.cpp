@@ -1946,9 +1946,13 @@ bool QgsFontManager::installFontsFromData( const QByteArray &data, QString &erro
   QgsDebugMsgLevel( QStringLiteral( "Font sourcePath: %1" ).arg( sourcePath ), 2 );
   const QFileInfo sourcePathFileInfo( sourcePath );
   if ( sourcePathFileInfo.exists() )
+  {
     QgsDebugMsgLevel( QStringLiteral( "Font sourcePath %1 exists: %2" ).arg( sourcePath, sourcePathFileInfo.size() ), 2 );
+  }
   else
+  {
     QgsDebugMsgLevel( QStringLiteral( "Font sourcePath %1 doesn't exist" ).arg( sourcePath ), 2 );
+  }
 
   //try to install the data directly as a font
   int id = QFontDatabase::addApplicationFont( sourcePath );
