@@ -1913,6 +1913,7 @@ bool QgsFontManager::installFontsFromData( const QByteArray &data, QString &erro
   families.clear();
   licenseDetails.clear();
 
+  QgsDebugMsgLevel( QStringLiteral( "Found data size: %1" ).arg( data.size() ), 2 );
   QTemporaryFile tempFile;
   if ( !extension.isEmpty() )
   {
@@ -1921,12 +1922,14 @@ bool QgsFontManager::installFontsFromData( const QByteArray &data, QString &erro
       cleanedExtension = cleanedExtension.mid( 1 );
     tempFile.setFileTemplate( QStringLiteral( "%1/XXXXXX.%2" ).arg( QDir::tempPath(), cleanedExtension ) );
   }
+  QgsDebugMsgLevel( QStringLiteral( "Font file template: %1" ).arg( tempFile.fileTemplate() ), 2 );
   QTemporaryDir tempDir;
 
   QgsReadWriteLocker locker( mReplacementLock, QgsReadWriteLocker::Read );
   const QString userFontsDir = mUserFontDirectories.empty() ? ( QgsApplication::qgisSettingsDirPath() + "fonts" ) : mUserFontDirectories.at( 0 );
   locker.unlock();
 
+  QgsDebugMsgLevel( QStringLiteral( "Font userFontsDir: %1" ).arg( userFontsDir ), 2 );
   const QDir fontsDir( userFontsDir );
 
   if ( !tempFile.open() )
@@ -1940,8 +1943,10 @@ bool QgsFontManager::installFontsFromData( const QByteArray &data, QString &erro
 
   QString sourcePath = tempFile.fileName();
 
+  QgsDebugMsgLevel( QStringLiteral( "Font sourcePath: %1" ).arg( sourcePath ), 2 );
   //try to install the data directly as a font
   int id = QFontDatabase::addApplicationFont( sourcePath );
+  QgsDebugMsgLevel( QStringLiteral( "Font id: %1" ).arg( id ), 2 );
   if ( id != -1 )
   {
     // successfully loaded data as a font
