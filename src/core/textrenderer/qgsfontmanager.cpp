@@ -1947,7 +1947,7 @@ bool QgsFontManager::installFontsFromData( const QByteArray &data, QString &erro
   const QFileInfo sourcePathFileInfo( sourcePath );
   if ( sourcePathFileInfo.exists() )
   {
-    QgsDebugMsgLevel( QStringLiteral( "Font sourcePath %1 exists: %2" ).arg( sourcePath, sourcePathFileInfo.size() ), 2 );
+    QgsDebugMsgLevel( QStringLiteral( "Font sourcePath %1 exists: %2" ).arg( sourcePath ).arg( sourcePathFileInfo.size() ), 2 );
   }
   else
   {
