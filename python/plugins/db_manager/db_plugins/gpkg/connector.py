@@ -618,7 +618,8 @@ class GPKGDBConnector(DBConnector):
             if name in vector_table_names:
                 self.core_connection.renameVectorTable('', name, new_table)
             else:
-                self.core_connection.renameRasterTable('', name, new_table)
+                sql = "ALTER TABLE %s RENAME TO %s" % (self.quoteId(name), self.quoteId(new_table))
+                self._execute_and_commit(sql)
             return True
         except QgsProviderConnectionException:
             return False
