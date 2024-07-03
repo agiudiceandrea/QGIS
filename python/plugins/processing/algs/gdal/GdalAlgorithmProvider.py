@@ -82,7 +82,7 @@ from .Dissolve import Dissolve
 from .ExecuteSql import ExecuteSql
 from .OffsetCurve import OffsetCurve
 from .ogr2ogr import ogr2ogr
-from .ogrinfo import ogrinfo
+from .ogrinfo import ogrinfo, ogrinfojson
 from .OgrToPostGis import OgrToPostGis
 from .ogr2ogrtopostgislist import Ogr2OgrToPostGisList
 from .OneSideBuffer import OneSideBuffer
@@ -195,6 +195,7 @@ class GdalAlgorithmProvider(QgsProcessingProvider):
             OffsetCurve(),
             ogr2ogr(),
             ogrinfo(),
+            ogrinfojson(),
             OgrToPostGis(),
             Ogr2OgrToPostGisList(),
             OneSideBuffer(),
