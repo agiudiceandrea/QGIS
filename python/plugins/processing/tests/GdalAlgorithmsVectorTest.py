@@ -253,7 +253,7 @@ class TestGdalVectorAlgorithms(QgisTestCase, AlgorithmsTestBase.AlgorithmsTest):
             alg.getConsoleCommands({'INPUT': source,
                                     'FEATURES': True,
                                     'NO_METADATA': False}, context, feedback),
-            ['ogrinfojson',
+            ['ogrinfo',
              '-json -features "' +
              source + '" filename_with_spaces'])
 
