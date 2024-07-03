@@ -161,7 +161,7 @@ class TestGdalVectorAlgorithms(QgisTestCase, AlgorithmsTestBase.AlgorithmsTest):
             alg.getConsoleCommands({'INPUT': source,
                                     'ALL_LAYERS': True,
                                     'SUMMARY_ONLY': True,
-                                    'EXTRA': '-nocount'
+                                    'EXTRA': '-nocount',
                                     'NO_METADATA': False}, context, feedback),
             ['ogrinfo',
              '-al -so -nocount ' +
@@ -242,7 +242,7 @@ class TestGdalVectorAlgorithms(QgisTestCase, AlgorithmsTestBase.AlgorithmsTest):
             alg.getConsoleCommands({'INPUT': source,
                                     'ALL_LAYERS': True,
                                     'FEATURES': True,
-                                    'EXTRA': '-nocount'
+                                    'EXTRA': '-nocount',
                                     'NO_METADATA': False}, context, feedback),
             ['ogrinfo',
              '-json -features -nocount ' +
