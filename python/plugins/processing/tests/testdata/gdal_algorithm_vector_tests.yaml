@@ -242,6 +242,24 @@ tests:
           - 'Geometry: Line String'
           - 'Feature Count: [6|7]' # On some platforms returns 6 instead of 7...
 
+  - algorithm: gdal:ogrinfojson
+    name: ogrinfo (json)
+    condition:
+      gdal:
+        at_least: 3070000
+    params:
+      INPUT:
+        name: lines.gml
+        type: vector
+    results:
+      OUTPUT:
+        name: expected/gdal/vector_info.json
+        type: regex
+        rules:
+          - '"extent":\[\n\s*-1.0,\s*-3.0,\n\s*11.0,\n\s*5.0\n\s*\],'
+          - '"type":"LineString",'
+          - '"featureCount":[6|7],' # On some platforms returns 6 instead of 7...
+
   - algorithm: gdal:onesidebuffer
     name: One-sided buffer (left-handed)
     params:
