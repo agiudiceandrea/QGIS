@@ -40,13 +40,10 @@ QgsVectorLayerDigitizingPropertiesPage::QgsVectorLayerDigitizingPropertiesPage( 
   {
     mRemoveDuplicateNodesCheckbox->setEnabled( true );
     mGeometryPrecisionLineEdit->setEnabled( true );
-    mGeometryPrecisionLineEdit->setValidator( new QDoubleValidator( mGeometryPrecisionLineEdit ) );
+    mGeometryPrecisionLineEdit->setValidator( new QgsDoubleValidator( mGeometryPrecisionLineEdit ) );
 
     const double precision( vlayer->geometryOptions()->geometryPrecision() );
-    const bool ok = true;
-    QString precisionStr( QLocale().toString( precision, ok ) );
-    if ( precision == 0.0 || ! ok )
-      precisionStr = QString();
+    const QString precisionStr = precision == 0.0 ? QString() : qgsDoubleToString( precision );
     mGeometryPrecisionLineEdit->setText( precisionStr );
 
     mRemoveDuplicateNodesManuallyActivated = vlayer->geometryOptions()->removeDuplicateNodes();
