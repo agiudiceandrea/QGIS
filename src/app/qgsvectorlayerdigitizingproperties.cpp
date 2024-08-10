@@ -14,10 +14,12 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "qgis.h"
 #include "qgsvectorlayerdigitizingproperties.h"
 #include "qgsanalysis.h"
 #include "qgscollapsiblegroupbox.h"
 #include "qgsdoublespinbox.h"
+#include "qgsdoublevalidator.h"
 #include "qgsgeometrycheckfactory.h"
 #include "qgsgeometrycheckregistry.h"
 #include "qgsgeometrycheck.h"
@@ -40,13 +42,10 @@ QgsVectorLayerDigitizingPropertiesPage::QgsVectorLayerDigitizingPropertiesPage( 
   {
     mRemoveDuplicateNodesCheckbox->setEnabled( true );
     mGeometryPrecisionLineEdit->setEnabled( true );
-    mGeometryPrecisionLineEdit->setValidator( new QDoubleValidator( mGeometryPrecisionLineEdit ) );
+    mGeometryPrecisionLineEdit->setValidator( new QgsDoubleValidator( mGeometryPrecisionLineEdit ) );
 
     const double precision( vlayer->geometryOptions()->geometryPrecision() );
-    const bool ok = true;
-    QString precisionStr( QLocale().toString( precision, ok ) );
-    if ( precision == 0.0 || ! ok )
-      precisionStr = QString();
+    const QString precisionStr = precision == 0.0 ? QString() : qgsDoubleToString( precision );
     mGeometryPrecisionLineEdit->setText( precisionStr );
 
     mRemoveDuplicateNodesManuallyActivated = vlayer->geometryOptions()->removeDuplicateNodes();
@@ -140,7 +139,7 @@ void QgsVectorLayerDigitizingPropertiesPage::apply()
 
   vlayer->geometryOptions()->setRemoveDuplicateNodes( mRemoveDuplicateNodesCheckbox->isChecked() );
   bool ok = true;
-  double precision( QLocale().toDouble( mGeometryPrecisionLineEdit->text(), &ok ) );
+  double precision( QgsDoubleValidator::toDouble( mGeometryPrecisionLineEdit->text(), &ok ) );
   if ( ! ok )
     precision = 0.0;
   vlayer->geometryOptions()->setGeometryPrecision( precision );
