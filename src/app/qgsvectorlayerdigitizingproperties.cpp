@@ -18,6 +18,7 @@
 #include "qgsanalysis.h"
 #include "qgscollapsiblegroupbox.h"
 #include "qgsdoublespinbox.h"
+#include "qgsdoublevalidator.h"
 #include "qgsgeometrycheckfactory.h"
 #include "qgsgeometrycheckregistry.h"
 #include "qgsgeometrycheck.h"
@@ -137,7 +138,7 @@ void QgsVectorLayerDigitizingPropertiesPage::apply()
 
   vlayer->geometryOptions()->setRemoveDuplicateNodes( mRemoveDuplicateNodesCheckbox->isChecked() );
   bool ok = true;
-  double precision( QLocale().toDouble( mGeometryPrecisionLineEdit->text(), &ok ) );
+  double precision( QgsDoubleValidator::toDouble( mGeometryPrecisionLineEdit->text(), &ok ) );
   if ( ! ok )
     precision = 0.0;
   vlayer->geometryOptions()->setGeometryPrecision( precision );
