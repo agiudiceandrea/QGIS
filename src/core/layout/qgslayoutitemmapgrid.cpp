@@ -1550,7 +1550,7 @@ int QgsLayoutItemMapGrid::xGridLines() const
 
   //consider to round up to the next step in case the left boundary is > 0
   const double roundCorrection = mapBoundingRect.top() > 0 ? 1.0 : 0.0;
-  double currentLevel = static_cast< int >( ( mapBoundingRect.top() - gridOffsetY ) / gridIntervalY + roundCorrection ) * gridIntervalY + gridOffsetY;
+  double currentLevel = static_cast< int >( std::round( ( mapBoundingRect.top() - gridOffsetY ) / gridIntervalY + roundCorrection ) ) * gridIntervalY + gridOffsetY;
 
   int gridLineCount = 0;
   if ( qgsDoubleNear( mMap->mapRotation(), 0.0 ) || ( mGridUnit != MapUnit && mGridUnit != DynamicPageSizeBased ) )
@@ -1651,7 +1651,7 @@ int QgsLayoutItemMapGrid::yGridLines() const
 
   //consider to round up to the next step in case the left boundary is > 0
   const double roundCorrection = mapBoundingRect.left() > 0 ? 1.0 : 0.0;
-  double currentLevel = static_cast< int >( ( mapBoundingRect.left() - gridOffsetX ) / gridIntervalX + roundCorrection ) * gridIntervalX + gridOffsetX;
+  double currentLevel = static_cast< int >( std::round( ( mapBoundingRect.left() - gridOffsetX ) / gridIntervalX + roundCorrection ) ) * gridIntervalX + gridOffsetX;
 
   int gridLineCount = 0;
   if ( qgsDoubleNear( mMap->mapRotation(), 0.0 ) || ( mGridUnit != MapUnit && mGridUnit != DynamicPageSizeBased ) )
@@ -1724,7 +1724,7 @@ int QgsLayoutItemMapGrid::xGridLinesCrsTransform( const QgsRectangle &bbox, cons
   }
 
   const double roundCorrection = bbox.yMaximum() > 0 ? 1.0 : 0.0;
-  double currentLevel = static_cast< int >( ( bbox.yMaximum() - mEvaluatedOffsetY ) / mEvaluatedIntervalY + roundCorrection ) * mEvaluatedIntervalY + mEvaluatedOffsetY;
+  double currentLevel = static_cast< int >( std::round( ( bbox.yMaximum() - mEvaluatedOffsetY ) / mEvaluatedIntervalY + roundCorrection ) ) * mEvaluatedIntervalY + mEvaluatedOffsetY;
 
   const double minX = bbox.xMinimum();
   const double maxX = bbox.xMaximum();
@@ -1803,7 +1803,7 @@ int QgsLayoutItemMapGrid::yGridLinesCrsTransform( const QgsRectangle &bbox, cons
   }
 
   const double roundCorrection = bbox.xMinimum() > 0 ? 1.0 : 0.0;
-  double currentLevel = static_cast< int >( ( bbox.xMinimum() - mEvaluatedOffsetX ) / mEvaluatedIntervalX + roundCorrection ) * mEvaluatedIntervalX + mEvaluatedOffsetX;
+  double currentLevel = static_cast< int >( std::round( ( bbox.xMinimum() - mEvaluatedOffsetX ) / mEvaluatedIntervalX + roundCorrection ) ) * mEvaluatedIntervalX + mEvaluatedOffsetX;
 
   const double minY = bbox.yMinimum();
   const double maxY = bbox.yMaximum();
