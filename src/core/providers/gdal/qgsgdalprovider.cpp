@@ -536,8 +536,8 @@ QString QgsGdalProvider::htmlMetadata() const
   myMetadata += QStringLiteral( "<tr><td class=\"highlight\">" ) + tr( "Dataset Description" ) + QStringLiteral( "</td><td>" ) + QString::fromUtf8( GDALGetDescription( mGdalDataset ) ) + QStringLiteral( "</td></tr>\n" );
 
   // compression
-  QString compression = QString::fromUtf8( GDALGetMetadataItem( mGdalDataset, "COMPRESSION", "IMAGE_STRUCTURE" ) );
-  myMetadata += QStringLiteral( "<tr><td class=\"highlight\">" ) + tr( "Compression" ) + QStringLiteral( "</td><td>" ) + compression + QStringLiteral( "</td></tr>\n" );
+  const char *compression = GDALGetMetadataItem( mGdalDataset, "COMPRESSION", "IMAGE_STRUCTURE" );
+  myMetadata += QStringLiteral( "<tr><td class=\"highlight\">" ) + tr( "Compression" ) + QStringLiteral( "</td><td>" ) + QString::fromUtf8( compression )+ QStringLiteral( "</td></tr>\n" );
 
   // Band details
   for ( int i = 1; i <= GDALGetRasterCount( mGdalDataset ); ++i )
