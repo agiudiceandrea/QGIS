@@ -83,8 +83,6 @@ QString QgsAppDirectoryItemGuiProvider::name()
 void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu *menu, const QList<QgsDataItem *> &, QgsDataItemGuiContext context )
 {
   bool inFavDirs = item->parent() && item->parent()->type() == Qgis::BrowserItemType::Favorites;
-  if ( item->type() != Qgis::BrowserItemType::Directory && !inFavDirs)
-    return;
 
   if ( item->type() == Qgis::BrowserItemType::Directory )
   {
@@ -254,7 +252,6 @@ void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMe
 
     menu->addSeparator();
 
-
     if ( item->parent() && !inFavDirs )
     {
       // only non-root directories can be added as favorites
@@ -266,31 +263,26 @@ void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMe
         addFavorite( directoryItem );
       } );
     }
-  }
-
-  if ( inFavDirs )
-  {
-    if ( QgsFavoriteItem *favoriteItem = qobject_cast< QgsFavoriteItem * >( item ) )
+    else if ( inFavDirs )
     {
-      QAction *actionRename = new QAction( tr( "Rename Favorite…" ), menu );
-      connect( actionRename, &QAction::triggered, this, [ = ]
+      if ( QgsFavoriteItem *favoriteItem = qobject_cast< QgsFavoriteItem * >( item ) )
       {
-        renameFavorite( favoriteItem );
-      } );
-      menu->addAction( actionRename );
+        QAction *actionRename = new QAction( tr( "Rename Favorite…" ), menu );
+        connect( actionRename, &QAction::triggered, this, [ = ]
+        {
+          renameFavorite( favoriteItem );
+        } );
+        menu->addAction( actionRename );
 
-      QAction *removeFavoriteAction = new QAction( tr( "Remove Favorite" ), menu );
-      connect( removeFavoriteAction, &QAction::triggered, this, [ = ]
-      {
-        removeFavorite( favoriteItem );
-      } );
-      menu->addAction( removeFavoriteAction );
-      menu->addSeparator();
+        QAction *removeFavoriteAction = new QAction( tr( "Remove Favorite" ), menu );
+        connect( removeFavoriteAction, &QAction::triggered, this, [ = ]
+        {
+          removeFavorite( favoriteItem );
+        } );
+        menu->addAction( removeFavoriteAction );
+        menu->addSeparator();
+      }
     }
-  }
-
-  if ( item->type() == Qgis::BrowserItemType::Directory )
-  {
     QAction *hideAction = new QAction( tr( "Hide from Browser" ), menu );
     connect( hideAction, &QAction::triggered, this, [ = ]
     {
@@ -430,6 +422,26 @@ void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMe
           QgsGui::nativePlatformInterface()->showFileProperties( dirItem->dirPath() );
         } );
       }
+    }
+  }
+  else if ( inFavDirs )
+  {
+    if ( QgsFavoriteItem *favoriteItem = qobject_cast< QgsFavoriteItem * >( item ) )
+    {
+      QAction *actionRename = new QAction( tr( "Rename Favorite…" ), menu );
+      connect( actionRename, &QAction::triggered, this, [ = ]
+      {
+        renameFavorite( favoriteItem );
+      } );
+      menu->addAction( actionRename );
+
+      QAction *removeFavoriteAction = new QAction( tr( "Remove Favorite" ), menu );
+      connect( removeFavoriteAction, &QAction::triggered, this, [ = ]
+      {
+        removeFavorite( favoriteItem );
+      } );
+      menu->addAction( removeFavoriteAction );
+      menu->addSeparator();
     }
   }
 }
