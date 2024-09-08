@@ -83,9 +83,12 @@ QString QgsAppDirectoryItemGuiProvider::name()
 void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu *menu, const QList<QgsDataItem *> &, QgsDataItemGuiContext context )
 {
   bool inFavDirs = item->parent() && item->parent()->type() == Qgis::BrowserItemType::Favorites;
+  if ( inFavDirs )
+    QgsDebugError( QStringLiteral( "inFavDirs true" ) );
 
   if ( item->type() == Qgis::BrowserItemType::Directory )
   {
+    QgsDebugError( QStringLiteral( "Qgis::BrowserItemType::Directory" ) );
     QgsDirectoryItem *directoryItem = qobject_cast< QgsDirectoryItem * >( item );
 
     QgsSettings settings;
@@ -265,8 +268,10 @@ void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMe
     }
     else if ( inFavDirs )
     {
+      QgsDebugError( QStringLiteral( "inFavDirs" ) );
       if ( QgsFavoriteItem *favoriteItem = qobject_cast< QgsFavoriteItem * >( item ) )
       {
+        QgsDebugError( QStringLiteral( "QgsFavoriteItem" ) );
         QAction *actionRename = new QAction( tr( "Rename Favorite…" ), menu );
         connect( actionRename, &QAction::triggered, this, [ = ]
         {
@@ -426,6 +431,7 @@ void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMe
   }
   else if ( inFavDirs )
   {
+    
     if ( QgsFavoriteItem *favoriteItem = qobject_cast< QgsFavoriteItem * >( item ) )
     {
       QAction *actionRename = new QAction( tr( "Rename Favorite…" ), menu );
