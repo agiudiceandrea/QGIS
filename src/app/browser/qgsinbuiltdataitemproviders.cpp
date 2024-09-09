@@ -435,7 +435,7 @@ void QgsAppDirectoryItemGuiProvider::populateContextMenu( QgsDataItem *item, QMe
     QgsDebugMsgLevel( QStringLiteral( "inFavDirs 2" ), 3 );
     if ( QgsFavoriteItem *favoriteItem = qobject_cast< QgsFavoriteItem * >( item ) )
     {
-      QgsDebugMsgLevel( QStringLiteral( "QgsFavoriteItem 2: %1" ).arg( item->type() ), 3 );
+      QgsDebugMsgLevel( QStringLiteral( "QgsFavoriteItem 2" ), 3 );
       QAction *actionRename = new QAction( tr( "Rename Favorite…" ), menu );
       connect( actionRename, &QAction::triggered, this, [ = ]
       {
