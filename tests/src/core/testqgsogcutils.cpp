@@ -292,7 +292,7 @@ void TestQgsOgcUtils::testExpressionFromOgcFilterWFS20_data()
                                         "<BBOX><ValueReference>Name>NAME</ValueReference><gml:Box srsName='foo'>"
                                         "<gml:coordinates>135.2239,34.4879 135.8578,34.8471</gml:coordinates></gml:Box></BBOX>"
                                         "</Filter>" )
-                                      << QStringLiteral( "intersects_bbox($geometry, geom_from_gml('<Box srsName=\"foo\"><coordinates>135.2239,34.4879 135.8578,34.8471</coordinates></Box>'))" );
+                                      << QStringLiteral( "intersects_bbox(@geometry, geom_from_gml('<Box srsName=\"foo\"><coordinates>135.2239,34.4879 135.8578,34.8471</coordinates></Box>'))" );
 
   QTest::newRow( "bbox corner" )
       << QString(
@@ -305,7 +305,7 @@ void TestQgsOgcUtils::testExpressionFromOgcFilterWFS20_data()
         "</gml:Envelope>"
         "</fes:BBOX>"
         "</fes:Filter>" )
-      << QStringLiteral( "intersects_bbox($geometry, geom_from_gml('<Envelope><lowerCorner>49 2</lowerCorner><upperCorner>50 3</upperCorner></Envelope>'))" );
+      << QStringLiteral( "intersects_bbox(@geometry, geom_from_gml('<Envelope><lowerCorner>49 2</lowerCorner><upperCorner>50 3</upperCorner></Envelope>'))" );
 }
 
 void TestQgsOgcUtils::testExpressionFromOgcFilterWFS20()
@@ -453,7 +453,7 @@ void TestQgsOgcUtils::testExpressionFromOgcFilter_data()
                                           "<BBOX><PropertyName>Name>NAME</PropertyName><gml:Box srsName='foo'>"
                                           "<gml:coordinates>135.2239,34.4879 135.8578,34.8471</gml:coordinates></gml:Box></BBOX>"
                                           "</Filter>" )
-                                        << QStringLiteral( "intersects_bbox($geometry, geom_from_gml('<Box srsName=\"foo\"><coordinates>135.2239,34.4879 135.8578,34.8471</coordinates></Box>'))" );
+                                        << QStringLiteral( "intersects_bbox(@geometry, geom_from_gml('<Box srsName=\"foo\"><coordinates>135.2239,34.4879 135.8578,34.8471</coordinates></Box>'))" );
 
   QTest::newRow( "Intersects" ) << QString(
                                   "<Filter>"
@@ -464,7 +464,7 @@ void TestQgsOgcUtils::testExpressionFromOgcFilter_data()
                                   "</gml:Point>"
                                   "</Intersects>"
                                   "</Filter>" )
-                                << QStringLiteral( "intersects($geometry, geom_from_gml('<Point><coordinates>123,456</coordinates></Point>'))" );
+                                << QStringLiteral( "intersects(@geometry, geom_from_gml('<Point><coordinates>123,456</coordinates></Point>'))" );
 
   QTest::newRow( "Literal conversion" ) << QString(
                                           "<Filter><PropertyIsEqualTo>"
@@ -722,7 +722,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilter_data()
                               "</ogc:Not>"
                               "</ogc:Filter>" );
 
-  QTest::newRow( "intersects_bbox" ) << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POINT (5 6)'))" ) << QString(
+  QTest::newRow( "intersects_bbox" ) << QStringLiteral( "intersects_bbox(@geometry, geomFromWKT('POINT (5 6)'))" ) << QString(
                                        "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
                                        "<ogc:BBOX>"
                                        "<ogc:PropertyName>geometry</ogc:PropertyName>"
@@ -730,7 +730,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilter_data()
                                        "</ogc:BBOX>"
                                        "</ogc:Filter>" );
 
-  QTest::newRow( "intersects + wkt" ) << QStringLiteral( "intersects($geometry, geomFromWKT('POINT (5 6)'))" ) << QString(
+  QTest::newRow( "intersects + wkt" ) << QStringLiteral( "intersects(@geometry, geomFromWKT('POINT (5 6)'))" ) << QString(
                                         "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
                                         "<ogc:Intersects>"
                                         "<ogc:PropertyName>geometry</ogc:PropertyName>"
@@ -738,7 +738,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilter_data()
                                         "</ogc:Intersects>"
                                         "</ogc:Filter>" );
 
-  QTest::newRow( "contains + gml" ) << QStringLiteral( "contains($geometry, geomFromGML('<Point><coordinates cs=\",\" ts=\" \">5,6</coordinates></Point>'))" ) << QString(
+  QTest::newRow( "contains + gml" ) << QStringLiteral( "contains(@geometry, geomFromGML('<Point><coordinates cs=\",\" ts=\" \">5,6</coordinates></Point>'))" ) << QString(
                                       "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
                                       "<ogc:Contains>"
                                       "<ogc:PropertyName>geometry</ogc:PropertyName>"
@@ -787,7 +787,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS11_data()
   QTest::addColumn<QString>( "xmlText" );
 
   QTest::newRow( "bbox" )
-      << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
+      << QStringLiteral( "intersects_bbox(@geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
       << QStringLiteral( "urn:ogc:def:crs:EPSG::4326" )
       << QString(
         "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
@@ -860,7 +860,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20_data()
                                       << QStringLiteral( "myns" ) << QStringLiteral( "http://example.com/myns" );
 
   QTest::newRow( "bbox" )
-      << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
+      << QStringLiteral( "intersects_bbox(@geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
       << QStringLiteral( "urn:ogc:def:crs:EPSG::4326" )
       << QString(
         "<fes:Filter xmlns:fes=\"http://www.opengis.net/fes/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\">"
@@ -875,7 +875,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20_data()
       << QString() << QString();
 
   QTest::newRow( "bbox with namespace" )
-      << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
+      << QStringLiteral( "intersects_bbox(@geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
       << QStringLiteral( "urn:ogc:def:crs:EPSG::4326" )
       << QString(
         "<fes:Filter xmlns:fes=\"http://www.opengis.net/fes/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" xmlns:myns=\"http://example.com/myns\">"
@@ -890,7 +890,7 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20_data()
       << QStringLiteral( "myns" ) << QStringLiteral( "http://example.com/myns" );
 
   QTest::newRow( "intersects" )
-      << QStringLiteral( "intersects($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
+      << QStringLiteral( "intersects(@geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
       << QStringLiteral( "urn:ogc:def:crs:EPSG::4326" )
       << QString(
         "<fes:Filter xmlns:fes=\"http://www.opengis.net/fes/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\">"
