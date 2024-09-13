@@ -69,7 +69,7 @@ void QgsRasterLayerUniqueValuesReportAlgorithm::initAlgorithm( const QVariantMap
 
 QString QgsRasterLayerUniqueValuesReportAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "This algorithm returns the count and area of each unique value in a given raster layer." );
+  return QObject::tr( "This algorithm returns the count and area, expressed in the area unit of the layer's CRS, of each unique value in a given raster layer." );
 }
 
 QgsRasterLayerUniqueValuesReportAlgorithm *QgsRasterLayerUniqueValuesReportAlgorithm::createInstance() const
@@ -107,7 +107,7 @@ QVariantMap QgsRasterLayerUniqueValuesReportAlgorithm::processAlgorithm( const Q
 {
   const QString outputFile = parameterAsFileOutput( parameters, QStringLiteral( "OUTPUT_HTML_FILE" ), context );
 
-  QString areaUnit = QgsUnitTypes::toAbbreviatedString( QgsUnitTypes::distanceToAreaUnit( mCrs.mapUnits() ) );
+  const QString areaUnit = mCrs.mapUnits() == Qgis::DistanceUnit::Unknown ? QStringLiteral ( "unknown" ) : QgsUnitTypes::toAbbreviatedString( QgsUnitTypes::distanceToAreaUnit( mCrs.mapUnits() ) );
 
   QString tableDest;
   std::unique_ptr< QgsFeatureSink > sink;
@@ -116,7 +116,7 @@ QVariantMap QgsRasterLayerUniqueValuesReportAlgorithm::processAlgorithm( const Q
     QgsFields outFields;
     outFields.append( QgsField( QStringLiteral( "value" ), QMetaType::Type::Double, QString(), 20, 8 ) );
     outFields.append( QgsField( QStringLiteral( "count" ), QMetaType::Type::LongLong, QString(), 20 ) );
-    outFields.append( QgsField( areaUnit.replace( QStringLiteral( "²" ), QStringLiteral( "2" ) ), QMetaType::Type::Double, QString(), 20, 8 ) );
+    outFields.append( QgsField( QString( areaUnit ).replace( QStringLiteral( "²" ), QStringLiteral( "2" ) ), QMetaType::Type::Double, QString(), 20, 8 ) );
     sink.reset( parameterAsSink( parameters, QStringLiteral( "OUTPUT_TABLE" ), context, tableDest, outFields, Qgis::WkbType::NoGeometry, QgsCoordinateReferenceSystem() ) );
     if ( !sink )
       throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT_TABLE" ) ) );
@@ -187,6 +187,7 @@ QVariantMap QgsRasterLayerUniqueValuesReportAlgorithm::processAlgorithm( const Q
     if ( file.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
     {
       const QString encodedAreaUnit = QgsStringUtils::ampersandEncode( areaUnit );
+      const QString projection = mCrs.userFriendlyIdentifier();
 
       QTextStream out( &file );
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -195,7 +196,7 @@ QVariantMap QgsRasterLayerUniqueValuesReportAlgorithm::processAlgorithm( const Q
       out << QStringLiteral( "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/></head><body>\n" );
       out << QStringLiteral( "<p>%1: %2 (%3 %4)</p>\n" ).arg( QObject::tr( "Analyzed file" ), mSource, QObject::tr( "band" ) ).arg( mBand );
       out << QObject::tr( "<p>%1: %2</p>\n" ).arg( QObject::tr( "Extent" ), mExtent.toString() );
-      out << QObject::tr( "<p>%1: %2</p>\n" ).arg( QObject::tr( "Projection" ), mCrs.userFriendlyIdentifier() );
+      out << QObject::tr( "<p>%1: %2</p>\n" ).arg( QObject::tr( "Projection" ), projection.isEmpty() ? QStringLiteral( "unknown" ) : projection );
       out << QObject::tr( "<p>%1: %2 (%3 %4)</p>\n" ).arg( QObject::tr( "Width in pixels" ) ).arg( mLayerWidth ).arg( QObject::tr( "units per pixel" ) ).arg( mRasterUnitsPerPixelX );
       out << QObject::tr( "<p>%1: %2 (%3 %4)</p>\n" ).arg( QObject::tr( "Height in pixels" ) ).arg( mLayerHeight ).arg( QObject::tr( "units per pixel" ) ).arg( mRasterUnitsPerPixelY );
       out << QObject::tr( "<p>%1: %2</p>\n" ).arg( QObject::tr( "Total pixel count" ) ).arg( layerSize );
