@@ -18,6 +18,7 @@
 QgsCoordinateBoundsPreviewMapWidget::QgsCoordinateBoundsPreviewMapWidget( QWidget *parent )
   : QgsMapCanvas( parent )
 {
+  setAnnotationsVisible( false );
   mPreviewBand = new QgsRubberBand( this, Qgis::GeometryType::Polygon );
   mPreviewBand->setWidth( 4 );
 
