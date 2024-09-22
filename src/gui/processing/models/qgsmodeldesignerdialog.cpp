@@ -826,7 +826,7 @@ void QgsModelDesignerDialog::updateWindowTitle()
   if ( !mModel->name().isEmpty() )
     title = mModel->group().isEmpty()
             ? QStringLiteral( "%1: %2" ).arg( title, mModel->name() )
-            : QStringLiteral( "%1: %2 - %3" ).arg( title, model->group(), mModel->name() );
+            : QStringLiteral( "%1: %2 - %3" ).arg( title, mModel->group(), mModel->name() );
 
   if ( isDirty() )
     title.prepend( '*' );
