@@ -334,14 +334,14 @@ void QgsProcessingAlgorithmDialogBase::setAlgorithm( QgsProcessingAlgorithm *alg
   if ( ( QgsGui::higFlags() & QgsGui::HigDialogTitleIsTitleCase ) && !( algorithm->flags() & Qgis::ProcessingAlgorithmFlag::DisplayNameIsLiteral ) )
   {
     title = mAlgorithm->group().isEmpty()
-            ? QStringLiteral( "%1 - %2" ).arg( QgsStringUtils::capitalize( mAlgorithm->group(), Qgis::Capitalization::TitleCase ), QgsStringUtils::capitalize( mAlgorithm->displayName(), Qgis::Capitalization::TitleCase ) )
-            : QgsStringUtils::capitalize( mAlgorithm->displayName(), Qgis::Capitalization::TitleCase );
+            ? QgsStringUtils::capitalize( mAlgorithm->displayName(), Qgis::Capitalization::TitleCase )
+            : QStringLiteral( "%1 - %2" ).arg( QgsStringUtils::capitalize( mAlgorithm->group(), Qgis::Capitalization::TitleCase ), QgsStringUtils::capitalize( mAlgorithm->displayName(), Qgis::Capitalization::TitleCase ) );
   }
   else
   {
     title = mAlgorithm->group().isEmpty()
-            ? QStringLiteral( "%1 - %2" ).arg( mAlgorithm->group(), mAlgorithm->displayName() )
-            : mAlgorithm->displayName();
+            ? mAlgorithm->displayName()
+            : QStringLiteral( "%1 - %2" ).arg( mAlgorithm->group(), mAlgorithm->displayName() );
   }
 
   setWindowTitle( title );
