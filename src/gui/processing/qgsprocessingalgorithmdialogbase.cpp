@@ -342,6 +342,7 @@ void QgsProcessingAlgorithmDialogBase::setAlgorithm( QgsProcessingAlgorithm *alg
     title = mAlgorithm->group().isEmpty()
             ? mAlgorithm->displayName()
             : QStringLiteral( "%1 - %2" ).arg( mAlgorithm->group(), mAlgorithm->displayName() );
+  }
 
   setWindowTitle( title );
 
