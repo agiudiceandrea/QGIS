@@ -146,6 +146,7 @@ QStringList QgsGeoPackageProjectStorage::listProjects( const QString &uri )
 
 bool QgsGeoPackageProjectStorage::readProject( const QString &uri, QIODevice *device, QgsReadWriteContext &context )
 {
+  QgsDebugMsgLevel( "QgsGeoPackageProjectStorage::readProject uri: " + uri, 2 );
   const QgsGeoPackageProjectUri projectUri = decodeUri( uri );
   if ( !projectUri.valid )
   {
@@ -298,9 +299,11 @@ QString QgsGeoPackageProjectStorage::encodeUri( const QgsGeoPackageProjectUri &g
 
 QgsGeoPackageProjectUri QgsGeoPackageProjectStorage::decodeUri( const QString &uri )
 {
+  QgsDebugMsgLevel( "QgsGeoPackageProjectStorage::decodeUri uri: " + uri, 2 );
   const QUrl url = QUrl::fromEncoded( uri.toUtf8() );
   const QUrlQuery urlQuery( url.query() );
   const QString urlAsString( url.toString( ) );
+  QgsDebugMsgLevel( "QgsGeoPackageProjectStorage::decodeUri urlAsString: " + urlAsString, 2 );
 
   QgsGeoPackageProjectUri gpkgUri;
 
