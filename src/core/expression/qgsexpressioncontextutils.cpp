@@ -771,6 +771,10 @@ QgsExpressionContextScope *QgsExpressionContextUtils::layoutItemScope( const Qgs
   //add known layout item context variables
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "item_id" ), item->id(), true ) );
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "item_uuid" ), item->uuid(), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "item_left" ), item->pagePos().x(), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "item_top" ), item->pagePos().y(), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "item_width" ), item->rectWithFrame().width(), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "item_height" ), item->rectWithFrame().height(), true ) );
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "layout_page" ), item->page() + 1, true ) );
 
   if ( item->layout() )
