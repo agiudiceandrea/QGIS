@@ -587,9 +587,14 @@ void QgsFieldCalculator::setDialogButtonState()
     tooltip = tr( "Please select a field" );
     enableButtons = false;
   }
+  else if ( builder->expressionText().isEmpty() )
+  {
+    tooltip = tr( "Please insert an expression" );
+    enableButtons = false;
+  }
   else if ( !builder->isExpressionValid() )
   {
-    tooltip = tr( "The expression is invalid see \"(more info)\" for details" );
+    tooltip = tr( "The expression is invalid. See \"(more info)\" for details" );
     enableButtons = false;
   }
 
