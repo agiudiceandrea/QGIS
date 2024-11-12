@@ -56,6 +56,7 @@ QgsFieldCalculator::QgsFieldCalculator( QgsVectorLayer *vl, QWidget *parent )
   connect( mCreateVirtualFieldCheckbox, &QCheckBox::stateChanged, this, &QgsFieldCalculator::mCreateVirtualFieldCheckbox_stateChanged );
   connect( mOutputFieldNameLineEdit, &QLineEdit::textChanged, this, &QgsFieldCalculator::mOutputFieldNameLineEdit_textChanged );
   connect( mOutputFieldTypeComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::activated ), this, &QgsFieldCalculator::mOutputFieldTypeComboBox_activated );
+  connect( mExistingFieldComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsFieldCalculator::mExistingFieldComboBox_currentIndexChanged );
 
   QgsGui::enableAutoGeometryRestore( this );
 
@@ -502,6 +503,12 @@ void QgsFieldCalculator::mOutputFieldTypeComboBox_activated( int index )
   setPrecisionMinMax();
 }
 
+void QgsFieldCalculator::mExistingFieldComboBox_currentIndexChanged( const int index )
+{
+  Q_UNUSED( index )
+  setDialogButtonState();
+}
+
 void QgsFieldCalculator::populateFields()
 {
   if ( !mVectorLayer )
@@ -572,6 +579,12 @@ void QgsFieldCalculator::setDialogButtonState()
        && mOutputFieldNameLineEdit->text().isEmpty() )
   {
     tooltip = tr( "Please enter a field name" );
+    enableButtons = false;
+  }
+  else if ( ( mUpdateExistingGroupBox->isChecked() || !mNewFieldGroupBox->isEnabled() )
+            && mExistingFieldComboBox->currentIndex() == -1 )
+  {
+    tooltip = tr( "Please select a field" );
     enableButtons = false;
   }
   else if ( !builder->isExpressionValid() )
