@@ -581,7 +581,7 @@ void QgsFieldCalculator::setDialogButtonState()
     tooltip = tr( "Please enter a field name" );
     enableButtons = false;
   }
-  else if ( ( !mNewFieldGroupBox->isChecked() || mUpdateExistingGroupBox->isEnabled() )
+  else if ( ( mUpdateExistingGroupBox->isChecked() || !mNewFieldGroupBox->isEnabled() )
             && mExistingFieldComboBox->currentIndex() == -1 )
   {
     tooltip = tr( "Please select a field" );
