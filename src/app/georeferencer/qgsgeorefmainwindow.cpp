@@ -1389,7 +1389,7 @@ void QgsGeoreferencerMainWindow::writeSettings()
   settingUseZeroForTransparent->setValue( mUseZeroForTrans );
   settingSaveGcps->setValue( mSaveGcp );
   settingLoadInProject->setValue( mLoadInQgis );
-  settingLastTargetCrs->setValue( mTargetCrs.authId() );
+  settingLastTargetCrs->setValue( mTargetCrs.authid() );
 }
 
 bool QgsGeoreferencerMainWindow::loadGCPs( QString &error )
