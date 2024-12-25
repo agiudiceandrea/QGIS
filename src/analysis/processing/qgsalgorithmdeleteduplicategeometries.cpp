@@ -72,17 +72,12 @@ QgsDeleteDuplicateGeometriesAlgorithm *QgsDeleteDuplicateGeometriesAlgorithm::cr
   return new QgsDeleteDuplicateGeometriesAlgorithm();
 }
 
-bool QgsDeleteDuplicateGeometriesAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
-{
-  mSource.reset( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
-  if ( !mSource )
-    throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
-
-  return true;
-}
-
 QVariantMap QgsDeleteDuplicateGeometriesAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  if ( !source )
+    throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
+
   QString destId;
   std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, destId, mSource->fields(), mSource->wkbType(), mSource->sourceCrs() ) );
   if ( !sink )
