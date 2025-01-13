@@ -44,7 +44,11 @@ class QgsPythonUtilsImpl : public QgsPythonUtils
     bool isEnabled() final;
     bool runString( const QString &command, QString msgOnError = QString(), bool single = true ) final;
     QString runStringUnsafe( const QString &command, bool single = true ) final; // returns error traceback on failure, empty QString on success
+    bool runFile( const QString &filename, const QString &messageOnError = QString() ) final;
+    QString runFileUnsafe( const QString &filename ) final; // returns error traceback on failure, empty QString on success
     bool evalString( const QString &command, QString &result ) final;
+    QString setArgvUnsafe( const QStringList &arguments ) final; // returns error traceback on failure, empty QString on success
+    bool setArgv( const QStringList &arguments, const QString &messageOnError = QString() ) final;
     bool getError( QString &errorClassName, QString &errorText ) final;
 
     /**

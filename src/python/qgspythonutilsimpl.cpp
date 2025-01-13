@@ -454,6 +454,132 @@ bool QgsPythonUtilsImpl::runString( const QString &command, QString msgOnError, 
   return res;
 }
 
+QString QgsPythonUtilsImpl::runFileUnsafe( const QString &filename )
+{
+  // acquire global interpreter lock to ensure we are in a consistent state
+  PyGILState_STATE gstate;
+  gstate = PyGILState_Ensure();
+  QString ret;
+
+  QFile file( filename );
+  if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+  {
+    ret = "Cannot open file";
+    goto error;
+  }
+
+  PyObject *obj = PyRun_String( file.readAll().constData(), Py_file_input, mMainDict, mMainDict );
+  PyObject *errobj = PyErr_Occurred();
+  if ( nullptr != errobj )
+  {
+    ret = getTraceback();
+  }
+  Py_XDECREF( obj );
+
+error:
+  // we are done calling python API, release global interpreter lock
+  PyGILState_Release( gstate );
+
+  return ret;
+}
+
+bool QgsPythonUtilsImpl::runFile( const QString &filename, const QString &messageOnError = QString() )
+{
+  const QString traceback = runFileUnsafe( filename );
+  if ( traceback.isEmpty() )
+    return true;
+
+  if ( msgOnError.isEmpty() )
+  {
+    // use some default message if custom hasn't been specified
+    msgOnError = QObject::tr( "An error occurred during execution of following file:" ) + "\n<tt>" + filename + "</tt>";
+  }
+
+  QString path, version;
+  evalString( QStringLiteral( "str(sys.path)" ), path );
+  evalString( QStringLiteral( "sys.version" ), version );
+
+  QString str = "<font color=\"red\">" + msgOnError + "</font><br><pre>\n" + traceback + "\n</pre>"
+                + QObject::tr( "Python version:" ) + "<br>" + version + "<br><br>"
+                + QObject::tr( "QGIS version:" ) + "<br>" + QStringLiteral( "%1 '%2', %3" ).arg( Qgis::version(), Qgis::releaseName(), Qgis::devVersion() ) + "<br><br>"
+                + QObject::tr( "Python path:" ) + "<br>" + path;
+  str.replace( '\n', QLatin1String( "<br>" ) ).replace( QLatin1String( "  " ), QLatin1String( "&nbsp; " ) );
+
+  qDebug() << str;
+  QgsMessageOutput *msg = QgsMessageOutput::createMessageOutput();
+  msg->setTitle( QObject::tr( "Python error" ) );
+  msg->setMessage( str, QgsMessageOutput::MessageHtml );
+  msg->showMessage();
+
+  return false;
+}
+
+QString QgsPythonUtilsImpl::setArgvUnsafe( const QStringList &arguments )
+{
+  // acquire global interpreter lock to ensure we are in a consistent state
+  PyGILState_STATE gstate;
+  gstate = PyGILState_Ensure();
+  QString ret;
+
+  PyObject *sysobj = nullptr, *argsobj = nullptr;
+  bool success = false;
+  sysobj = PyRun_String( "sys", Py_single_input, mMainDict, mMainDict );
+  if ( !sysobj )
+    goto error;
+  PyObject *argsobj = PyList_New( arguments.size() );
+  if ( !argsobj )
+    goto error;
+  for ( size_t i = 0; i != arguments.size(); ++i )
+  {
+    if ( PyList_SET_ITEM( argsobj, i, PyUnicode_FromString( arguments[i].toUtf8().constData() ) ) != 0 )
+      goto error;
+  }
+  if ( PyObject_SetAttrString( sysobj, "argv", argsobj ) != 0 )
+    goto error;
+  success = true;
+error:
+  Py_XDECREF( argsobj );
+  Py_XDECREF( sysobj );
+  if ( !success )
+    ret = "Cannot set sys.argv";
+
+  // we are done calling python API, release global interpreter lock
+  PyGILState_Release( gstate );
+
+  return ret;
+}
+
+bool QgsPythonUtilsImpl::setArgv( const QStringList &arguments, const QString &messageOnError = QString() )
+{
+  const QString traceback = setArgvUnsafe( arguments );
+  if ( traceback.isEmpty() )
+    return true;
+
+  if ( msgOnError.isEmpty() )
+  {
+    // use some default message if custom hasn't been specified
+    msgOnError = QObject::tr( "An error occurred while setting sys.argv from following list:" ) + "\n<tt>" + arguments.join( ',' ) + "</tt>";
+  }
+
+  QString path, version;
+  evalString( QStringLiteral( "str(sys.path)" ), path );
+  evalString( QStringLiteral( "sys.version" ), version );
+
+  QString str = "<font color=\"red\">" + msgOnError + "</font><br><pre>\n" + traceback + "\n</pre>"
+                + QObject::tr( "Python version:" ) + "<br>" + version + "<br><br>"
+                + QObject::tr( "QGIS version:" ) + "<br>" + QStringLiteral( "%1 '%2', %3" ).arg( Qgis::version(), Qgis::releaseName(), Qgis::devVersion() ) + "<br><br>"
+                + QObject::tr( "Python path:" ) + "<br>" + path;
+  str.replace( '\n', QLatin1String( "<br>" ) ).replace( QLatin1String( "  " ), QLatin1String( "&nbsp; " ) );
+
+  qDebug() << str;
+  QgsMessageOutput *msg = QgsMessageOutput::createMessageOutput();
+  msg->setTitle( QObject::tr( "Python error" ) );
+  msg->setMessage( str, QgsMessageOutput::MessageHtml );
+  msg->showMessage();
+
+  return false;
+}
+
 
 QString QgsPythonUtilsImpl::getTraceback()
 {
