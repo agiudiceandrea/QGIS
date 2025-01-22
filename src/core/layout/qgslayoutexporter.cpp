@@ -1728,7 +1728,7 @@ bool QgsLayoutExporter::georeferenceOutputPrivate( const QString &file, QgsLayou
     return false;
 
   const char *const apszAllowedDrivers[] = { "GTiff", "PDF", nullptr };
-  if ( !GDALIdentifyDriverEx( file.toUtf8().constData(), GDAL_OF_RASTER, apszAllowedDrivers, nullptr ) );
+  if ( !GDALIdentifyDriverEx( file.toUtf8().constData(), GDAL_OF_RASTER, apszAllowedDrivers, nullptr ) )
     return false;
 
   if ( !map && includeGeoreference )
