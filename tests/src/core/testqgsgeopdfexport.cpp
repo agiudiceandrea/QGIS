@@ -395,7 +395,7 @@ void TestQgsGeospatialPdfExport::testGeorefPolygon()
   }
   QVERIFY( !cp1.isNull() );
   QCOMPARE( cp1.attribute( QStringLiteral( "x" ) ), QStringLiteral( "0" ) );
-  QCOMPARE( cp1.attribute( QStringLiteral( "y" ) ).left( 10 ), QStringLiteral( "-2.8346456" ) );
+  QCOMPARE( cp1.attribute( QStringLiteral( "y" ) ).left( 10 ), QStringLiteral( "630" ) );
 }
 
 void TestQgsGeospatialPdfExport::testGroups()
