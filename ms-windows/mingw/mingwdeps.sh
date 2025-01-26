@@ -14,7 +14,7 @@ dnf install -y --nogpgcheck \
   mingw64-gdal \
   mingw64-gdb \
   mingw64-GeographicLib \
-  mingw64-geos-3.10.2-5 \
+  mingw64-geos-3.10.2-5.fc37 \
   mingw64-gsl \
   mingw64-libgomp \
   mingw64-libzip \
