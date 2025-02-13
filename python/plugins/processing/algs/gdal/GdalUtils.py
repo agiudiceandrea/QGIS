@@ -185,7 +185,7 @@ class GdalUtils:
 
         command, *arguments = QgsRunProcess.splitCommand(fused_command)
         if os.name == "nt":
-            QgsBlockingProcess(commands[0], [commands[1]])
+            proc = QgsBlockingProcess(commands[0], [commands[1]])
         else:
             proc = QgsBlockingProcess(command, arguments)
         proc = QgsBlockingProcess(command, arguments)
