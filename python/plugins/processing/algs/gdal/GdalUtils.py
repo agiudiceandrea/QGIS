@@ -188,7 +188,6 @@ class GdalUtils:
             proc = QgsBlockingProcess(commands[0], [commands[1]])
         else:
             proc = QgsBlockingProcess(command, arguments)
-        proc = QgsBlockingProcess(command, arguments)
         proc.setStdOutHandler(on_stdout)
         proc.setStdErrHandler(on_stderr)
 
