@@ -85,6 +85,10 @@ QgsProjectionSelectionTreeWidget::QgsProjectionSelectionTreeWidget( QWidget *par
     mCrsModel->setFilterDeprecated( selected );
     mRecentCrsModel->setFilterDeprecated( selected );
   } );
+  connect( cbxHideNonEarth, &QCheckBox::toggled, this, [=]( bool selected ) {
+    mCrsModel->setFilterNonEarth( selected );
+    mRecentCrsModel->setFilterNonEarth( selected );
+  } );
   connect( leSearch, &QgsFilterLineEdit::textChanged, this, [=]( const QString &filter ) {
     mCrsModel->setFilterString( filter );
     mRecentCrsModel->setFilterString( filter );

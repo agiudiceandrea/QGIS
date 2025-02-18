@@ -161,6 +161,18 @@
              </spacer>
             </item>
             <item>
+             <widget class="QCheckBox" name="cbxHideNonEarth">
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Hide non-Earth CRSs</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QCheckBox" name="cbxHideDeprecated">
               <property name="font">
                <font>

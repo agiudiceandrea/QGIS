@@ -653,9 +653,18 @@ void QgsCoordinateReferenceSystemProxyModel::setFilterDeprecated( bool filter )
   invalidateFilter();
 }
 
+void QgsCoordinateReferenceSystemProxyModel::setFilterNonEarth( bool filter )
+{
+  if ( mFilterNonEarth == filter )
+    return;
+
+  mFilterNonEarth = filter;
+  invalidateFilter();
+}
+
 bool QgsCoordinateReferenceSystemProxyModel::filterAcceptsRow( int sourceRow, const QModelIndex &sourceParent ) const
 {
-  if ( mFilterString.trimmed().isEmpty() && !mFilters && !mFilterDeprecated && mFilterAuthIds.isEmpty() )
+  if ( mFilterString.trimmed().isEmpty() && !mFilters && !mFilterDeprecated && !mFilterNonEarth && mFilterAuthIds.isEmpty() )
     return true;
 
   const QModelIndex sourceIndex = mModel->index( sourceRow, 0, sourceParent );
