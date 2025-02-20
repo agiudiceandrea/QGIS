@@ -103,7 +103,7 @@ void QgsRasterBandComboBox::setLayer( QgsMapLayer *layer )
       const int nBands = provider->bandCount();
       for ( int i = 1; i <= nBands; ++i ) //band numbering seem to start at 1
       {
-        addItem( fontMetrics().elidedText( displayBandName( provider, i ), i ), Qt::ElideRight, width() );
+        addItem( fontMetrics().elidedText( displayBandName( provider, i ), Qt::ElideRight, width() ), i );
       }
     }
     else
