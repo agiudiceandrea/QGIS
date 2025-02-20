@@ -54,6 +54,8 @@ QgsRasterBandComboBox::QgsRasterBandComboBox( QWidget *parent )
 
   // default to editable, until a layer is set
   setEditable( true );
+
+  setMinimumContentsLength( 1 );
 }
 
 QgsRasterLayer *QgsRasterBandComboBox::layer() const
@@ -103,7 +105,7 @@ void QgsRasterBandComboBox::setLayer( QgsMapLayer *layer )
       const int nBands = provider->bandCount();
       for ( int i = 1; i <= nBands; ++i ) //band numbering seem to start at 1
       {
-        addItem( fontMetrics().elidedText( displayBandName( provider, i ), Qt::ElideRight, width() ), i );
+        addItem( fontMetrics().elidedText( displayBandName( provider, i ), Qt::ElideMiddle, width() ), i );
       }
     }
     else
