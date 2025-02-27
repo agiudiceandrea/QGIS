@@ -95,19 +95,19 @@ void TestQgsValueMapConfigDlg::testLoadFromCSVSingleColumn()
 
   QList<QVariant> valueList;
   QVariantMap value;
-  value.insert( QString( "" ), QStringLiteral( "Basic unquoted record" ) );
+  value.insert( QString( "" ), QString( "1" ) );
   valueList << value;
   value.clear();
-  value.insert( QString( "" ), QStringLiteral( "Forest type" ) );
+  value.insert( QString( "" ), QString( "2" ) );
   valueList << value;
   value.clear();
-  value.insert( QString( "" ), QStringLiteral( "So-called \"data\"" ) );
+  value.insert( QString( "" ), QString( "three" ) );
   valueList << value;
   value.clear();
-  value.insert( QString( "" ), QStringLiteral( "444" ) );
+  value.insert( QString( "" ), QString( "4" ) );
   valueList << value;
   value.clear();
-  value.insert( QString( "" ), QStringLiteral( "five" ) );
+  value.insert( QString( "" ), QString( "5" ) );
   valueList << value;
 
   QgsValueMapConfigDlg *valueMapConfig = static_cast<QgsValueMapConfigDlg *>( QgsGui::editorWidgetRegistry()->createConfigWidget( QStringLiteral( "ValueMap" ), &vl, 1, nullptr ) );
