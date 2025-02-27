@@ -36,8 +36,9 @@ class TestQgsValueMapConfigDlg : public QObject
     void cleanup();         // will be called after every testfunction.
 
     void testLoadFromCSV();
-    void testLoadFromCSVSingleColumn();
     void testLoadFromCSVUTF8();
+    void testLoadFromCSVSingleColumn1();
+    void testLoadFromCSVSingleColumn2();
 };
 
 void TestQgsValueMapConfigDlg::initTestCase()
@@ -88,7 +89,30 @@ void TestQgsValueMapConfigDlg::testLoadFromCSV()
   delete valueMapConfig;
 }
 
-void TestQgsValueMapConfigDlg::testLoadFromCSVSingleColumn()
+void TestQgsValueMapConfigDlg::testLoadFromCSVUTF8()
+{
+  const QString dataDir( TEST_DATA_DIR );
+  QgsVectorLayer vl( QStringLiteral( "LineString?crs=epsg:3111&field=pk:int&field=name:string" ), QStringLiteral( "vl1" ), QStringLiteral( "memory" ) );
+
+  QList<QVariant> valueList;
+  QVariantMap value;
+  value.insert( QStringLiteral( "char è" ), QString( "1" ) );
+  valueList << value;
+  value.clear();
+  value.insert( QStringLiteral( "char Ü" ), QString( "2" ) );
+  valueList << value;
+  value.clear();
+  value.insert( QStringLiteral( "char Σ" ), QString( "3" ) );
+  valueList << value;
+  value.clear();
+
+  QgsValueMapConfigDlg *valueMapConfig = static_cast<QgsValueMapConfigDlg *>( QgsGui::editorWidgetRegistry()->createConfigWidget( QStringLiteral( "ValueMap" ), &vl, 1, nullptr ) );
+  valueMapConfig->loadMapFromCSV( dataDir + QStringLiteral( "/valuemapsampleutf8.csv" ) );
+  QCOMPARE( valueMapConfig->config().value( QStringLiteral( "map" ) ).toList(), valueList );
+  delete valueMapConfig;
+}
+
+void TestQgsValueMapConfigDlg::testLoadFromCSVSingleColumn1()
 {
   const QString dataDir( TEST_DATA_DIR );
   QgsVectorLayer vl( QStringLiteral( "LineString?crs=epsg:3111&field=pk:int&field=name:string" ), QStringLiteral( "vl1" ), QStringLiteral( "memory" ) );
@@ -114,30 +138,33 @@ void TestQgsValueMapConfigDlg::testLoadFromCSVSingleColumn()
   valueMapConfig->loadMapFromCSV( dataDir + QStringLiteral( "/valuemapsample1col1.csv" ) );
   QCOMPARE( valueMapConfig->config().value( QStringLiteral( "map" ) ).toList(), valueList );
 
-  valueMapConfig->loadMapFromCSV( dataDir + QStringLiteral( "/valuemapsample1col2.csv" ) );
-  QCOMPARE( valueMapConfig->config().value( QStringLiteral( "map" ) ).toList(), valueList );
   delete valueMapConfig;
 }
 
-void TestQgsValueMapConfigDlg::testLoadFromCSVUTF8()
+void TestQgsValueMapConfigDlg::testLoadFromCSVSingleColumn2()
 {
   const QString dataDir( TEST_DATA_DIR );
   QgsVectorLayer vl( QStringLiteral( "LineString?crs=epsg:3111&field=pk:int&field=name:string" ), QStringLiteral( "vl1" ), QStringLiteral( "memory" ) );
 
   QList<QVariant> valueList;
   QVariantMap value;
-  value.insert( QStringLiteral( "char è" ), QString( "1" ) );
+  value.insert( QStringLiteral( "Basic unquoted record" ), QString() );
   valueList << value;
   value.clear();
-  value.insert( QStringLiteral( "char Ü" ), QString( "2" ) );
+  value.insert( QStringLiteral( "Forest type" ), QString() );
   valueList << value;
   value.clear();
-  value.insert( QStringLiteral( "char Σ" ), QString( "3" ) );
+  value.insert( QStringLiteral( "So-called \"data\"" ), QString() );
   valueList << value;
   value.clear();
+  value.insert( QStringLiteral( "444" ), QString() );
+  valueList << value;
+  value.clear();
+  value.insert( QStringLiteral( "five" ), QString() );
+  valueList << value;
 
   QgsValueMapConfigDlg *valueMapConfig = static_cast<QgsValueMapConfigDlg *>( QgsGui::editorWidgetRegistry()->createConfigWidget( QStringLiteral( "ValueMap" ), &vl, 1, nullptr ) );
-  valueMapConfig->loadMapFromCSV( dataDir + QStringLiteral( "/valuemapsampleutf8.csv" ) );
+  valueMapConfig->loadMapFromCSV( dataDir + QStringLiteral( "/valuemapsample1col2.csv" ) );
   QCOMPARE( valueMapConfig->config().value( QStringLiteral( "map" ) ).toList(), valueList );
   delete valueMapConfig;
 }
