@@ -1188,13 +1188,17 @@ class QgsVectorFileWriterMetadataContainer
                              false  // Default value
                            ) );
 
+      QStringList csvSeparatorValues;
+      csvSeparatorValues << QStringLiteral( "COMMA" )
+                         << QStringLiteral( "SEMICOLON" )
+                         << QStringLiteral( "TAB" )
+                         << QStringLiteral( "SPACE" );
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,12,0)
+      csvSeparatorValues << QStringLiteral( "PIPE" );
+#endif
       layerOptions.insert( QStringLiteral( "SEPARATOR" ), new QgsVectorFileWriter::SetOption(
                              QObject::tr( "Field separator character." ),
-                             QStringList()
-                             << QStringLiteral( "COMMA" )
-                             << QStringLiteral( "SEMICOLON" )
-                             << QStringLiteral( "TAB" )
-                             << QStringLiteral( "SPACE" ),
+                             csvSeparatorValues,
                              QStringLiteral( "COMMA" ) // Default value
                            ) );
 
