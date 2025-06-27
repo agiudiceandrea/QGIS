@@ -162,7 +162,4 @@ def pyQgisVersion():
     This way QGIS X.99 is only compatible with plugins for the upcoming major release.
     """
     x, y, z = re.findall(r"^(\d*).(\d*).(\d*)", Qgis.QGIS_VERSION)[0]
-    if y == "99":
-        x = str(int(x) + 1)
-        y = z = "0"
     return f"{x}.{y}.{z}"
