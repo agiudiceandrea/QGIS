@@ -255,14 +255,6 @@ bool QgsPluginRegistry::checkQgisVersion( const QString &minVersion, const QStri
   int qgisMinor = qgisVersionParts.at( 1 ).toInt();
   int qgisBugfix = qgisVersionParts.at( 2 ).toInt();
 
-  if ( qgisMinor == 99 )
-  {
-    // we want the API version, so for x.99 bump it up to the next major release: e.g. 2.99 to 3.0.0
-    qgisMajor++;
-    qgisMinor = 0;
-    qgisBugfix = 0;
-  };
-
   // build XxYyZz strings with trailing zeroes if needed
   const QString minVer = QStringLiteral( "%1%2%3" ).arg( minVerMajor, 2, 10, QChar( '0' ) ).arg( minVerMinor, 2, 10, QChar( '0' ) ).arg( minVerBugfix, 2, 10, QChar( '0' ) );
   const QString maxVer = QStringLiteral( "%1%2%3" ).arg( maxVerMajor, 2, 10, QChar( '0' ) ).arg( maxVerMinor, 2, 10, QChar( '0' ) ).arg( maxVerBugfix, 2, 10, QChar( '0' ) );
