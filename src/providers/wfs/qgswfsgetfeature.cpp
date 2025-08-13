@@ -52,7 +52,6 @@ bool QgsWFSGetFeature::request( bool synchronous, const QString &WFSVersion, con
         {
           query.addQueryItem( QStringLiteral( "NAMESPACE" ), namespaceValue );
         }
-
       }
 
       if ( !filter.isEmpty() )
