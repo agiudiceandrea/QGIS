@@ -6366,6 +6366,7 @@ void QgisApp::enableProjectMacros()
 
 bool QgisApp::addProject( const QString &projectFile )
 {
+  QgsDebugMsgLevel( "QgisApp::addProject projectFile: " + projectFile, 2 );
   QgsCanvasRefreshBlocker refreshBlocker;
   QWidgetUpdateBlocker layerTreeViewUpdateBlocker( mLayerTreeView );
 
