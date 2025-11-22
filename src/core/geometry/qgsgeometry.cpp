@@ -427,7 +427,8 @@ QgsGeometry QgsGeometry::createWedgeBufferFromAngles( const QgsPoint &center, do
   const double RAD_TO_DEG = 180.0 / M_PI;
 
   const double angularWidth =  endAngle - startAngle;
-  const bool useShortestArc = QgsGeometryUtilsBase::normalizedAngle( angularWidth * DEG_TO_RAD ) * RAD_TO_DEG <= 180.0;
+  const double normAngle = QgsGeometryUtilsBase::normalizedAngle( angularWidth * DEG_TO_RAD ) * RAD_TO_DEG;
+  const bool useShortestArc = qgsDoubleNear( normAngle, 180.0 ) || normAngle < 180.0;
 
   if ( std::abs( angularWidth ) >= 360.0 )
   {
