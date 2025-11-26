@@ -1340,9 +1340,7 @@ void QgsDelimitedTextProvider::onFileUpdated()
 {
   if ( !mRescanRequired )
   {
-    QStringList messages;
-    messages.append( tr( "The file has been updated by another application - reloading" ) );
-    reportErrors( messages );
+    QgsMessageLog::logMessage( tr( "The file has been updated by another application - reloading" ), QStringLiteral( "DelimitedText" ),  Qgis::MessageLevel::Info );
     mRescanRequired = true;
     emit dataChanged();
   }
