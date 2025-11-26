@@ -1336,7 +1336,7 @@ void QgsDelimitedTextProvider::setUriParameter( const QString &parameter, const 
   setDataSourceUri( QString::fromUtf8( url.toEncoded() ) );
 }
 
-void QgsDelimitedTextProvider::onFileUpdated()
+void QgsDelimitedTextProvider::onFileUpdated() // test
 {
   if ( !mRescanRequired )
   {
