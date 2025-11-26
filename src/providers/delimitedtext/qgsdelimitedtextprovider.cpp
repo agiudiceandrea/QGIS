@@ -1341,7 +1341,7 @@ void QgsDelimitedTextProvider::onFileUpdated()
   if ( !mRescanRequired )
   {
     QStringList messages;
-    messages.append( tr( "The file has been updated by another application - reloading" ) );
+    messages.append( tr( "The file has been updated by another application - reloading 2" ) );
     reportErrors( messages );
     mRescanRequired = true;
     emit dataChanged();
