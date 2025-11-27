@@ -1456,11 +1456,8 @@ def test_029_file_watcher():
         "Request 11 did not return any data",
         "Request 13 did not return any data",
         "Request 14 did not return any data",
-        "Errors in file temp_file",
         "The file has been updated by another application - reloading",
-        "Errors in file temp_file",
         "The file has been updated by another application - reloading",
-        "Errors in file temp_file",
         "The file has been updated by another application - reloading",
     ]
     return wanted
