@@ -128,7 +128,7 @@ bool QgsGeometryByExpressionAlgorithm::prepareAlgorithm( const QVariantMap &para
 
   mExpressionContext = createExpressionContext( parameters, context );
   QgsMapLayer *layer = parameterAsLayer( parameters, QStringLiteral( "INPUT" ), context );
-  mExpressionContext.appendScope( QgsExpressionContextUtils.layerScope( layer ) );
+  mExpressionContext.appendScope( QgsExpressionContextUtils::layerScope( layer ) );
   mExpression.prepare( &mExpressionContext );
 
   return true;
