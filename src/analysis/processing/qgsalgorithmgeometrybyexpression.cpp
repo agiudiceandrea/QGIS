@@ -126,7 +126,7 @@ bool QgsGeometryByExpressionAlgorithm::prepareAlgorithm( const QVariantMap &para
     return false;
   }
 
-  mExpressionContext = createExpressionContext( parameters, context );
+  mExpressionContext = context.expressionContext();
   mExpression.prepare( &mExpressionContext );
 
   return true;
