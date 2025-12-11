@@ -730,7 +730,7 @@ void QgsSimpleLineCallout::draw( QgsRenderContext &context, const QRectF &rect, 
     toAllParts = dataDefinedProperties().valueAsBool( QgsCallout::Property::DrawCalloutToAllParts, context.expressionContext(), toAllParts );
   }
 
-  if ( calloutContext.allFeaturePartsLabeled || !toAllParts )
+  if ( !toAllParts )
     drawCalloutLine( anchor.constGet() );
   else
   {
