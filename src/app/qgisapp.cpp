@@ -1090,7 +1090,8 @@ QgisApp::QgisApp( QSplashScreen *splash, AppOptions options, const QString &root
   int myRed = settings.value( QStringLiteral( "qgis/default_canvas_color_red" ), 255 ).toInt();
   int myGreen = settings.value( QStringLiteral( "qgis/default_canvas_color_green" ), 255 ).toInt();
   int myBlue = settings.value( QStringLiteral( "qgis/default_canvas_color_blue" ), 255 ).toInt();
-  mMapCanvas->setCanvasColor( QColor( myRed, myGreen, myBlue ) );
+  int myAlpha = settings.value( QStringLiteral( "qgis/default_canvas_color_alpha" ), 255 ).toInt();
+  mMapCanvas->setCanvasColor( QColor( myRed, myGreen, myBlue, myAlpha ) );
 
   // set project linked to main canvas
   mMapCanvas->setProject( QgsProject::instance() );
@@ -4568,7 +4569,8 @@ void QgisApp::createOverview()
   int red = settings.value( QStringLiteral( "qgis/default_canvas_color_red" ), 255 ).toInt();
   int green = settings.value( QStringLiteral( "qgis/default_canvas_color_green" ), 255 ).toInt();
   int blue = settings.value( QStringLiteral( "qgis/default_canvas_color_blue" ), 255 ).toInt();
-  mOverviewCanvas->setBackgroundColor( QColor( red, green, blue ) );
+  int alpha = settings.value( QStringLiteral( "qgis/default_canvas_color_alpha" ), 255 ).toInt();
+  mOverviewCanvas->setBackgroundColor( QColor( red, green, blue, alpha ) );
 
   mOverviewMapCursor = new QCursor( Qt::OpenHandCursor );
   mOverviewCanvas->setCursor( *mOverviewMapCursor );

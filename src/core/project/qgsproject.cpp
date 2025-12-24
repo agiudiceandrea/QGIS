@@ -1291,12 +1291,13 @@ void QgsProject::clear()
   int red = mSettings.value( QStringLiteral( "qgis/default_canvas_color_red" ), 255 ).toInt();
   int green = mSettings.value( QStringLiteral( "qgis/default_canvas_color_green" ), 255 ).toInt();
   int blue = mSettings.value( QStringLiteral( "qgis/default_canvas_color_blue" ), 255 ).toInt();
-  setBackgroundColor( QColor( red, green, blue ) );
+  int alpha = mSettings.value( QStringLiteral( "qgis/default_canvas_color_alpha" ), 255 ).toInt();
+  setBackgroundColor( QColor( red, green, blue, alpha ) );
 
   red = mSettings.value( QStringLiteral( "qgis/default_selection_color_red" ), 255 ).toInt();
   green = mSettings.value( QStringLiteral( "qgis/default_selection_color_green" ), 255 ).toInt();
   blue = mSettings.value( QStringLiteral( "qgis/default_selection_color_blue" ), 0 ).toInt();
-  const int alpha = mSettings.value( QStringLiteral( "qgis/default_selection_color_alpha" ), 255 ).toInt();
+  alpha = mSettings.value( QStringLiteral( "qgis/default_selection_color_alpha" ), 255 ).toInt();
   setSelectionColor( QColor( red, green, blue, alpha ) );
 
   mSnappingConfig.clearIndividualLayerSettings();
@@ -2213,7 +2214,8 @@ bool QgsProject::readProjectFile( const QString &filename, Qgis::ProjectReadFlag
 
   const QColor backgroundColor( readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/CanvasColorRedPart" ), 255 ),
                                 readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/CanvasColorGreenPart" ), 255 ),
-                                readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/CanvasColorBluePart" ), 255 ) );
+                                readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/CanvasColorBluePart" ), 255 ),
+                                readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/CanvasColorAlphaPart" ), 255 ) );
   setBackgroundColor( backgroundColor );
   const QColor selectionColor( readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/SelectionColorRedPart" ), 255 ),
                                readNumEntry( QStringLiteral( "Gui" ), QStringLiteral( "/SelectionColorGreenPart" ), 255 ),
