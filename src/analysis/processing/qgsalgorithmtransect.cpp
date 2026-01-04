@@ -165,7 +165,7 @@ QVariantMap QgsTransectAlgorithm::processAlgorithm( const QVariantMap &parameter
     }
 
     inputGeometry.convertToMultiType();
-    const QgsMultiLineString *multiLine = static_cast<const QgsMultiLineString *>( inputGeometry.constGet() );
+    const QgsMultiLineString *multiLine = qgsgeometry_cast<const QgsMultiLineString *>( inputGeometry.constGet() );
     for ( int id = 0; id < multiLine->numGeometries(); ++id )
     {
       const QgsLineString *line = multiLine->lineStringN( id );
