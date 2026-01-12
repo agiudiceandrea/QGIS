@@ -61,7 +61,10 @@ QgsHtmlAnnotation *QgsHtmlAnnotation::clone() const
 {
   auto c = std::make_unique<QgsHtmlAnnotation>();
   copyCommonProperties( c.get() );
-  c->setSourceFile( mHtmlFile );
+  if ( !mHtmlFile.isEmpty() )
+  {
+    c->setSourceFile( mHtmlFile );
+  }
   return c.release();
 }
 
