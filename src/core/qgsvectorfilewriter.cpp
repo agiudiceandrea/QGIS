@@ -1323,7 +1323,7 @@ class QgsVectorFileWriterMetadataContainer
       datasetOptions.clear();
       layerOptions.clear();
 
-      driverMetadata.insert( QStringLiteral( "DBF File" ),
+      driverMetadata.insert( QStringLiteral( "DBF file" ),
                              QgsVectorFileWriter::MetaData(
                                QStringLiteral( "DBF File" ),
                                QObject::tr( "DBF File" ),
