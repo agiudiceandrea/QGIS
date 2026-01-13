@@ -196,7 +196,10 @@ class GdalUtils:
         on_stderr.buffer = ""
 
         command, *arguments = QgsRunProcess.splitCommand(fused_command)
-        proc = QgsBlockingProcess(command, arguments)
+        if os.name == "nt":
+            proc = QgsBlockingProcess(commands[0], [commands[1]])
+        else:
+            proc = QgsBlockingProcess(command, arguments)
         proc.setStdOutHandler(on_stdout)
         proc.setStdErrHandler(on_stderr)
 
