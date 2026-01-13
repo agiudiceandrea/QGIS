@@ -358,11 +358,12 @@ void TestQgsGeospatialPdfExport::testGeorefPolygon()
 
   QList<QgsAbstractGeospatialPdfExporter::ComponentLayerDetail> renderedLayers;
   QgsAbstractGeospatialPdfExporter::ExportDetails details;
+  details.pageSizeMm = QSizeF(253.2, 222.25);
 
   // with points
   QgsAbstractGeospatialPdfExporter::GeoReferencedSection section;
   section.crs = QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4283" ) );
-  section.pageBoundsMm = QgsRectangle( 0, 0, 253.2, 222.25 );
+  
   QgsPolygon p;
   p.fromWkt( QStringLiteral( "Polygon((30 5, 250 15, 240 200, 50 190, 30 5))" ) );
   section.pageBoundsPolygon = p;
@@ -377,7 +378,9 @@ void TestQgsGeospatialPdfExport::testGeorefPolygon()
   QDomDocument doc;
   doc.setContent( composition );
   QCOMPARE( doc.elementsByTagName( QStringLiteral( "SRS" ) ).at( 0 ).toElement().text(), QStringLiteral( "EPSG:4283" ) );
-  QCOMPARE( doc.elementsByTagName( QStringLiteral( "BoundingPolygon" ) ).at( 0 ).toElement().text(), QStringLiteral( "Polygon ((60 -12, 500 -32, 480 -402, 100 -382, 60 -12))" ) );
+  QCOMPARE( doc.elementsByTagName( QStringLiteral( "BoundingPolygon" ) ).at( 0 ).toElement().text(), QStringLiteral( "Polygon ((85.0710900473933691 615.82677165354334647, 708.92575039494477096 587.48031496062992574, 680.56872037914695284 63.07086614173226735, 141.78515007898894851 91.41732283464568809, 85.0710900473933691 615.82677165354334647))" ) );
+  QCOMPARE( doc.elementsByTagName( QStringLiteral( "Width" ) ).at( 0 ).toElement().text(), QStringLiteral( "718" ) );
+  QCOMPARE( doc.elementsByTagName( QStringLiteral( "Height" ) ).at( 0 ).toElement().text(), QStringLiteral( "630" ) );
 
   QDomNodeList cps = doc.elementsByTagName( QStringLiteral( "ControlPoint" ) );
   QCOMPARE( cps.count(), 4 );
@@ -394,7 +397,7 @@ void TestQgsGeospatialPdfExport::testGeorefPolygon()
   }
   QVERIFY( !cp1.isNull() );
   QCOMPARE( cp1.attribute( QStringLiteral( "x" ) ), QStringLiteral( "0" ) );
-  QCOMPARE( cp1.attribute( QStringLiteral( "y" ) ).left( 10 ), QStringLiteral( "-2.8346456" ) );
+  QCOMPARE( cp1.attribute( QStringLiteral( "y" ) ).left( 10 ), QStringLiteral( "630" ) );
 }
 
 void TestQgsGeospatialPdfExport::testGroups()
