@@ -36,6 +36,18 @@ class TestQgsExifUtils(QgisTestCase):
         )
         self.assertEqual(elevation, 422.19101123595505)
 
+        # test non ASCII char in file name 1
+        elevation = QgsExifTools.readTag(
+            os.path.join(photos_folder, "0997è.JPG"), "Exif.GPSInfo.GPSAltitude"
+        )
+        self.assertEqual(elevation, 422.19101123595505)
+
+        # test non ASCII char in file name 2
+        elevation = QgsExifTools.readTag(
+            os.path.join(photos_folder, "写真.JPG"), "Exif.GPSInfo.GPSAltitude"
+        )
+        self.assertEqual(elevation, 422.19101123595505)
+
         # test a converted Exif datetime value
         dt = QgsExifTools.readTag(
             os.path.join(photos_folder, "0997.JPG"), "Exif.Image.DateTime"

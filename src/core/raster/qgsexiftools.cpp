@@ -300,7 +300,7 @@ QVariant QgsExifTools::readTag( const QString &imagePath, const QString &key )
 
   try
   {
-    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toUtf8().constData() ) );
     if ( !image || key.isEmpty() )
       return QVariant();
 
@@ -348,7 +348,7 @@ QVariantMap QgsExifTools::readTags( const QString &imagePath )
   try
   {
     QVariantMap res;
-    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toUtf8().constData() ) );
     if ( !image )
       return QVariantMap();
     image->readMetadata();
@@ -407,9 +407,10 @@ QgsPoint QgsExifTools::getGeoTag( const QString &imagePath, bool &ok )
   ok = false;
   if ( !QFileInfo::exists( imagePath ) )
     return QgsPoint();
+
   try
   {
-    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toUtf8().constData() ) );
     if ( !image )
       return QgsPoint();
 
@@ -481,7 +482,7 @@ bool QgsExifTools::geoTagImage( const QString &imagePath, const QgsPointXY &loca
 #ifdef HAVE_EXIV2
   try
   {
-    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toUtf8().constData() ) );
     if ( !image )
       return false;
 
@@ -522,7 +523,7 @@ bool QgsExifTools::tagImage( const QString &imagePath, const QString &tag, const
 #ifdef HAVE_EXIV2
   try
   {
-    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toUtf8().constData() ) );
     if ( !image )
       return false;
 
