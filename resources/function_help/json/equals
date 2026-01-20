@@ -1,0 +1,21 @@
+{
+  "name": "equals",
+  "type": "function",
+  "groups": ["GeometryGroup"],
+  "description": "Tests whether a geometry is equal to another. Returns TRUE if geometry1 is exactly equal to geometry2.",
+  "arguments": [{
+    "arg": "geometry1",
+    "description": "a geometry"
+  }, {
+    "arg": "geometry2",
+    "description": "a geometry"
+  }],
+  "examples": [{
+    "expression": "equals( geom_from_wkt( 'POINT( 0 0 )' ), geom_from_wkt( 'POINT( 0 0 )' ) )",
+    "returns": "TRUE"
+  }, {
+    "expression": "equals( geom_from_wkt( 'POINT( 1 0 )' ), geom_from_wkt( 'POINT( 0 0 )' ) )",
+    "returns": "FALSE"
+  }],
+  "tags": ["tests", "equal", "equals", "exactly"]
+}
