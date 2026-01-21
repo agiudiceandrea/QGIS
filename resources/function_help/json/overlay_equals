@@ -2,7 +2,7 @@
   "name": "overlay_equals",
   "type": "function",
   "groups": ["GeometryGroup"],
-  "description": "Returns whether the current feature is exactly equal to at least one feature from a target layer, or an array of expression-based results for the features in the target layer that are exactly equal to the current feature. Note that the order of the vertices matters.",
+  "description": "Returns whether the current feature is exactly equal to at least one feature from a target layer, or an array of expression-based results for the features in the target layer that are exactly equal to the current feature. Note that the order of vertices matters.",
   "arguments": [{
     "arg": "layer",
     "description": "the layer whose overlay is checked"
