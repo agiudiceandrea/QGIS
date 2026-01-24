@@ -190,6 +190,11 @@ class PyQgsDefaultSearchWidgetWrapper(QgisTestCase):
             w.createExpression(QgsSearchWidgetWrapper.FilterFlag.LessThanOrEqualTo),
             '"fldint"<=5000',
         )
+        line_edit.setText("9999991")
+        self.assertEqual(
+            w.createExpression(QgsSearchWidgetWrapper.FilterFlag.LessThanOrEqualTo),
+            '"fldint"<=9999991',
+        )
 
         # numeric field (double)
         parent = QWidget()
@@ -210,6 +215,11 @@ class PyQgsDefaultSearchWidgetWrapper(QgisTestCase):
         self.assertEqual(
             w.createExpression(QgsSearchWidgetWrapper.FilterFlag.LessThanOrEqualTo),
             '"flddouble"<=5000.5',
+        )
+        line_edit.setText("9999991")
+        self.assertEqual(
+            w.createExpression(QgsSearchWidgetWrapper.FilterFlag.LessThanOrEqualTo),
+            '"flddouble"<=9999991',
         )
 
         # date/time/datetime
@@ -269,6 +279,11 @@ class PyQgsDefaultSearchWidgetWrapper(QgisTestCase):
             w.expression(),
             "\"fldint\" = '10000'",
         )
+        line_edit.setText("9999991")
+        self.assertEqual(
+            w.expression(),
+            "\"fldint\" = '9999991'",
+        )
 
         w = QgsDefaultSearchWidgetWrapper(layer, 1)
         w.initWidget(parent)
@@ -294,6 +309,11 @@ class PyQgsDefaultSearchWidgetWrapper(QgisTestCase):
         self.assertEqual(
             w.expression(),
             "\"flddouble\" = '10000.5'",
+        )
+        line_edit.setText("9999991")
+        self.assertEqual(
+            w.expression(),
+            "\"flddouble\" = '9999991'",
         )
 
 
