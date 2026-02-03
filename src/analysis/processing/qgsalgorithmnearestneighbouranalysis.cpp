@@ -123,7 +123,6 @@ QVariantMap QgsNearestNeighbourAnalysisAlgorithm::processAlgorithm( const QVaria
   {
     throw QgsProcessingException( QObject::tr( "An error occurred while calculating area" ) );
   }
-  
   int i = 0;
   QgsFeature f;
   while ( it.nextFeature( f ) )
