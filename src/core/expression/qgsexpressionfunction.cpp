@@ -5288,6 +5288,13 @@ static QVariant fcnEquals( const QVariantList &values, const QgsExpressionContex
   return fGeom.equals( sGeom ) ? TVL_True : TVL_False;
 }
 
+static QVariant fcnEqualsTopological( const QVariantList &values, const QgsExpressionContext *, QgsExpression *parent, const QgsExpressionNodeFunction * )
+{
+  QgsGeometry fGeom = QgsExpressionUtils::getGeometry( values.at( 0 ), parent );
+  QgsGeometry sGeom = QgsExpressionUtils::getGeometry( values.at( 1 ), parent );
+  return fGeom.isGeosEqual( sGeom ) ? TVL_True : TVL_False;
+}
+
 static QVariant fcnBuffer( const QVariantList &values, const QgsExpressionContext *, QgsExpression *parent, const QgsExpressionNodeFunction * )
 {
   const QgsGeometry fGeom = QgsExpressionUtils::getGeometry( values.at( 0 ), parent );
@@ -8822,6 +8829,11 @@ static QVariant fcnGeomOverlayEquals( const QVariantList &values, const QgsExpre
   return executeGeomOverlay( values, context, parent, &QgsGeometry::equals, false, 0.01 );  //grow amount should adapt to current units
 }
 
+static QVariant fcnGeomOverlayEqualsTopological( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
+{
+  return executeGeomOverlay( values, context, parent, &QgsGeometry::isGeosEqual, false, 0.01 );  //grow amount should adapt to current units
+}
+
 static QVariant fcnGeomOverlayTouches( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
 {
   return executeGeomOverlay( values, context, parent, &QgsGeometry::touches, false, 0.01 ); //grow amount should adapt to current units
@@ -9319,6 +9331,7 @@ const QList<QgsExpressionFunction *> &QgsExpression::Functions()
       { u"overlay_touches"_s, fcnGeomOverlayTouches },
       { u"overlay_disjoint"_s, fcnGeomOverlayDisjoint },
       { u"overlay_within"_s, fcnGeomOverlayWithin },
+      { u"overlay_equals_topological"_s, fcnGeomOverlayEqualsTopological },
     };
     QMapIterator< QString, QgsExpressionFunction::FcnEval > i( geometry_overlay_definitions );
     while ( i.hasNext() )
@@ -9467,6 +9480,9 @@ const QList<QgsExpressionFunction *> &QgsExpression::Functions()
         << new QgsStaticExpressionFunction( u"equals"_s, QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( u"geometry1"_s )
                                             << QgsExpressionFunction::Parameter( u"geometry2"_s ),
                                             fcnEquals, u"GeometryGroup"_s )
+        << new QgsStaticExpressionFunction( u"equals_topological"_s, QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( u"geometry1"_s )
+                                            << QgsExpressionFunction::Parameter( u"geometry2"_s ),
+                                            fcnEqualsTopological, u"GeometryGroup"_s )
         << new QgsStaticExpressionFunction( u"translate"_s, QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( u"geometry"_s )
                                             << QgsExpressionFunction::Parameter( u"dx"_s )
                                             << QgsExpressionFunction::Parameter( u"dy"_s ),

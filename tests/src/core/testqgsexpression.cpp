@@ -4322,6 +4322,7 @@ class TestQgsExpression : public QObject
       polygon_ring << QgsPointXY( 0, 0 ) << QgsPointXY( 10, 10 ) << QgsPointXY( 10, 0 ) << QgsPointXY( 0, 0 );
       QgsPolygonXY polygon;
       polygon << polygon_ring;
+      QgsMultiPoint multipoint( QVector<QgsPointXY> { point );
 
       QTest::newRow( "No Intersects" ) << "intersects( $geometry, geomFromWKT('LINESTRING ( 2 0, 0 2 )') )" << QgsGeometry::fromPointXY( point ) << false << QVariant( 0 );
       QTest::newRow( "Intersects" ) << "intersects( $geometry, geomFromWKT('LINESTRING ( 0 0, 0 2 )') )" << QgsGeometry::fromPointXY( point ) << false << QVariant( 1 );
@@ -4334,6 +4335,11 @@ class TestQgsExpression : public QObject
       QTest::newRow( "Equals line" ) << "equals( $geometry, geomFromWKT('LINESTRING( 0 0, 10 10 )') )" << QgsGeometry::fromPolylineXY( line ) << false << QVariant( 1 );
       QTest::newRow( "No Equals polygon" ) << "equals( $geometry, geomFromWKT('POLYGON(( 0 0, 10 0, 10 10, 0 0 ))') )" << QgsGeometry::fromPolygonXY( polygon ) << false << QVariant( 0 );
       QTest::newRow( "Equals polygon" ) << "equals( $geometry, geomFromWKT('POLYGON(( 0 0, 10 10, 10 0, 0 0 ))') )" << QgsGeometry::fromPolygonXY( polygon ) << false << QVariant( 1 );
+      QTest::newRow( "No Equals Topological point" ) << "equals( $geometry, geomFromWKT('POINT( 1 0 )') )" << QgsGeometry::fromPointXY( point ) << false << QVariant( 0 );
+      QTest::newRow( "Equals Topological point" ) << "equals( $geometry, geomFromWKT('POINT( 0 0 )') )" << QgsGeometry::fromPointXY( point ) << false << QVariant( 1 );
+      QTest::newRow( "Equals Topological multipoint" ) << "equals( $geometry, geomFromWKT('MULTIPOINT( ( 0 0 ) )') )" << QgsGeometry::fromPointXY( point ) << false << QVariant( 1 );
+      QTest::newRow( "Equals Topological line" ) << "equals( $geometry, geomFromWKT('LINESTRING( 10 10, 0 0 )') )" << QgsGeometry::fromPolylineXY( line ) << false << QVariant( 1 );
+      QTest::newRow( "Equals Topological polygon" ) << "equals( $geometry, geomFromWKT('POLYGON(( 0 0, 10 0, 10 10, 0 0 ))') )" << QgsGeometry::fromPolygonXY( polygon ) << false << QVariant( 1 );
 
       // OGR test
       QTest::newRow( "OGR Intersects" ) << "intersects( $geometry, geomFromWKT('LINESTRING ( 10 0, 0 10 )') )" << QgsGeometry::fromPolylineXY( line ) << false << QVariant( 1 );
