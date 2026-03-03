@@ -1464,7 +1464,7 @@ int main( int argc, char *argv[] )
         if ( systemEnvVars.contains( envVarName ) && envVarApply == "unset"_L1 )
         {
 #ifdef Q_OS_WIN
-          _wputenv_s( envVarName.toStdWString().c_str() );
+          _wputenv_s( envVarName.toStdWString().c_str(), NULL );
 #else
           unsetenv( envVarName.toUtf8().constData() );
 #endif
