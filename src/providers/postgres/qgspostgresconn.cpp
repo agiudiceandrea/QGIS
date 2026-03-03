@@ -1753,7 +1753,7 @@ QString QgsPostgresConn::PQerrorMessage() const
   QMutexLocker locker( &mLock );
 
   Q_ASSERT( mConn );
-  return QString::fromUtf8( ::PQerrorMessage( mConn ) );
+  return QString::fromUtf16( ::PQerrorMessage( mConn ) );
 }
 
 int QgsPostgresConn::PQsendQuery( const QString &query )
