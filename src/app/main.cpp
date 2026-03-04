@@ -1472,7 +1472,8 @@ int main( int argc, char *argv[] )
         else
         {
 #ifdef Q_OS_WIN
-          if ( envVarApply != "undefined" || !getenv( envVarName.toUtf8().constData() ) )
+          size_t requiredSize = 0;
+          if ( envVarApply != "undefined" || _wgetenv_s( &requiredSize, NULL, 0, envVarName.toStdWString().c_str() ) == ERANGE )
             _wputenv_s( envVarName.toStdWString().c_str(), envVarValue.toStdWString().c_str() );
 #else
           setenv( envVarName.toUtf8().constData(), envVarValue.toUtf8().constData(), envVarApply == "undefined"_L1 ? 0 : 1 );
