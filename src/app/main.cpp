@@ -527,7 +527,7 @@ bool checkEnvVarExist( const QString &envVarName )
 {
   size_t requiredSize;
   _wgetenv_s( &requiredSize, NULL, 0, envVarName.toStdWString().c_str() );
-  return requiredSize == 0;
+  return requiredSize > 0;
 }
 #endif
 
