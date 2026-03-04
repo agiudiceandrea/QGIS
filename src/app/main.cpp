@@ -1473,7 +1473,7 @@ int main( int argc, char *argv[] )
         {
 #ifdef Q_OS_WIN
           if ( envVarApply != "undefined" || !getenv( envVarName.toUtf8().constData() ) )
-            _wputenv_s( envVarName.toStdWString().c_str(), envVarValue.toStdWString().c_str() ) );
+            _wputenv_s( envVarName.toStdWString().c_str(), envVarValue.toStdWString().c_str() );
 #else
           setenv( envVarName.toUtf8().constData(), envVarValue.toUtf8().constData(), envVarApply == "undefined"_L1 ? 0 : 1 );
 #endif
