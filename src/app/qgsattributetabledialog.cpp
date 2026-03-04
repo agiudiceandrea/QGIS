@@ -57,10 +57,6 @@
 #include "qgsdockwidget.h"
 #include "qgssettingsregistrycore.h"
 
-const QgsSettingsEntryBool *QgsAttributeTableDialog::settingsAttributeTableDefaultDocked = new QgsSettingsEntryBool( QStringLiteral( "attribute-table-default-docked" ), QgsSettingsTree::sTreeAttributeTable, true, QStringLiteral( "If true, attribute tables will be docked by default." ) );
-
-const QgsSettingsEntryBool *QgsAttributeTableDialog::settingsAutosizeAttributeTable = new QgsSettingsEntryBool( QStringLiteral( "autosize-attribute-table" ), QgsSettingsTree::sTreeAttributeTable, false );
-
 
 QgsExpressionContext QgsAttributeTableDialog::createExpressionContext() const
 {
@@ -288,11 +284,10 @@ QgsAttributeTableDialog::QgsAttributeTableDialog( QgsVectorLayer *layer, QgsAttr
   // info from table to application
   connect( this, &QgsAttributeTableDialog::saveEdits, this, [=] { QgisApp::instance()->saveEdits(); } );
 
-  QgsDockableWidgetHelper::OpeningMode openingMode = QgsDockableWidgetHelper::OpeningMode::RespectSetting;
+  QgsDockableWidgetHelper::OpeningMode openingMode = QgsSettings()->value( QStringLiteral( "/qgis/dockAttributeTable" ), false ).toBool() ? QgsDockableWidgetHelper::OpeningMode::ForceDocked : QgsDockableWidgetHelper::OpeningMode::ForceDialog;
   if ( initiallyDocked )
     openingMode = *initiallyDocked ? QgsDockableWidgetHelper::OpeningMode::ForceDocked : QgsDockableWidgetHelper::OpeningMode::ForceDialog;
-  bool defaultDocked = QgsAttributeTableDialog::settingsAttributeTableDefaultDocked->value();
-  mDockableWidgetHelper = new QgsDockableWidgetHelper( windowTitle(), this, QgisApp::instance(), QStringLiteral( "attribute-table" ), QStringList(), openingMode, defaultDocked, Qt::BottomDockWidgetArea );
+  mDockableWidgetHelper = new QgsDockableWidgetHelper( windowTitle(), this, QgisApp::instance(), u"attribute-table"_s, QStringList(), openingMode, false, Qt::BottomDockWidgetArea );
   toggleShortcuts( !mDockableWidgetHelper->isDocked() );
   connect( mDockableWidgetHelper, &QgsDockableWidgetHelper::closed, this, [=]() {
     close();
