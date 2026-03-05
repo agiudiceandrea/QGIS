@@ -522,6 +522,15 @@ void myMessageOutput( QtMsgType type, const QMessageLogContext &, const QString 
   }
 }
 
+#ifdef Q_OS_WIN
+bool checkEnvVarExist( const QString &envVarName )
+{
+  size_t requiredSize;
+  _wgetenv_s( &requiredSize, NULL, 0, envVarName.toStdWString().c_str() );
+  return requiredSize > 0;
+}
+#endif
+
 #ifdef _MSC_VER
 #undef APP_EXPORT
 #define APP_EXPORT __declspec( dllexport )
@@ -1461,18 +1470,21 @@ int main( int argc, char *argv[] )
           }
         }
 
-        if ( systemEnvVars.contains( envVarName ) && envVarApply == "unset"_L1 )
+        if ( envVarApply == "unset"_L1 )
         {
+          if ( systemEnvVars.contains( envVarName ) )
+          {
 #ifdef Q_OS_WIN
-          _wputenv_s( envVarName.toStdWString().c_str(), L"" );
+            _wputenv_s( envVarName.toStdWString().c_str(), L"" );
 #else
-          unsetenv( envVarName.toUtf8().constData() );
+            unsetenv( envVarName.toUtf8().constData() );
 #endif
+          }
         }
         else
         {
 #ifdef Q_OS_WIN
-          if ( envVarApply != "undefined" || !getenv( envVarName.toUtf8().constData() ) )
+          if ( envVarApply != "undefined" || !checkEnvVarExist( envVarName ) )
             _wputenv_s( envVarName.toStdWString().c_str(), envVarValue.toStdWString().c_str() );
 #else
           setenv( envVarName.toUtf8().constData(), envVarValue.toUtf8().constData(), envVarApply == "undefined"_L1 ? 0 : 1 );
