@@ -1470,13 +1470,16 @@ int main( int argc, char *argv[] )
           }
         }
 
-        if ( systemEnvVars.contains( envVarName ) && envVarApply == "unset"_L1 )
+        if ( envVarApply == "unset"_L1 )
         {
+          if ( systemEnvVars.contains( envVarName ) )
+          {
 #ifdef Q_OS_WIN
-          _wputenv_s( envVarName.toStdWString().c_str(), L"" );
+            _wputenv_s( envVarName.toStdWString().c_str(), L"" );
 #else
-          unsetenv( envVarName.toUtf8().constData() );
+            unsetenv( envVarName.toUtf8().constData() );
 #endif
+          }
         }
         else
         {
