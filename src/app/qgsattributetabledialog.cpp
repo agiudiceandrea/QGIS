@@ -57,7 +57,7 @@
 #include "qgsdockwidget.h"
 #include "qgssettingsregistrycore.h"
 
-const QgsSettingsEntryBool *QgsAttributeTableDialog::settingsAttributeTableDefaultDocked = new QgsSettingsEntryBool( QStringLiteral( "attribute-table-default-docked" ), QgsSettingsTree::sTreeAttributeTable, false, QStringLiteral( "If true, attribute tables will be docked by default." );
+const QgsSettingsEntryBool *QgsAttributeTableDialog::settingsAttributeTableDefaultDocked = new QgsSettingsEntryBool( QStringLiteral( "attribute-table-default-docked" ), QgsSettingsTree::sTreeAttributeTable, false, QStringLiteral( "If true, attribute tables will be docked by default." ) );
 
 const QgsSettingsEntryBool *QgsAttributeTableDialog::settingsAutosizeAttributeTable = new QgsSettingsEntryBool( QStringLiteral( "autosize-attribute-table" ), QgsSettingsTree::sTreeAttributeTable, false );
 
