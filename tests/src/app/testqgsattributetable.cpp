@@ -957,9 +957,9 @@ void TestQgsAttributeTable::testDeleteFieldCrash()
   dlg->setView( QgsDualView::ViewMode::AttributeTable );
   dlg->mMainView->tableView()->setCurrentIndex( cellIndex );
   dlg->mMainView->tableView()->edit( cellIndex );
-  // this triggered the crash in QgsAttributeTableModel::getWidgetData
-  // since the widgetData list was already cleared but the attributes were not.
   dlg->removeAttributes( QList<int>() << 1 );
+  // this triggered the crash
+  dlg->close();
 }
 
 QGSTEST_MAIN( TestQgsAttributeTable )
