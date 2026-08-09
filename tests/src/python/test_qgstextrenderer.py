@@ -5456,7 +5456,7 @@ class PyQgsTextRenderer(QgisTestCase):
             self.checkRender(
                 format,
                 "rect_background_valign_top",
-                rect=QRectF(100, 100, 100, 100),
+                rect=QRectF(100, 100, 200, 200),
                 text=["first line", "second line"],
                 vAlignment=QgsTextRenderer.VAlignment.AlignTop,
             )
@@ -5482,7 +5482,7 @@ class PyQgsTextRenderer(QgisTestCase):
             self.checkRender(
                 format,
                 "rect_background_valign_center",
-                rect=QRectF(100, 100, 100, 100),
+                rect=QRectF(100, 100, 200, 200),
                 text=["first line", "second line"],
                 vAlignment=QgsTextRenderer.VAlignment.AlignVCenter,
             )
@@ -5509,7 +5509,7 @@ class PyQgsTextRenderer(QgisTestCase):
             self.checkRender(
                 format,
                 "rect_background_valign_bottom",
-                rect=QRectF(100, 100, 100, 100),
+                rect=QRectF(100, 100, 200, 200),
                 text=["first line", "second line"],
                 vAlignment=QgsTextRenderer.VAlignment.AlignBottom,
             )
