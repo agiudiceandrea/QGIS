@@ -5793,6 +5793,83 @@ class PyQgsTextRenderer(QgisTestCase):
             )
         )
 
+    def testDrawRectBackgroundVAlignTop(self):
+        """
+        Test drawing text with a background enabled, top aligned, in rect
+        mode. This combination was not affected by the double vertical
+        offset bug (the offset is always 0 for AlignTop) -- included here
+        for full coverage of the vAlignment x background matrix, alongside
+        testDrawRectBackgroundVAlignCenter and testDrawRectBackgroundVAlignBottom.
+        """
+        format = QgsTextFormat()
+        format.setFont(getTestFont("bold"))
+        format.setSize(30)
+        format.background().setEnabled(True)
+        format.background().setType(QgsTextBackgroundSettings.ShapeType.ShapeRectangle)
+        format.background().setFillColor(QColor(0, 255, 0))
+        self.assertTrue(
+            self.checkRender(
+                format,
+                "rect_background_valign_top",
+                rect=QRectF(100, 100, 200, 200),
+                text=["first line", "second line"],
+                vAlignment=QgsTextRenderer.VAlignment.AlignTop,
+            )
+        )
+ 
+    def testDrawRectBackgroundVAlignCenter(self):
+        """
+        Test drawing text with a background enabled, vertically centered, in
+        rect mode.
+ 
+        Regression test -- previously enabling a background caused the
+        vertical alignment offset to be applied twice, so vertically
+        centered text no longer appeared centered within the rect once a
+        background was enabled.
+        """
+        format = QgsTextFormat()
+        format.setFont(getTestFont("bold"))
+        format.setSize(30)
+        format.background().setEnabled(True)
+        format.background().setType(QgsTextBackgroundSettings.ShapeType.ShapeRectangle)
+        format.background().setFillColor(QColor(0, 255, 0))
+        self.assertTrue(
+            self.checkRender(
+                format,
+                "rect_background_valign_center",
+                rect=QRectF(100, 100, 200, 200),
+                text=["first line", "second line"],
+                vAlignment=QgsTextRenderer.VAlignment.AlignVCenter,
+            )
+        )
+ 
+    def testDrawRectBackgroundVAlignBottom(self):
+        """
+        Test drawing text with a background enabled, bottom aligned, in
+        rect mode.
+ 
+        Regression test -- previously enabling a background caused the
+        vertical alignment offset to be applied twice, so bottom aligned
+        text no longer appeared at the bottom of the rect once a background
+        was enabled (it rendered further below the intended position, or
+        outside of the rect entirely for tall rects).
+        """
+        format = QgsTextFormat()
+        format.setFont(getTestFont("bold"))
+        format.setSize(30)
+        format.background().setEnabled(True)
+        format.background().setType(QgsTextBackgroundSettings.ShapeType.ShapeRectangle)
+        format.background().setFillColor(QColor(0, 255, 0))
+        self.assertTrue(
+            self.checkRender(
+                format,
+                "rect_background_valign_bottom",
+                rect=QRectF(100, 100, 200, 200),
+                text=["first line", "second line"],
+                vAlignment=QgsTextRenderer.VAlignment.AlignBottom,
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
