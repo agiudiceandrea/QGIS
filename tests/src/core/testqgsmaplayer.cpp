@@ -82,6 +82,8 @@ class TestQgsMapLayer : public QObject
 
     void publicSourceOnGdalWithCredentials();
 
+    void cloneServerProperties();
+
   private:
     QgsVectorLayer *mpLayer = nullptr;
 };
@@ -552,6 +554,45 @@ void TestQgsMapLayer::publicSourceOnGdalWithCredentials()
   QCOMPARE( rl.publicSource( true ), u"test.tif|option:AN=OPTION|credential:ANOTHER=XXXXXXXX|credential:SOMEKEY=XXXXXXXX"_s );
   QCOMPARE( rl.publicSource( false ), u"test.tif|option:AN=OPTION"_s );
   QCOMPARE( rl.publicSource(), u"test.tif|option:AN=OPTION"_s );
+}
+
+void TestQgsMapLayer::cloneServerProperties()
+{
+  auto source = std::make_unique<QgsVectorLayer>( u"Point"_s, u"source layer"_s, u"memory"_s );
+  source->serverProperties()->setShortName( u"a_short_name"_s );
+  source->serverProperties()->setTitle( u"a title"_s );
+  source->serverProperties()->setAbstract( u"an abstract"_s );
+  source->serverProperties()->setKeywordList( u"test1,test2,test3"_s );
+
+  const QgsServerMetadataUrlProperties::MetadataUrl metadataUrl( u"http://metadata.url"_s, u"FGDC"_s, u"text/xml"_s );
+  source->serverProperties()->addMetadataUrl( metadataUrl );
+
+  const QgsServerWmsDimensionProperties::WmsDimensionInfo
+    wmsDimension( u"elevation"_s, u"field name"_s, u"end field name"_s, u"metre"_s, u"m"_s, QgsServerWmsDimensionProperties::WmsDimensionInfo::ReferenceValue, QVariant( u"0"_s ) );
+  QVERIFY( source->serverProperties()->addWmsDimension( wmsDimension ) );
+
+  std::unique_ptr<QgsVectorLayer> clone( source->clone() );
+  QVERIFY( clone );
+
+  // the source layer's server properties must be unchanged
+  QCOMPARE( source->serverProperties()->shortName(), u"a_short_name"_s );
+  QCOMPARE( source->serverProperties()->title(), u"a title"_s );
+  QCOMPARE( source->serverProperties()->abstract(), u"an abstract"_s );
+  QCOMPARE( source->serverProperties()->keywordList(), u"test1,test2,test3"_s );
+  QCOMPARE( source->serverProperties()->metadataUrls().size(), 1 );
+  QCOMPARE( source->serverProperties()->metadataUrls().at( 0 ), metadataUrl );
+  QCOMPARE( source->serverProperties()->wmsDimensions().size(), 1 );
+  QCOMPARE( source->serverProperties()->wmsDimensions().at( 0 ), wmsDimension );
+
+  // the cloned layer must have correctly received the source layer's server properties
+  QCOMPARE( clone->serverProperties()->shortName(), u"a_short_name"_s );
+  QCOMPARE( clone->serverProperties()->title(), u"a title"_s );
+  QCOMPARE( clone->serverProperties()->abstract(), u"an abstract"_s );
+  QCOMPARE( clone->serverProperties()->keywordList(), u"test1,test2,test3"_s );
+  QCOMPARE( clone->serverProperties()->metadataUrls().size(), 1 );
+  QCOMPARE( clone->serverProperties()->metadataUrls().at( 0 ), metadataUrl );
+  QCOMPARE( clone->serverProperties()->wmsDimensions().size(), 1 );
+  QCOMPARE( clone->serverProperties()->wmsDimensions().at( 0 ), wmsDimension );
 }
 
 QGSTEST_MAIN( TestQgsMapLayer )
