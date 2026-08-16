@@ -63,6 +63,7 @@ from qgis.core import (
     QgsReadWriteContext,
     QgsRectangle,
     QgsRenderContext,
+    QgsServerWmsDimensionProperties,
     QgsSingleCategoryDiagramRenderer,
     QgsSingleSymbolRenderer,
     QgsSymbol,
