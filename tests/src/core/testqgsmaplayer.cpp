@@ -596,6 +596,9 @@ void TestQgsMapLayer::cloneServerProperties()
   QCOMPARE( source->serverProperties()->metadataUrls().at( 0 ), metadataUrl );
   QCOMPARE( source->serverProperties()->wmsDimensions().size(), 1 );
   QCOMPARE( source->serverProperties()->wmsDimensions().at( 0 ), wmsDimension );
+  QCOMPARE( source->serverProperties()->wmsDimensions().at( 0 ).referenceValue, wmsDimension.referenceValue );
+  QCOMPARE( source->serverProperties()->wmsDimensions().at( 0 ).referenceValue, QVariant( u"0"_s ) );
+  QCOMPARE( source->serverProperties()->wmsDimensions().at( 0 ).referenceValue, u"0"_s );
 
   QCOMPARE( clone->serverProperties()->shortName(), u"MyShortName"_s );
   QCOMPARE( clone->serverProperties()->title(), u"MyTitle"_s );
@@ -612,6 +615,9 @@ void TestQgsMapLayer::cloneServerProperties()
   QCOMPARE( clone->serverProperties()->metadataUrls().at( 0 ), metadataUrl );
   QCOMPARE( clone->serverProperties()->wmsDimensions().size(), 1 );
   QCOMPARE( clone->serverProperties()->wmsDimensions().at( 0 ), wmsDimension );
+  QCOMPARE( clone->serverProperties()->wmsDimensions().at( 0 ).referenceValue, wmsDimension.referenceValue );
+  QCOMPARE( clone->serverProperties()->wmsDimensions().at( 0 ).referenceValue, QVariant( u"0"_s ) );
+  QCOMPARE( clone->serverProperties()->wmsDimensions().at( 0 ).referenceValue, u"0"_s );
 }
 
 QGSTEST_MAIN( TestQgsMapLayer )
