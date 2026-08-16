@@ -3976,6 +3976,11 @@ class TestQgsVectorLayer(QgisTestCase, FeatureSourceTestCase):
         metadata.setFees("a handful of roos")
         layer.setMetadata(metadata)
 
+        wmsDimension = QgsServerWmsDimensionProperties.WmsDimensionInfo( "elevation", "field_name", "end_field_name", "foot", "ft", QgsServerWmsDimensionProperties.WmsDimensionInfo.ReferenceValue, 1 )
+        self.assertEqual(wmsDimension.refeenceValue, 1)
+        wmsDimension = QgsServerWmsDimensionProperties.WmsDimensionInfo( "elevation", "field_name", "end_field_name", "foot", "ft", QgsServerWmsDimensionProperties.WmsDimensionInfo.ReferenceValue, "1" )
+        self.assertEqual(wmsDimension.refeenceValue, "1")
+
         # generate xml from layer
         layer_doc = QDomDocument("doc")
         layer_elem = layer_doc.createElement("maplayer")
@@ -3985,6 +3990,7 @@ class TestQgsVectorLayer(QgisTestCase, FeatureSourceTestCase):
         clone = layer.clone()
 
         self.assertEqual(clone.metadata().fees(), "a handful of roos")
+        
 
         # generate xml from clone
         clone_doc = QDomDocument("doc")
