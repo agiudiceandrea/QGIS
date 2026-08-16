@@ -3978,9 +3978,9 @@ class TestQgsVectorLayer(QgisTestCase, FeatureSourceTestCase):
         layer.setMetadata(metadata)
 
         wmsDimension = QgsServerWmsDimensionProperties.WmsDimensionInfo( "elevation", "field_name", "end_field_name", "foot", "ft", QgsServerWmsDimensionProperties.WmsDimensionInfo.ReferenceValue, 1 )
-        self.assertEqual(wmsDimension.refeenceValue, 1)
+        self.assertEqual(wmsDimension.referenceValue, 1)
         wmsDimension = QgsServerWmsDimensionProperties.WmsDimensionInfo( "elevation", "field_name", "end_field_name", "foot", "ft", QgsServerWmsDimensionProperties.WmsDimensionInfo.ReferenceValue, "1" )
-        self.assertEqual(wmsDimension.refeenceValue, "1")
+        self.assertEqual(wmsDimension.referenceValue, "1")
 
         # generate xml from layer
         layer_doc = QDomDocument("doc")
