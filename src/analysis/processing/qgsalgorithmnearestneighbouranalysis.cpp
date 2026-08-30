@@ -117,8 +117,15 @@ QVariantMap QgsNearestNeighbourAnalysisAlgorithm::processAlgorithm( const QVaria
   const QgsFeatureRequest request;
   const QgsFeature neighbour;
   double sumDist = 0.0;
-  const double area = source->sourceExtent().width() * source->sourceExtent().height();
-
+  double area = 0.0;
+  try
+  {
+    area = da.measureArea( QgsGeometry::fromRect( source->sourceExtent() ) );
+  }
+  catch ( QgsCsException & )
+  {
+    throw QgsProcessingException( QObject::tr( "An error occurred while calculating area" ) );
+  }
   int i = 0;
   QgsFeature f;
   while ( it.nextFeature( f ) )
