@@ -288,26 +288,7 @@ static QVariant fcnGenerateSeries( const QVariantList &values, const QgsExpressi
   return array;
 }
 
-static QVariant fcnGeometry( const QVariantList &, const QgsExpressionContext *context, QgsExpression *, const QgsExpressionNodeFunction * )
-{
-  if ( !context )
-    return QVariant();
-
-  // prefer geometry from context if it's present, otherwise fallback to context's feature's geometry
-  if ( context->hasGeometry() )
-    return context->geometry();
-  else
-  {
-    FEAT_FROM_CONTEXT( context, f )
-    QgsGeometry geom = f.geometry();
-    if ( !geom.isNull() )
-      return QVariant::fromValue( geom );
-    else
-      return QVariant();
-  }
-}
-
-static QVariant fcnGetVariable( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction *node )
+static QVariant fcnGetVariable( const QVariantList &values, const QgsExpressionContext *context, QgsExpression *parent, const QgsExpressionNodeFunction * )
 {
   if ( !context )
     return QVariant();
@@ -324,7 +305,11 @@ static QVariant fcnGetVariable( const QVariantList &values, const QgsExpressionC
   }
   else if ( name == "geometry"_L1 )
   {
-    return fcnGeometry( values, context, parent, node );
+    if ( !context->hasFeature() )
+      return QVariant();
+
+    const QgsFeature feature = context->feature();
+    return feature.hasGeometry() ? QVariant::fromValue( feature.geometry() ) : QVariant();
   }
   else
   {
@@ -4840,6 +4825,24 @@ static QVariant fcnMat( const QVariantList &values, const QgsExpressionContext *
     return QVariant();
 }
 
+static QVariant fcnGeometry( const QVariantList &, const QgsExpressionContext *context, QgsExpression *, const QgsExpressionNodeFunction * )
+{
+  if ( !context )
+    return QVariant();
+
+  // prefer geometry from context if it's present, otherwise fallback to context's feature's geometry
+  if ( context->hasGeometry() )
+    return context->geometry();
+  else
+  {
+    FEAT_FROM_CONTEXT( context, f )
+    QgsGeometry geom = f.geometry();
+    if ( !geom.isNull() )
+      return QVariant::fromValue( geom );
+    else
+      return QVariant();
+  }
+}
 
 static QVariant fcnGeomFromWKT( const QVariantList &values, const QgsExpressionContext *, QgsExpression *parent, const QgsExpressionNodeFunction * )
 {
